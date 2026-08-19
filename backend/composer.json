@@ -67,7 +67,8 @@
         ],
         "verify": [
             "@analyse",
-            "@test:architecture"
+            "@test:architecture",
+            "@test:domain"
         ]
     },
     "extra": {
