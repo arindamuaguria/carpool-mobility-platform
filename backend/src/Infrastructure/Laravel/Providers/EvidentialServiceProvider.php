@@ -7,10 +7,13 @@ namespace Cmp\Infrastructure\Laravel\Providers;
 use Cmp\Application\Shared\Evidence\RaisesForReconciliation;
 use Cmp\Application\Shared\Evidence\RecordsEvidence;
 use Cmp\Application\Shared\Evidence\VerifiesEvidentialChain;
+use Cmp\Application\Shared\Integrity\RecordsIntegrityEvents;
+use Cmp\Domain\Shared\Time\Clock;
 use Cmp\Infrastructure\Evidential\DatabaseEvidentialChainVerifier;
 use Cmp\Infrastructure\Evidential\DatabaseEvidentialWriter;
 use Cmp\Infrastructure\Evidential\KeyedChainHash;
 use Cmp\Infrastructure\Evidential\LoggingReconciliationRaises;
+use Cmp\Infrastructure\Integrity\EvidentialIntegrityEvents;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\ConnectionResolverInterface;
@@ -63,6 +66,17 @@ final class EvidentialServiceProvider extends ServiceProvider
 
             return new KeyedChainHash($key);
         });
+
+        // API-039 ‡ / FRD-FR-241 / SADR-08: an attempt to assert an authoritative
+        // value is recorded evidentially. Bound here because this is the
+        // composition root for everything that writes evidence.
+        $this->app->singleton(
+            RecordsIntegrityEvents::class,
+            static fn (Application $app): EvidentialIntegrityEvents => new EvidentialIntegrityEvents(
+                $app->make(RecordsEvidence::class),
+                $app->make(Clock::class),
+            ),
+        );
 
         // BE-105 ‡: one writer, on the application account.
         $this->app->singleton(
