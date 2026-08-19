@@ -68,7 +68,15 @@
         "verify": [
             "@analyse",
             "@test:architecture",
-            "@test:domain"
+            "@test:domain",
+            "@test:integration"
+        ],
+        "migrate": [
+            "@php artisan migrate --database=mysql_migration"
+        ],
+        "db:up": [
+            "@php artisan db:provision-accounts",
+            "@migrate"
         ]
     },
     "extra": {
@@ -93,6 +101,8 @@
         "test:integration": "Level 3 — integration against a real MySQL (TC-030).",
         "test:contract": "Level 4 — contract tests; shape only, never a business rule (TC-031).",
         "test:system": "Level 5 — system behaviour.",
-        "verify": "Runs the automated verification levels in order; a failure stops the later ones (TC-028). A level joins this list on the commit that gives it its first test — an empty suite is not a passing level."
+        "verify": "Runs the automated verification levels in order; a failure stops the later ones (TC-028). A level joins this list on the commit that gives it its first test — an empty suite is not a passing level.",
+        "migrate": "Run migrations under the migration account — the only account holding DDL (DB-215).",
+        "db:up": "Provision the three DADR-09 accounts, then migrate."
     }
 }
