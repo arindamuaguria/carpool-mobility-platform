@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Verification levels — CMP-DOC-18 TC-025.
+
+    Six levels run in order and a failure at an earlier level stops the later
+    ones (TC-028). Level 1 (static analysis) and level 6 (manual review) are not
+    PHPUnit suites: level 1 is the deptrac/PHPStan/Pint stage of the build plus
+    the structural assertions in the Architecture suite, and level 6 is a
+    specified procedure with a recorded outcome (TC-032).
+
+      Architecture  structural enforcement asserted in code  (level 1, TC-037)
+      Domain        no database, no framework, no network    (level 2, TC-029)
+      Integration   a real MySQL, never an in-memory stand-in (level 3, TC-030)
+      Contract      shape only, never a business rule        (level 4, TC-031)
+      System        end-to-end specified behaviour           (level 5)
+
+    No coverage percentage is a gate (TC-012, TC-020).
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         failOnWarning="true"
+         failOnRisky="true"
+         failOnDeprecation="true"
+         beStrictAboutOutputDuringTests="true"
+>
+    <testsuites>
+        <testsuite name="Architecture">
+            <directory>tests/Architecture</directory>
+        </testsuite>
+        <testsuite name="Domain">
+            <directory>tests/Domain</directory>
+        </testsuite>
+        <testsuite name="Integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
+        <testsuite name="Contract">
+            <directory>tests/Contract</directory>
+        </testsuite>
+        <testsuite name="System">
+            <directory>tests/System</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="SESSION_DRIVER" value="array"/>
+    </php>
+</phpunit>

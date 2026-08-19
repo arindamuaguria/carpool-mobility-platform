@@ -1,0 +1,97 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "cmp/backend",
+    "type": "project",
+    "description": "Carpool Mobility Platform — backend. The business authority (CMP-DOC-07 ARCH-016).",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.3",
+        "laravel/framework": "^13.17",
+        "laravel/tinker": "^3.0"
+    },
+    "require-dev": {
+        "deptrac/deptrac": "^4.7",
+        "fakerphp/faker": "^1.23",
+        "larastan/larastan": "^3.10",
+        "laravel/pail": "^1.2.5",
+        "laravel/pao": "^1.0.6",
+        "laravel/pint": "^1.27",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.6",
+        "phpunit/phpunit": "^12.5.12"
+    },
+    "autoload": {
+        "psr-4": {
+            "Cmp\\Domain\\": "src/Domain/",
+            "Cmp\\Application\\": "src/Application/",
+            "Cmp\\Infrastructure\\": "src/Infrastructure/",
+            "Cmp\\Interface\\": "src/Interface/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
+        ],
+        "post-update-cmd": [
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+        ],
+        "pre-package-uninstall": [
+            "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ],
+        "analyse": [
+            "@php vendor/bin/pint --test",
+            "@php vendor/bin/phpstan analyse --no-progress --memory-limit=1G",
+            "@php vendor/bin/deptrac analyse --config-file=deptrac.yaml --no-progress"
+        ],
+        "test:architecture": [
+            "@php vendor/bin/phpunit --testsuite=Architecture"
+        ],
+        "test:domain": [
+            "@php vendor/bin/phpunit --testsuite=Domain"
+        ],
+        "test:integration": [
+            "@php vendor/bin/phpunit --testsuite=Integration"
+        ],
+        "test:contract": [
+            "@php vendor/bin/phpunit --testsuite=Contract"
+        ],
+        "test:system": [
+            "@php vendor/bin/phpunit --testsuite=System"
+        ],
+        "verify": [
+            "@analyse",
+            "@test:architecture"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts-descriptions": {
+        "analyse": "Level 1 — static analysis (TC-025). Style, types, layer dependency direction.",
+        "test:architecture": "Level 1 — structural enforcement asserted in code (TC-037).",
+        "test:domain": "Level 2 — domain tests; no database, no framework, no network (TC-029).",
+        "test:integration": "Level 3 — integration against a real MySQL (TC-030).",
+        "test:contract": "Level 4 — contract tests; shape only, never a business rule (TC-031).",
+        "test:system": "Level 5 — system behaviour.",
+        "verify": "Runs the automated verification levels in order; a failure stops the later ones (TC-028). A level joins this list on the commit that gives it its first test — an empty suite is not a passing level."
+    }
+}
