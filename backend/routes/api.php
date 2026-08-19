@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Cmp\Interface\Rest\Controller\VersionsController;
+use Cmp\Interface\Rest\Middleware\RequireIdempotencyKey;
 use Cmp\Interface\Rest\Middleware\RequireSupportedVersion;
 use Cmp\Interface\Rest\Middleware\ServeJsonOnly;
 use Cmp\Interface\Rest\ServedVersions;
@@ -31,7 +32,18 @@ use Illuminate\Support\Facades\Route;
  */
 
 Route::prefix(ServedVersions::PREFIX.'/{version}')
-    ->middleware([RequireSupportedVersion::class, ServeJsonOnly::class])
+    ->middleware([
+        // API-024 ‡: an unserved version is refused before anything else looks
+        // at the request, and API-026 keeps that reachable without a session.
+        RequireSupportedVersion::class,
+        // API-011: JSON, and nothing negotiated.
+        ServeJsonOnly::class,
+        // API-057 ‡ / API-058 ‡: every state-changing request carries a key.
+        // Applied to the group rather than per route, so an operation cannot be
+        // added without it — AADR-04 made the key mandatory, and a per-route
+        // opt-in is how "mandatory" becomes "usually".
+        RequireIdempotencyKey::class,
+    ])
     ->group(function (): void {
         // API-027 / §9.1 — reachable without a session.
         Route::get('versions', VersionsController::class)->name('versions.show');
