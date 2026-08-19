@@ -29,8 +29,22 @@ final class GrantPlan
      *
      * `DB-118` ‡ evidential, `DB-094` ledger: `SELECT` and `INSERT`, never
      * `UPDATE`, never `DELETE`.
+     *
+     * `cfg_` is here for the same reason by a different route. **`DADR-09` does
+     * not state a grant for the configuration domain** — it names operational,
+     * projection and machinery as read-write and evidential and ledger as
+     * append-only, and is silent on the sixth. The narrowest reading consistent
+     * with the rest of the chain is applied and reported: `BE-169` requires the
+     * application to read policy on nearly every decision, and `DB-152` requires
+     * every change to produce **a new version rather than an update in place**.
+     * Withholding `UPDATE` and `DELETE` makes that a property of the credential
+     * rather than of the code — the same technique `DADR-09` uses for evidence.
+     *
+     * This is a documentation gap, not a decision taken here. If the Project
+     * Owner rules that the configuration domain is read-write, this line changes
+     * and `cfg_policy_values` may carry a current-version pointer again.
      */
-    private const APPLICATION_APPEND_ONLY_DOMAINS = ['ev_', 'led_'];
+    private const APPLICATION_APPEND_ONLY_DOMAINS = ['ev_', 'led_', 'cfg_'];
 
     /**
      * `DB-119` ‡: the application holds no `DDL` privilege on any domain, so it
