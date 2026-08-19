@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Cmp\Interface\Console\ListJobFamiliesCommand;
 use Cmp\Interface\Console\ProvisionDatabaseAccountsCommand;
 use Cmp\Interface\Console\VerifySchemaCommand;
 use Illuminate\Foundation\Application;
@@ -16,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withCommands([
+        ListJobFamiliesCommand::class,
         ProvisionDatabaseAccountsCommand::class,
         VerifySchemaCommand::class,
     ])
