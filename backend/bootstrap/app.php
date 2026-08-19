@@ -15,6 +15,12 @@ use Illuminate\Http\Request;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        // CMP-DOC-10 §5: the REST surface, versioned in the first path segment
+        // (API-019 ‡). apiPrefix is empty because routes/api.php declares the
+        // whole path itself — API-019 ‡ fixes the prefix and a second one applied
+        // by the framework would put the version in the second segment.
+        api: __DIR__.'/../routes/api.php',
+        apiPrefix: '',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )

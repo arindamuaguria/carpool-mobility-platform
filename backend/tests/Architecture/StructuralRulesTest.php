@@ -516,13 +516,28 @@ final class StructuralRulesTest extends TestCase
             // Rules 5 and 10: BAD-DEC-006 leaves the administrative role set
             // undecided and ADM-168 records that the admin unit cannot start.
             'src/Interface/Admin' => 'ADM-168 / BAD-DEC-006',
-            // Rule 11: no REST surface exists; FEAT-035 brings the first.
-            'src/Interface/Rest' => 'FEAT-035',
             // Rules 12 and 13: BE-161 leaves the notification provider directed
             // but unselected (CMP-IMP-334, FEAT-023), and FEAT-016 brings the
             // payment operations. Neither has an adapter (CMP-IMP-030).
             'src/Infrastructure/Adapter' => 'CMP-IMP-030 / FEAT-016 / FEAT-023',
         ];
+
+        // Rule 11 left this list at FEAT-035 (CMP-IMP-461 … 467). The REST
+        // surface now holds source, so the rule examines something — but the
+        // thing it examines is a **request schema**, and none exists yet: every
+        // operation CMP-DOC-10 §11 states needs an application service, and
+        // BE-017's aggregates are unbuilt. The surface serves one operation,
+        // GET /versions, which reads no request body at all.
+        self::assertNotSame([], glob(self::basePath('src/Interface/Rest').'/*.php') ?: []);
+        self::assertSame(
+            [],
+            self::requestSchemaFiles() === [] ? [] : array_keys(array_filter(
+                self::requestSchemaFiles(),
+                static fn (string $contents): bool => str_contains($contents, 'FormRequest')
+                    || str_contains($contents, 'function rules('),
+            )),
+            'A request schema now exists, so rule 11 examines it — check this test still says what is true.',
+        );
 
         foreach ($empty as $directory => $blocker) {
             // The directory exists — CMP-IMP-021 created the layer skeleton
