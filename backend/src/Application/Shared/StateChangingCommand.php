@@ -19,4 +19,18 @@ use Cmp\Application\Shared\Idempotency\IdempotencyKey;
 interface StateChangingCommand extends Command
 {
     public function idempotencyKey(): IdempotencyKey;
+
+    /**
+     * A stable fingerprint of this command’s content.
+     *
+     * `API-062` ‡ distinguishes a repeat with the **same** key and the same
+     * content — which returns the original outcome — from `API-063` ‡, a
+     * repeat with the same key and different content, which is refused. The
+     * registry cannot tell them apart without one.
+     *
+     * It is derived from the command’s own values, in application terms
+     * (`BE-042`): a transport body would make the answer depend on how the
+     * request happened to be serialised.
+     */
+    public function contentFingerprint(): string;
 }

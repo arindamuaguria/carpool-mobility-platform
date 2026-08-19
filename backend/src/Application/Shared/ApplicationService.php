@@ -35,9 +35,6 @@ use Cmp\Domain\Shared\Refusal\BusinessRefusal;
  */
 abstract class ApplicationService
 {
-    /**
-     * @return Result<mixed>
-     */
     final public function execute(Command $command): Result
     {
         try {
@@ -47,8 +44,5 @@ abstract class ApplicationService
         }
     }
 
-    /**
-     * @return Result<mixed>
-     */
     abstract protected function handle(Command $command): Result;
 }

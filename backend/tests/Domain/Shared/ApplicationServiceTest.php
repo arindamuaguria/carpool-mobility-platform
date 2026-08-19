@@ -96,6 +96,12 @@ final class ApplicationServiceTest extends DomainTestCase
             {
                 return IdempotencyKey::fromString('caller-generated-key');
             }
+
+            public function contentFingerprint(): string
+            {
+                // API-062 ‡ / API-063 ‡: derived from the command’s own values.
+                return hash('sha256', 'caller-generated-key');
+            }
         };
 
         self::assertInstanceOf(Command::class, $command);
