@@ -1,0 +1,73 @@
+# Layer dependency direction — CMP-DOC-09 BE-003, BE-014; CMP-DOC-18 TC-037 rules 1, 2, 3 and 7.
+#
+# BE-003: dependencies point inward only; Domain depends on nothing.
+# BE-002: the Domain namespace references no framework type.
+# BE-009: ORM models are infrastructure detail and appear in no other layer.
+# BE-153: no provider type above an adapter.
+#
+# TC-041/TC-042: a rule is narrowed, never suppressed. There is no baseline file and
+# no skipped-violations block: a violation fails the build (TC-037).
+
+deptrac:
+  paths:
+    - ./src
+
+  layers:
+    - name: Domain
+      collectors:
+        - type: directory
+          value: src/Domain/.*
+
+    - name: Application
+      collectors:
+        - type: directory
+          value: src/Application/.*
+
+    - name: Infrastructure
+      collectors:
+        - type: directory
+          value: src/Infrastructure/.*
+
+    - name: Interface
+      collectors:
+        - type: directory
+          value: src/Interface/.*
+
+    # Framework and vendor types. Named as layers so that a reference to one from
+    # Domain is a reportable violation rather than an unclassified token.
+    - name: Orm
+      collectors:
+        - type: classNameRegex
+          value: '#^Illuminate\\Database\\Eloquent\\.*#'
+        - type: classNameRegex
+          value: '#^Illuminate\\Database\\Query\\.*#'
+
+    - name: Framework
+      collectors:
+        - type: bool
+          must:
+            - type: classNameRegex
+              value: '#^(Illuminate|Laravel|Symfony|Filament|Carbon|Livewire|Psr)\\.*#'
+          must_not:
+            - type: layer
+              value: Orm
+
+  ruleset:
+    # BE-003 / BE-002: Domain depends on nothing at all.
+    Domain: ~
+
+    # BE-006: orchestration over the domain. No framework, no ORM.
+    Application:
+      - Domain
+
+    # BE-005 / BE-013: adapters that reach the domain only through Application.
+    Interface:
+      - Application
+      - Framework
+
+    # BE-008: the only layer permitted the ORM and provider types.
+    Infrastructure:
+      - Domain
+      - Application
+      - Framework
+      - Orm

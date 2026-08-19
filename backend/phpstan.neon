@@ -1,0 +1,24 @@
+# Static analysis — CMP-DOC-09 BE-014; CMP-DOC-18 TC-037, TC-040, TC-044.
+#
+# Level 1 of the six verification levels (TC-025). Runs in every environment, not
+# only in a pipeline (TC-040). A violation fails the build (TC-037); there is no
+# baseline file, because TC-042 requires a rule producing a false positive to be
+# narrowed rather than suppressed.
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 9
+    paths:
+        - src
+        - database
+        - bootstrap
+        - config
+        - routes
+        - tests
+
+    # BE-002: the Domain namespace references no framework type. Larastan teaches
+    # PHPStan about Laravel; the Domain layer is analysed without that knowledge so
+    # that a framework type there cannot be silently understood.
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: true
