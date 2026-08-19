@@ -48,4 +48,26 @@ abstract class IntegrationTestCase extends TestCase
     {
         return $this->connection('mysql_read');
     }
+
+    /**
+     * One connection setting, as a string.
+     *
+     * BE-015 keeps environment-specific values out of source, so a test that
+     * needs a host or a credential reads it from configuration rather than
+     * carrying one.
+     */
+    protected function connectionSetting(string $connection, string $key): string
+    {
+        $value = config('database.connections.'.$connection.'.'.$key);
+
+        if (is_string($value)) {
+            return $value;
+        }
+
+        if (is_int($value)) {
+            return (string) $value;
+        }
+
+        self::fail(sprintf('The %s connection has no %s configured.', $connection, $key));
+    }
 }

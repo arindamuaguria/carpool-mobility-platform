@@ -5,18 +5,22 @@ declare(strict_types=1);
 namespace Cmp\Infrastructure\Laravel\Providers;
 
 use Cmp\Application\Shared\Database\ProvisionsDatabaseAccounts;
+use Cmp\Application\Shared\Idempotency\IdempotencyRegistry;
 use Cmp\Application\Shared\Schema\ApprovesDestructiveMigrations;
 use Cmp\Application\Shared\Schema\InspectsSchemaConventions;
 use Cmp\Application\Shared\Schema\SchemaConventionViolated;
 use Cmp\Application\Shared\Schema\SchemaVerification;
 use Cmp\Application\Shared\Schema\VerifiesCheckConstraintEnforcement;
 use Cmp\Application\Shared\Schema\VerifySchema;
+use Cmp\Application\Shared\Transaction\TransactionBoundary;
 use Cmp\Infrastructure\Persistence\Grants\DatabaseAccount;
 use Cmp\Infrastructure\Persistence\Grants\DatabaseAccountProvisioner;
 use Cmp\Infrastructure\Persistence\Grants\GrantPlan;
+use Cmp\Infrastructure\Persistence\Idempotency\DatabaseIdempotencyRegistry;
 use Cmp\Infrastructure\Persistence\Schema\CheckConstraintEnforcementProbe;
 use Cmp\Infrastructure\Persistence\Schema\DestructiveMigrationGuard;
 use Cmp\Infrastructure\Persistence\Schema\SchemaConventionInspector;
+use Cmp\Infrastructure\Persistence\Transaction\DatabaseTransactionBoundary;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Connection;
@@ -50,6 +54,12 @@ final class PersistenceServiceProvider extends ServiceProvider
 
     /** `DADR-09`: the read account holds `SELECT` and is used for reporting. */
     public const READ_CONNECTION = 'mysql_read';
+
+    /**
+     * The interface version recorded on tables whose interpretation depends on
+     * it (`DB-040`, `DADR-16`). The interface is `/api/v1` (`AADR-03`).
+     */
+    public const INTERFACE_VERSION = 1;
 
     /** Used by `db:provision-accounts` alone (`DB-122` ‡). */
     public const PROVISIONING_CONNECTION = 'mysql_provisioning';
@@ -88,6 +98,26 @@ final class PersistenceServiceProvider extends ServiceProvider
                 $this->provisioningConnection(),
                 new GrantPlan($this->schemaName()),
                 $this->configuredAccounts(),
+            ),
+        );
+        // BE-047 ‡: the application layer owns transaction boundaries, and this
+        // is the only implementation of them. TC-037 rule 4 fails the build if
+        // anything else opens one.
+        $this->app->bind(
+            TransactionBoundary::class,
+            fn (): DatabaseTransactionBoundary => new DatabaseTransactionBoundary(
+                $this->connection(self::APPLICATION_CONNECTION),
+            ),
+        );
+
+        // BADR-08 / DB-141 ‡: the registry runs inside the caller’s transaction
+        // on the application connection, so that the entry commits with the
+        // effect it guards.
+        $this->app->bind(
+            IdempotencyRegistry::class,
+            fn (): DatabaseIdempotencyRegistry => new DatabaseIdempotencyRegistry(
+                $this->connection(self::APPLICATION_CONNECTION),
+                self::INTERFACE_VERSION,
             ),
         );
     }
