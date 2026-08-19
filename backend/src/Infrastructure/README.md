@@ -15,6 +15,7 @@ evidential writer, the policy configuration store and job implementations
 | `Adapter/`     | Port adapters; provider types appear no higher | `BADR-11`, `BE-153` |
 | `Policy/`      | Typed, versioned, cached policy configuration store | `BADR-12` |
 | `Job/`         | Job implementations for the seven job families | `BADR-07` |
+| `Time/`       | The clock adapter for the `Clock` port | `BE-036` |
 | `Laravel/`     | Framework composition — providers and bootstrapping | `BE-008` |
 
 Depends inward on `Cmp\Application` and `Cmp\Domain`. Nothing depends on it at
