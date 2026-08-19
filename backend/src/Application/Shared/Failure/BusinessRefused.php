@@ -59,4 +59,25 @@ final class BusinessRefused extends Failure
     {
         return $this->reason->kind();
     }
+
+    /**
+     * `API-087`: a refusal arising from a state conflict is distinguished from
+     * one arising from a rule — `409` against `422`.
+     *
+     * Asked and answered **here** rather than by the adapter reading
+     * {@see kind()}. `RefusalKind` is a Domain type, `BE-002` keeps the Domain
+     * out of the `Interface` layer, and an adapter that had to `match` on a
+     * domain enum to pick a status code would be a layer violation wearing a
+     * switch statement. The application layer answers the question the interface
+     * actually has.
+     */
+    public function isStateConflict(): bool
+    {
+        return $this->reason->kind() === RefusalKind::StateConflict;
+    }
+
+    public function isRuleDeclined(): bool
+    {
+        return $this->reason->kind() === RefusalKind::RuleDeclined;
+    }
 }
