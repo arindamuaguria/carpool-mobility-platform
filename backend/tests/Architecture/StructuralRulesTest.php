@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Architecture;
 
+use Cmp\Application\Shared\Integrity\AuthoritativeValues;
 use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -394,10 +395,8 @@ final class StructuralRulesTest extends TestCase
         $offenders = [];
 
         foreach (self::requestSchemaFiles() as $relative => $contents) {
-            foreach (self::authoritativeFieldNames() as $field) {
-                if (str_contains($contents, "'".$field."'") || str_contains($contents, '"'.$field.'"')) {
-                    $offenders[] = $relative.' → '.$field;
-                }
+            foreach (self::authoritativeValuesNamedIn($contents) as $value) {
+                $offenders[] = $relative.' → '.$value;
             }
         }
 
@@ -418,10 +417,8 @@ final class StructuralRulesTest extends TestCase
                 continue;
             }
 
-            foreach (self::authoritativeFieldNames() as $field) {
-                if (str_contains($contents, "'".$field."'") || str_contains($contents, '"'.$field.'"')) {
-                    $offenders[] = $relative.' → '.$field;
-                }
+            foreach (self::authoritativeValuesNamedIn($contents) as $value) {
+                $offenders[] = $relative.' → '.$value;
             }
         }
 
@@ -500,11 +497,13 @@ final class StructuralRulesTest extends TestCase
         self::assertTrue(self::isARuleFreeKind('src/Interface/Rest/RideController.php', ''));
         self::assertFalse(self::isARuleFreeKind('src/Application/Shared/Policy/ChangePolicyValue.php', ''));
 
-        // Rules 11 and 12 both read API-037 ‡'s seven, so a schema or a payload
-        // naming one is caught by the same list.
-        self::assertContains('fare', self::authoritativeFieldNames());
-        self::assertContains('payment_status', self::authoritativeFieldNames());
-        self::assertContains('seats_available', self::authoritativeFieldNames());
+        // Rules 11 and 12 both read API-037 ‡'s seven through AuthoritativeValues,
+        // so a schema or a payload naming one is caught by the same register that
+        // RequestSchema checks against — one list, not two that drift.
+        self::assertSame(['fare'], self::authoritativeValuesNamedIn("['fare' => 500]"));
+        self::assertSame(['seat counts'], self::authoritativeValuesNamedIn('"seatsAvailable"'));
+        self::assertSame(['trip state'], self::authoritativeValuesNamedIn("'booking_status'"));
+        self::assertSame([], self::authoritativeValuesNamedIn("'origin', 'destination'"));
     }
 
     public function test_a_rule_with_nothing_to_check_yet_says_so(): void
@@ -558,21 +557,24 @@ final class StructuralRulesTest extends TestCase
     }
 
     /**
-     * `API-037` ‡'s seven, as field names a schema would plausibly use.
+     * The authoritative values a file's string literals attempt to name.
+     *
+     * `API-037` ‡'s seven, read from {@see AuthoritativeValues} rather than
+     * restated here. Two lists of the same thing drift, and the one that drifts
+     * is always the one nobody is looking at — this rule would then pass while
+     * the schema check caught the field, or the reverse.
+     *
+     * Every quoted literal in the file is normalised the way the register
+     * normalises a field name, so `seats_available`, `seatsAvailable` and
+     * `SEATS-AVAILABLE` are all found by a register that spells it one way.
      *
      * @return list<string>
      */
-    private static function authoritativeFieldNames(): array
+    private static function authoritativeValuesNamedIn(string $contents): array
     {
-        return [
-            'fare', 'fare_amount', 'fareAmount',
-            'verification_status', 'verificationStatus', 'verification_standing',
-            'payment_status', 'paymentStatus',
-            'seats_available', 'seatsAvailable', 'seat_count', 'seatCount',
-            'rating', 'ratings',
-            'wallet_balance', 'walletBalance', 'balance',
-            'trip_state', 'tripState', 'booking_status', 'bookingStatus',
-        ];
+        preg_match_all('/([\'"])([A-Za-z_][A-Za-z0-9_\- ]{0,40})\1/', $contents, $matches);
+
+        return AuthoritativeValues::assertedIn($matches[2]);
     }
 
     /**
