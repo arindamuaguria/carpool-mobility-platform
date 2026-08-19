@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Cmp\Infrastructure\Laravel\Providers\AppServiceProvider;
+use Cmp\Infrastructure\Laravel\Providers\AuthorisationServiceProvider;
 use Cmp\Infrastructure\Laravel\Providers\EventServiceProvider;
 use Cmp\Infrastructure\Laravel\Providers\PersistenceServiceProvider;
 use Cmp\Infrastructure\Laravel\Providers\PolicyServiceProvider;
@@ -14,4 +15,5 @@ return [
     EventServiceProvider::class,
     PortServiceProvider::class,
     PolicyServiceProvider::class,
+    AuthorisationServiceProvider::class,
 ];
