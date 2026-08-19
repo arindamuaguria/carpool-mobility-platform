@@ -10,112 +10,142 @@ use Cmp\Application\Shared\Authorisation\AuthorisationRefusalCause;
 use Cmp\Application\Shared\Authorisation\Authoriser;
 use Cmp\Application\Shared\Authorisation\Operation;
 use Cmp\Application\Shared\Authorisation\RecordsAuthorisationRefusals;
+use Cmp\Application\Shared\Evidence\EvidentialOutcome;
+use Cmp\Application\Shared\Evidence\VerifiesEvidentialChain;
 use Cmp\Application\Shared\Idempotency\ActorReference;
-use Cmp\Infrastructure\Authorisation\LoggingAuthorisationRefusals;
-use Psr\Log\AbstractLogger;
+use Cmp\Infrastructure\Authorisation\EvidentialAuthorisationRefusals;
+use Cmp\Infrastructure\Evidential\DatabaseEvidentialWriter;
+use Tests\Integration\Evidence\ClearsTheEvidentialLog;
 use Tests\Integration\IntegrationTestCase;
 
 /**
- * CMP-IMP-033 — a refused authorisation reaches a sink.
+ * `SEC-057` ‡ — a refused authorisation reaches the **evidential** log.
  *
  * Level 3: the wiring is the thing under test, and it only exists once the
- * container has built it.
+ * container has built it. What the record contains is proven at level 2 in
+ * `EvidentialAuthorisationRefusalsTest` (`TC-033`); what is proven here is that
+ * the platform's own composition writes it, that it lands in `ev_` under the
+ * application account, and that the chain still verifies afterwards.
  *
- * **`SEC-057` ‡ is not discharged by this.** The record it asks for is
- * evidential, and `BE-202` says operational logging *"shall not substitute for"*
- * the evidential log. What is proven here is that every refusal reaches the
- * recorder and carries what the evidential record will need — so `CMP-IMP-439`
- * is a binding change rather than a hunt through every place a refusal happens.
+ * `BE-202` — *"operational logging shall not substitute for"* the evidential log
+ * — is now satisfied by having the evidential record rather than by a docblock
+ * saying it is missing.
  */
 final class AuthorisationRefusalRecordingTest extends IntegrationTestCase
 {
-    public function test_the_platform_wires_a_recorder(): void
+    use ClearsTheEvidentialLog;
+
+    protected function setUp(): void
     {
+        parent::setUp();
+
+        $this->clearEvidentialLog();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->clearEvidentialLog();
+
+        parent::tearDown();
+    }
+
+    public function test_the_platform_wires_the_evidential_recorder(): void
+    {
+        // The interim operational-log recorder is gone. A second implementation
+        // would mean a refusal could be recorded somewhere BE-202 says is not the
+        // record SEC-057 ‡ asks for.
         self::assertInstanceOf(
-            LoggingAuthorisationRefusals::class,
+            EvidentialAuthorisationRefusals::class,
             $this->app->make(RecordsAuthorisationRefusals::class),
         );
     }
 
-    public function test_a_refusal_reaches_the_recorder_with_what_the_evidential_record_will_need(): void
+    public function test_a_refusal_is_written_to_the_evidential_log(): void
     {
-        // SEC-057 ‡ / BE-183 / API-088 ‡ / NFR-060.
-        $logger = $this->spyLogger();
-        $authoriser = new Authoriser(AuthorisationPolicy::of([]), new LoggingAuthorisationRefusals($logger));
+        // SEC-057 ‡, end to end, through the platform's own recorder.
+        $authoriser = new Authoriser(
+            AuthorisationPolicy::of([]),
+            $this->app->make(RecordsAuthorisationRefusals::class),
+        );
 
         $authoriser->permits(
             Operation::named('test.operation'),
             Actor::holding(ActorReference::fromString('actor-1'), []),
         );
 
-        self::assertCount(1, $logger->entries);
+        $rows = $this->records();
 
-        $entry = $logger->entries[0];
-        self::assertSame('warning', $entry['level']);
-        self::assertSame('authorisation.refused', $entry['message']);
-        self::assertSame('test.operation', $entry['context']['operation']);
-        self::assertSame('actor-1', $entry['context']['actor']);
-        self::assertSame(AuthorisationRefusalCause::NoRuleStated->name, $entry['context']['cause']);
+        self::assertCount(1, $rows);
+        self::assertSame(EvidentialAuthorisationRefusals::ACTION, $rows[0]->action);
+        self::assertSame('test.operation', $rows[0]->subject);
+        self::assertSame('actor-1', $rows[0]->actor);
+        self::assertSame(EvidentialOutcome::Refused->value, $rows[0]->outcome);
+        self::assertSame(AuthorisationRefusalCause::NoRuleStated->describe(), $rows[0]->reason);
     }
 
-    public function test_the_record_says_plainly_that_it_is_not_the_evidential_one(): void
+    public function test_the_refusal_record_chains_like_any_other(): void
     {
-        // BE-202: "Operational logging shall be distinct from the evidential log
-        // and shall not substitute for it." Someone reading this log later must
-        // not mistake it for the record SEC-057 ‡ requires.
-        $logger = $this->spyLogger();
+        // SEC-105 ‡ / BE-115: there is one chain, and a refusal is not a
+        // second-class entry in it. A verification pass that passed only because
+        // the record was absent would prove nothing.
+        $recorder = $this->app->make(RecordsAuthorisationRefusals::class);
 
-        (new LoggingAuthorisationRefusals($logger))->record(
+        foreach (AuthorisationRefusalCause::cases() as $cause) {
+            $recorder->record(
+                Operation::named('test.operation'),
+                Actor::holding(ActorReference::fromString('actor-1'), []),
+                $cause,
+            );
+        }
+
+        self::assertCount(count(AuthorisationRefusalCause::cases()), $this->records());
+
+        $verification = $this->app->make(VerifiesEvidentialChain::class)->verify();
+
+        self::assertTrue($verification->isIntact(), $verification->describe());
+    }
+
+    public function test_the_record_is_written_by_the_account_that_cannot_alter_it(): void
+    {
+        // DB-118 ‡ / DADR-09: the application account holds SELECT and INSERT on
+        // ev_ and neither UPDATE nor DELETE. The refusal path runs under that
+        // account like everything else, which is why the record it writes cannot
+        // afterwards be tidied away by the code that wrote it.
+        $this->app->make(RecordsAuthorisationRefusals::class)->record(
             Operation::named('test.operation'),
             Actor::holding(ActorReference::fromString('actor-1'), []),
             AuthorisationRefusalCause::NotAParty,
         );
 
-        self::assertFalse($logger->entries[0]['context']['evidential']);
-    }
+        $rows = $this->records();
+        self::assertCount(1, $rows);
 
-    public function test_the_record_carries_nothing_be_201_forbids(): void
-    {
-        // BE-201 ‡: no payment credential, no precise location, no contact
-        // detail. The entry carries an operation, an opaque actor reference and a
-        // cause — DB-024 ‡ makes the reference opaque, so it is not a name or a
-        // number either.
-        $logger = $this->spyLogger();
+        $refused = false;
 
-        (new LoggingAuthorisationRefusals($logger))->record(
-            Operation::named('test.operation'),
-            Actor::holding(ActorReference::fromString('actor-1'), []),
-            AuthorisationRefusalCause::CapabilityNotHeld,
-        );
+        try {
+            $this->applicationConnection()->delete(
+                'DELETE FROM '.DatabaseEvidentialWriter::TABLE.' WHERE id = ?',
+                [$rows[0]->id],
+            );
+        } catch (\Throwable) {
+            $refused = true;
+        }
 
-        self::assertSame(
-            ['operation', 'actor', 'cause', 'detail', 'evidential'],
-            array_keys($logger->entries[0]['context']),
-        );
+        self::assertTrue($refused, 'DB-118 ‡: the application account must not be able to delete a refusal record.');
+        self::assertCount(1, $this->records());
     }
 
     /**
-     * @return AbstractLogger&object{entries: list<array{level: string, message: string, context: array<string, mixed>}>}
+     * @return list<object{id: int, actor: string, action: string, subject: string, outcome: string, reason: ?string}>
      */
-    private function spyLogger(): AbstractLogger
+    private function records(): array
     {
-        return new class extends AbstractLogger
-        {
-            /** @var list<array{level: string, message: string, context: array<string, mixed>}> */
-            public array $entries = [];
+        /** @var list<object{id: int, actor: string, action: string, subject: string, outcome: string, reason: ?string}> $rows */
+        $rows = $this->applicationConnection()->select(
+            'SELECT id, actor, action, subject, outcome, reason FROM '
+            .DatabaseEvidentialWriter::TABLE.' ORDER BY id ASC'
+        );
 
-            /**
-             * @param  mixed  $level
-             * @param  array<string, mixed>  $context
-             */
-            public function log($level, string|\Stringable $message, array $context = []): void
-            {
-                $this->entries[] = [
-                    'level' => is_string($level) ? $level : 'unknown',
-                    'message' => (string) $message,
-                    'context' => $context,
-                ];
-            }
-        };
+        return $rows;
     }
 }

@@ -14,8 +14,6 @@ use Cmp\Application\Shared\Transaction\TransactionBoundary;
 use Cmp\Domain\Shared\Time\Instant;
 use Cmp\Infrastructure\Evidential\DatabaseEvidentialWriter;
 use Cmp\Infrastructure\Evidential\KeyedChainHash;
-use Illuminate\Database\Connection;
-use Illuminate\Database\ConnectionResolverInterface;
 use Tests\Integration\IntegrationTestCase;
 use Throwable;
 
@@ -33,16 +31,18 @@ use Throwable;
  */
 final class EvidentialLogTest extends IntegrationTestCase
 {
+    use ClearsTheEvidentialLog;
+
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->clearLog();
+        $this->clearEvidentialLog();
     }
 
     protected function tearDown(): void
     {
-        $this->clearLog();
+        $this->clearEvidentialLog();
 
         parent::tearDown();
     }
@@ -300,44 +300,6 @@ final class EvidentialLogTest extends IntegrationTestCase
         $privileged->statement('DROP TRIGGER IF EXISTS ev_evidential_records_refuse_update');
         $privileged->statement('DROP TRIGGER IF EXISTS ev_evidential_records_refuse_delete');
         $privileged->statement($statement, $bindings);
-    }
-
-    private function restoreTriggers(): void
-    {
-        $privileged = $this->provisioningConnection();
-
-        $privileged->statement('DROP TRIGGER IF EXISTS ev_evidential_records_refuse_update');
-        $privileged->statement('DROP TRIGGER IF EXISTS ev_evidential_records_refuse_delete');
-        $privileged->unprepared(
-            'CREATE TRIGGER ev_evidential_records_refuse_update BEFORE UPDATE ON ev_evidential_records FOR EACH ROW '
-            ."SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'DB-108 : an evidential record is never updated by any code path.'"
-        );
-        $privileged->unprepared(
-            'CREATE TRIGGER ev_evidential_records_refuse_delete BEFORE DELETE ON ev_evidential_records FOR EACH ROW '
-            ."SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'DB-108 : an evidential record is never deleted by any code path.'"
-        );
-    }
-
-    private function clearLog(): void
-    {
-        $privileged = $this->provisioningConnection();
-
-        $privileged->statement('DROP TRIGGER IF EXISTS ev_evidential_records_refuse_delete');
-        $privileged->delete('DELETE FROM '.DatabaseEvidentialWriter::TABLE);
-        $privileged->statement('ALTER TABLE '.DatabaseEvidentialWriter::TABLE.' AUTO_INCREMENT = 1');
-
-        // Both defences go back before any test body runs. A test that found
-        // them missing would be asserting nothing.
-        $this->restoreTriggers();
-    }
-
-    private function provisioningConnection(): Connection
-    {
-        $connection = $this->app->make(ConnectionResolverInterface::class)->connection('mysql_provisioning');
-
-        self::assertInstanceOf(Connection::class, $connection);
-
-        return $connection;
     }
 
     private function refused(callable $operation): bool
