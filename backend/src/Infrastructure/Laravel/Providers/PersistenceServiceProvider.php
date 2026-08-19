@@ -13,6 +13,8 @@ use Cmp\Application\Shared\Schema\SchemaVerification;
 use Cmp\Application\Shared\Schema\VerifiesCheckConstraintEnforcement;
 use Cmp\Application\Shared\Schema\VerifySchema;
 use Cmp\Application\Shared\Transaction\TransactionBoundary;
+use Cmp\Application\Shared\Work\WorkQueueInventory;
+use Cmp\Domain\Shared\Time\Clock;
 use Cmp\Infrastructure\Persistence\Grants\DatabaseAccount;
 use Cmp\Infrastructure\Persistence\Grants\DatabaseAccountProvisioner;
 use Cmp\Infrastructure\Persistence\Grants\GrantPlan;
@@ -21,6 +23,7 @@ use Cmp\Infrastructure\Persistence\Schema\CheckConstraintEnforcementProbe;
 use Cmp\Infrastructure\Persistence\Schema\DestructiveMigrationGuard;
 use Cmp\Infrastructure\Persistence\Schema\SchemaConventionInspector;
 use Cmp\Infrastructure\Persistence\Transaction\DatabaseTransactionBoundary;
+use Cmp\Infrastructure\Persistence\Work\DatabaseWorkQueueInventory;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Connection;
@@ -118,6 +121,15 @@ final class PersistenceServiceProvider extends ServiceProvider
             fn (): DatabaseIdempotencyRegistry => new DatabaseIdempotencyRegistry(
                 $this->connection(self::APPLICATION_CONNECTION),
                 self::INTERFACE_VERSION,
+            ),
+        );
+        // DB-148 / BE-204: depth and oldest-item age per family, read from the
+        // job store itself rather than from a counter that could drift.
+        $this->app->bind(
+            WorkQueueInventory::class,
+            fn (Application $app): DatabaseWorkQueueInventory => new DatabaseWorkQueueInventory(
+                $this->connection(self::APPLICATION_CONNECTION),
+                $app->make(Clock::class),
             ),
         );
     }

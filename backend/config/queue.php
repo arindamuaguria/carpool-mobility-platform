@@ -1,33 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
+use Cmp\Application\Shared\Work\JobFamily;
+
+/*
+ * The work subsystem.
+ *
+ * BADR-07 / BE-142: job storage is the relational database at launch, behind an
+ * interface permitting substitution. Only two connections are configured — the
+ * database driver the platform runs on, and `sync` for tests that need a job to
+ * run inline. No broker is configured: ADR-06 deferred one, and configuring an
+ * unused connection would suggest a supplier had been chosen.
+ *
+ * BE-131: the seven families are declared in JobFamily and nowhere else. This
+ * file binds them; it does not name them, so an eighth cannot be introduced by
+ * editing configuration.
+ */
+
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Default Queue Connection Name
-    |--------------------------------------------------------------------------
-    |
-    | Laravel's queue supports a variety of backends via a single, unified
-    | API, giving you convenient access to each backend using identical
-    | syntax for each. The default queue connection is defined below.
-    |
-    */
-
     'default' => env('QUEUE_CONNECTION', 'database'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Queue Connections
-    |--------------------------------------------------------------------------
-    |
-    | Here you may configure the connection options for every queue backend
-    | used by your application. An example configuration is provided for
-    | each backend supported by Laravel. You're also free to add more.
-    |
-    | Drivers: "sync", "database", "beanstalkd", "sqs", "redis",
-    |          "deferred", "background", "failover", "null"
-    |
-    */
 
     'connections' => [
 
@@ -37,93 +30,33 @@ return [
 
         'database' => [
             'driver' => 'database',
+            // The application account's connection. DB-007 puts job state in
+            // mch_, where that account holds SELECT/INSERT/UPDATE/DELETE.
             'connection' => env('DB_QUEUE_CONNECTION'),
-            'table' => env('DB_QUEUE_TABLE', 'jobs'),
-            'queue' => env('DB_QUEUE', 'default'),
+            'table' => 'mch_jobs',
+            // A job is always enqueued to a named family. Nothing may land on a
+            // queue that is not one of the seven, so the fallback is the lowest
+            // family rather than an eighth called "default".
+            'queue' => JobFamily::Maintenance->queue(),
             'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
-            'after_commit' => false,
-        ],
-
-        'beanstalkd' => [
-            'driver' => 'beanstalkd',
-            'host' => env('BEANSTALKD_QUEUE_HOST', 'localhost'),
-            'queue' => env('BEANSTALKD_QUEUE', 'default'),
-            'retry_after' => (int) env('BEANSTALKD_QUEUE_RETRY_AFTER', 90),
-            'block_for' => 0,
-            'after_commit' => false,
-        ],
-
-        'sqs' => [
-            'driver' => 'sqs',
-            'key' => env('AWS_ACCESS_KEY_ID'),
-            'secret' => env('AWS_SECRET_ACCESS_KEY'),
-            'prefix' => env('SQS_PREFIX', 'https://sqs.us-east-1.amazonaws.com/your-account-id'),
-            'queue' => env('SQS_QUEUE', 'default'),
-            'suffix' => env('SQS_SUFFIX'),
-            'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
-            'after_commit' => false,
-        ],
-
-        'redis' => [
-            'driver' => 'redis',
-            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
-            'queue' => env('REDIS_QUEUE', 'default'),
-            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 90),
-            'block_for' => null,
-            'after_commit' => false,
-        ],
-
-        'deferred' => [
-            'driver' => 'deferred',
-        ],
-
-        'background' => [
-            'driver' => 'background',
-        ],
-
-        'failover' => [
-            'driver' => 'failover',
-            'connections' => [
-                'database',
-                'deferred',
-            ],
+            // BE-057 ‡ and BADR-06 put dispatch after commit, and a job enqueued
+            // inside a transaction that then rolls back describes work that was
+            // never authorised. The framework's own guard is enabled as a second
+            // layer behind UnitOfWork.
+            'after_commit' => true,
         ],
 
     ],
 
     /*
-    |--------------------------------------------------------------------------
-    | Job Batching
-    |--------------------------------------------------------------------------
-    |
-    | The following options configure the database and table that store job
-    | batching information. These options can be updated to any database
-    | connection and table which has been defined by your application.
-    |
-    */
-
-    'batching' => [
-        'database' => env('DB_CONNECTION', 'sqlite'),
-        'table' => 'job_batches',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Failed Queue Jobs
-    |--------------------------------------------------------------------------
-    |
-    | These options configure the behavior of failed queue job logging so you
-    | can control how and where failed jobs are stored. Laravel ships with
-    | support for storing failed jobs in a simple file or in a database.
-    |
-    | Supported drivers: "database-uuids", "dynamodb", "file", "null"
-    |
-    */
-
+     * DB-147 / BE-137: an exhausted job moves to a failed state visible to
+     * operations. `null-driver` discarding is deliberately not used — a safety
+     * job that vanished silently would break BD-04 in the quietest way there is.
+     */
     'failed' => [
-        'driver' => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
-        'database' => env('DB_CONNECTION', 'sqlite'),
-        'table' => 'failed_jobs',
+        'driver' => 'database-uuids',
+        'database' => env('DB_CONNECTION', 'mysql'),
+        'table' => 'mch_failed_jobs',
     ],
 
 ];
