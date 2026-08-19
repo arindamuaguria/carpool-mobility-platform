@@ -8,15 +8,15 @@
 | Document Name | Documentation Status |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 3.6 |
+| Version | 3.7 |
 | Status | Draft |
-| Date | 2026-08-19 |
+| Date | 2026-08-20 |
 | Author | Documentation Manager (AI-assisted) |
 | Reviewer | [TBD] |
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 3.5 (2026-08-19) |
+| Previous Version | 3.6 (2026-08-19) |
 | Related Documents | README.md, Documentation_Index.md, Document_Change_Log.md, Glossary.md, Master_Traceability_Matrix.md |
 
 ---
@@ -70,11 +70,11 @@ authoritative answer to *"where are we in the documentation programme?"*
 | ID | File | Version | Status | Last Updated |
 |---|---|---|---|---|
 | CMP-CTRL-README | README.md | **0.4** | Draft | **2026-08-19** |
-| CMP-CTRL-INDEX | Documentation_Index.md | **3.6** | Draft | **2026-08-19** |
-| CMP-CTRL-STATUS | Documentation_Status.md | **3.6** | Draft | **2026-08-19** |
-| CMP-CTRL-CHANGELOG | Document_Change_Log.md | **3.6** | Draft | **2026-08-19** |
+| CMP-CTRL-INDEX | Documentation_Index.md | **3.7** | Draft | **2026-08-20** |
+| CMP-CTRL-STATUS | Documentation_Status.md | **3.7** | Draft | **2026-08-20** |
+| CMP-CTRL-CHANGELOG | Document_Change_Log.md | **3.7** | Draft | **2026-08-20** |
 | CMP-CTRL-GLOSSARY | Glossary.md | 3.1 | Draft | 2026-08-17 |
-| CMP-CTRL-RTM | Master_Traceability_Matrix.md | 3.1 | Draft | 2026-08-17 |
+| CMP-CTRL-RTM | Master_Traceability_Matrix.md | **3.2** | Draft | **2026-08-20** |
 
 ## 5. Documentation Roadmap Status
 
@@ -92,13 +92,13 @@ authoritative answer to *"where are we in the documentation programme?"*
 | DOC-10 | API | API Specification | **0.1** | **Draft — awaiting Project Owner review** | Software Architect / Backend Lead |
 | DOC-11 | DATABASE | Database Design Document | **0.1** | **Draft — awaiting Project Owner review** | Software Architect / Backend Lead |
 | DOC-12 | UI/UX | UI/UX Specification | **0.1** | **Draft — awaiting Project Owner review** | UI/UX Designer |
-| DOC-13 | SECURITY | Security Design | **0.1** | **Draft — awaiting Project Owner review** | Security Analyst |
+| DOC-13 | SECURITY | Security Design | **0.2** | **Draft — awaiting Project Owner review** | Security Analyst |
 | DOC-14 | PAYMENT | Payment & UPI Specification | **0.1** | **Draft — awaiting Project Owner review** | Solution Architect / Payments |
 | DOC-15 | GPS | GPS / Live Trip Specification | **0.1** | **Draft — awaiting Project Owner review** | Software Architect |
 | DOC-16 | NOTIFICATION | Communication & Notification Specification | **0.1** | **Draft — awaiting Project Owner review** | Software Architect |
 | DOC-17 | ADMIN | Admin / Filament Specification | **0.1** | **Draft — awaiting Project Owner review** | Backend Lead / Product Analyst |
 | DOC-18 | TESTING | Testing & QA Documentation | **0.1** | **Draft — awaiting Project Owner review** | QA Analyst |
-| DOC-19 | DEVOPS | DevOps / Deployment Documentation | **0.1** | **Draft — awaiting Project Owner review** | DevOps Engineer |
+| DOC-19 | DEVOPS | DevOps / Deployment Documentation | **0.2** | **Draft — awaiting Project Owner review** | DevOps Engineer |
 | DOC-20 | TRACEABILITY | Requirements Traceability & Release Documentation | **0.2** | **Draft — awaiting Project Owner review** | Documentation Manager |
 | DOC-20A | TRACEABILITY | Review of the 37 Uncited Integrity-Critical Requirements (annex) | **0.1** | **Draft — awaiting Project Owner review** | Documentation Manager |
 
@@ -343,7 +343,7 @@ This is advice; the Project Owner may direct otherwise.
 | Absolute rules enforced by the database | 7 of 10; the other 3 are behavioural | CMP-DOC-11 §18.4 |
 | **Sizing decisions blocked by `GAP-016`** | **7** | CMP-DOC-11 §14.5 |
 | **Retention periods set** | **1 of 9** | CMP-DOC-11 §13.2 |
-| Security design statements issued | 240 | CMP-DOC-13 §23.1 |
+| Security design statements issued | 242 (240 at v0.1; `SEC-241`–`SEC-242` at v0.2) | CMP-DOC-13 §23.1 |
 | Security Decision Records | 16 | CMP-DOC-13 Appendix B |
 | — integrity-critical (‡) | **135 — 56%, the highest proportion in the chain** | CMP-DOC-13 §23.2 |
 | Security quality requirements mechanised | 18 of 18; **16 verifiable, 2 not** | CMP-DOC-13 §20.2 |
@@ -404,9 +404,9 @@ This is advice; the Project Owner may direct otherwise.
 | **Integrity-critical statements chain-wide** | **1,164 of 3,114** | CMP-DOC-18 §4.3 |
 | **Coverage of the ‡ set** | **Not yet mapped — `TC-017`** | CMP-DOC-18 §4.4 |
 | **Categories that cannot be pass-or-fail** | **5** | CMP-DOC-18 §15.3 |
-| Deployment specification statements issued | 208 | CMP-DOC-19 §20.1 |
+| Deployment specification statements issued | 210 (208 at v0.1; `OPS-209`–`OPS-210` at v0.2) | CMP-DOC-19 §20.1 |
 | Deployment Decision Records | 14 | CMP-DOC-19 Appendix B |
-| — integrity-critical (‡) | 119 | CMP-DOC-19 §20.1 |
+| — integrity-critical (‡) | 120 | CMP-DOC-19 §20.1 |
 | **Obligations on CMP-DOC-19 discharged** | **16**, from 9 documents | CMP-DOC-19 §17.2 |
 | **Sizing register entries** | **21** (18 inherited, 3 added) | CMP-DOC-19 §4 |
 | Environments / deployment units / build gates | 4 / 5 / 4 | CMP-DOC-19 §5, §6, §9 |
@@ -440,6 +440,12 @@ This is advice; the Project Owner may direct otherwise.
 | Glossary terms pending addition | 0 | CMP-DOC-03 Appendix C — **added in Glossary v0.4** |
 | Known requirement gap | Fraud detection & response | `BRD-OQ-010`, `BAD-OQ-014`, `GAP-005` |
 | **Known product gaps in the core journey** | **2** | `GAP-008` driver cancellation · `GAP-009` return of value |
+| **Formal documents whose `.docx` rendering is not regenerated** | **2** — CMP-DOC-13, CMP-DOC-19 at v0.2 | README §8.2, Index §4 |
+
+> **NOTE (2026-08-20).** *Chain totals, measured* above is **CMP-DOC-20's measurement at its
+> own issue** and is not recalculated here. CMP-DOC-13 v0.2 and CMP-DOC-19 v0.2 have since
+> added four statements, one of them ‡; the chain now holds 3,625 statements and 1,413 ‡.
+> CMP-DOC-20 is not revised by this change.
 
 ## 8. Status Maintenance Rules
 
