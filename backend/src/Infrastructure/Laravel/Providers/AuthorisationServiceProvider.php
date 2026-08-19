@@ -8,7 +8,9 @@ use Cmp\Application\Shared\Authorisation\AuthorisationPolicy;
 use Cmp\Application\Shared\Authorisation\Authoriser;
 use Cmp\Application\Shared\Authorisation\RecordsAuthorisationRefusals;
 use Cmp\Application\Shared\Authorisation\Role;
-use Cmp\Infrastructure\Authorisation\LoggingAuthorisationRefusals;
+use Cmp\Application\Shared\Evidence\RecordsEvidence;
+use Cmp\Domain\Shared\Time\Clock;
+use Cmp\Infrastructure\Authorisation\EvidentialAuthorisationRefusals;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Log\LogManager;
 use Illuminate\Support\ServiceProvider;
@@ -64,9 +66,14 @@ final class AuthorisationServiceProvider extends ServiceProvider
     {
         $this->app->singleton(AuthorisationPolicy::class, static fn (): AuthorisationPolicy => self::policy());
 
+        // SEC-057 ‡: every refused authorisation is recorded, and the record is
+        // the evidential one — BE-202 forbids operational logging standing in
+        // for it. The writer arrived with CMP-IMP-439, so it no longer has to.
         $this->app->singleton(
             RecordsAuthorisationRefusals::class,
-            static fn (Application $app): LoggingAuthorisationRefusals => new LoggingAuthorisationRefusals(
+            static fn (Application $app): EvidentialAuthorisationRefusals => new EvidentialAuthorisationRefusals(
+                $app->make(RecordsEvidence::class),
+                $app->make(Clock::class),
                 $app->make(LogManager::class),
             ),
         );

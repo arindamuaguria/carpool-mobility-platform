@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Cmp\Infrastructure\Laravel\Providers;
 
+use Cmp\Application\Shared\Evidence\RecordsEvidence;
 use Cmp\Application\Shared\Policy\ChangePolicyValue;
 use Cmp\Application\Shared\Policy\PolicyCache;
 use Cmp\Application\Shared\Policy\RecordsPolicyChanges;
+use Cmp\Application\Shared\StateMachine\ApplyTransition;
 use Cmp\Application\Shared\Transaction\TransactionBoundary;
 use Cmp\Domain\Shared\Policy\PolicyRegister;
 use Cmp\Domain\Shared\Policy\PolicyStore;
@@ -91,6 +93,10 @@ final class PolicyServiceProvider extends ServiceProvider
             $app->make(PolicyRegister::class),
             $app->make(RecordsPolicyChanges::class),
             $app->make(PolicyCache::class),
+            // ARCH-115 / DB-154 / BE-173: a policy change is an evidential
+            // record, written in the same transaction (BE-106 ‡).
+            $app->make(RecordsEvidence::class),
+            $app->make(Clock::class),
         ));
 
         // BE-175: one engine, reading declared definitions. BE-177 ‡: the
@@ -104,6 +110,16 @@ final class PolicyServiceProvider extends ServiceProvider
         // (BE-017). Each arrives with its aggregate, in the change that makes it
         // enforceable.
         $this->app->singleton(StateMachine::class, static fn (): StateMachine => new StateMachine([]));
+
+        // BE-178: a transition is evidenced with its trigger and actor. The
+        // engine is Domain and depends on nothing (BE-001–BE-003), so the
+        // joining of a transition to its evidence is an application-layer
+        // service rather than something the engine does.
+        $this->app->bind(ApplyTransition::class, static fn (Application $app): ApplyTransition => new ApplyTransition(
+            $app->make(StateMachine::class),
+            $app->make(RecordsEvidence::class),
+            $app->make(Clock::class),
+        ));
 
         $this->app->singleton(
             DatabaseStateModelRepository::class,

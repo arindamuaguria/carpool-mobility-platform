@@ -12,12 +12,17 @@ namespace Cmp\Application\Shared\Authorisation;
  * noticed, and `TB-2` — an operator who is authenticated and elevated — is
  * defended by noticing.
  *
- * **`SEC-057` ‡ is not yet discharged.** The record it asks for is an evidential
- * one, and the evidential writer is `CMP-IMP-439`; `ev_evidential_records` does
- * not exist. `BE-202` is explicit that operational logging *"shall not
- * substitute for"* the evidential log, so the interim implementation is not a
- * substitute and does not claim to be. The call path is built and tested, and
- * the sink is what is missing.
+ * The record it asks for is an **evidential** one, and `BE-202` is explicit that
+ * operational logging *"shall not substitute for"* the evidential log. The
+ * evidential writer arrived with `CMP-IMP-439`, so the bound implementation
+ * writes one and `SEC-057` ‡ is discharged. Which implementation that is belongs
+ * to the composition root and not here — `BE-002` keeps this layer from naming
+ * an Infrastructure class, in a docblock as much as in an import.
+ *
+ * {@see Authoriser::authorise()} calls this **before** it raises, so an
+ * implementation that fails to record must raise rather than return: a refusal
+ * reported without its record would be exactly the unevidenced outcome
+ * `FRD-FR-248` ‡ exists to prevent.
  */
 interface RecordsAuthorisationRefusals
 {

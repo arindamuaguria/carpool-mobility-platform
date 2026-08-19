@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Policy;
 
+use Cmp\Application\Shared\Evidence\EvidentialOutcome;
+use Cmp\Application\Shared\Evidence\RecordsEvidence;
 use Cmp\Application\Shared\Policy\ChangePolicyValue;
 use Cmp\Application\Shared\Policy\RecordsPolicyChanges;
 use Cmp\Application\Shared\Transaction\TransactionBoundary;
@@ -13,8 +15,10 @@ use Cmp\Domain\Shared\Policy\PolicyNotSet;
 use Cmp\Domain\Shared\Policy\PolicyRegister;
 use Cmp\Domain\Shared\Policy\PolicyType;
 use Cmp\Domain\Shared\Policy\PolicyValueInvalid;
+use Cmp\Domain\Shared\Time\Clock;
 use Cmp\Infrastructure\Persistence\Policy\DatabasePolicyStore;
 use PDO;
+use Tests\Integration\Evidence\ClearsTheEvidentialLog;
 use Tests\Integration\IntegrationTestCase;
 use Throwable;
 
@@ -32,6 +36,8 @@ use Throwable;
  */
 final class PolicyStoreTest extends IntegrationTestCase
 {
+    use ClearsTheEvidentialLog;
+
     private const KEY = 'test.retry_limit';
 
     private PolicyKey $key;
@@ -46,11 +52,13 @@ final class PolicyStoreTest extends IntegrationTestCase
         $this->register = PolicyRegister::of($this->key);
 
         $this->clearStore();
+        $this->clearEvidentialLog();
     }
 
     protected function tearDown(): void
     {
         $this->clearStore();
+        $this->clearEvidentialLog();
 
         parent::tearDown();
     }
@@ -304,6 +312,90 @@ final class PolicyStoreTest extends IntegrationTestCase
         return (int) $rows[0]->total;
     }
 
+    public function test_a_change_is_evidenced(): void
+    {
+        // ARCH-115 / DB-154 / BE-173, and BADR-12: "every change is written by an
+        // operator action, validated before application, and recorded
+        // evidentially."
+        $this->change()->apply(self::KEY, '3', 'operator-1');
+
+        $rows = $this->evidentialRecords();
+
+        self::assertCount(1, $rows);
+        self::assertSame(ChangePolicyValue::ACTION, $rows[0]->action);
+        self::assertSame('operator-1', $rows[0]->actor);
+        self::assertSame(EvidentialOutcome::Succeeded->value, $rows[0]->outcome);
+    }
+
+    public function test_the_record_points_at_the_one_version_holding_the_values(): void
+    {
+        // BE-173 asks for the previous and new value, and BE-107 ‡ fixes the
+        // evidential record at six fields with no place for either — BE-201 ‡
+        // being why there is no seventh. DB-152's versioned record holds them, so
+        // the subject resolves to exactly one of those rows and the pair carries
+        // between them what BE-173 asks for.
+        $this->change()->apply(self::KEY, '3', 'operator-1');
+        $this->change()->apply(self::KEY, '5', 'operator-2');
+
+        $rows = $this->evidentialRecords();
+        self::assertCount(2, $rows);
+        self::assertSame(self::KEY.'@v1', $rows[0]->subject);
+        self::assertSame(self::KEY.'@v2', $rows[1]->subject);
+
+        $version = $this->applicationConnection()->select(
+            'SELECT v.version, v.value_text, v.previous_value_text, v.applied_by FROM '
+            .DatabasePolicyStore::VERSIONS_TABLE.' AS v'
+            .' INNER JOIN '.DatabasePolicyStore::VALUES_TABLE.' AS pv ON pv.id = v.policy_value_id'
+            .' WHERE pv.policy_key = ? AND v.version = ?',
+            [self::KEY, 2],
+        );
+
+        self::assertCount(1, $version);
+        self::assertSame('3', $version[0]->previous_value_text);
+        self::assertSame('5', $version[0]->value_text);
+        self::assertSame('operator-2', $version[0]->applied_by);
+    }
+
+    public function test_a_rejected_change_is_not_evidenced_because_nothing_happened(): void
+    {
+        // BE-174 / ARCH-148 reject an invalid value before the transaction opens,
+        // so there is no change to evidence. A record here would assert that the
+        // platform did something it did not do.
+        try {
+            $this->change()->apply(self::KEY, 'not-an-integer', 'operator-1');
+            self::fail('BE-174: an invalid value must be rejected rather than applied.');
+        } catch (PolicyValueInvalid) {
+            // expected
+        }
+
+        self::assertSame([], $this->evidentialRecords());
+    }
+
+    public function test_the_change_and_its_record_commit_together(): void
+    {
+        // BE-106 ‡: the evidential record is written in the same transaction as
+        // the operation it evidences. Counting both after a change is the
+        // observable half of that; the other half is that neither can be present
+        // without the other, which follows from there being one transaction.
+        $this->change()->apply(self::KEY, '3', 'operator-1');
+
+        self::assertSame(1, $this->versionCount());
+        self::assertCount(1, $this->evidentialRecords());
+    }
+
+    /**
+     * @return list<object{actor: string, action: string, subject: string, outcome: string}>
+     */
+    private function evidentialRecords(): array
+    {
+        /** @var list<object{actor: string, action: string, subject: string, outcome: string}> $rows */
+        $rows = $this->applicationConnection()->select(
+            'SELECT actor, action, subject, outcome FROM ev_evidential_records ORDER BY id ASC'
+        );
+
+        return $rows;
+    }
+
     private function store(): DatabasePolicyStore
     {
         return new DatabasePolicyStore($this->applicationConnection(), $this->register);
@@ -321,6 +413,11 @@ final class PolicyStoreTest extends IntegrationTestCase
             $register,
             $this->app->make(RecordsPolicyChanges::class),
             $store,
+            // ARCH-115 / DB-154 / BE-173: a change is evidenced. The real writer,
+            // because BE-106 ‡ puts the record in the same transaction and a
+            // double that skipped it would prove nothing about that.
+            $this->app->make(RecordsEvidence::class),
+            $this->app->make(Clock::class),
         );
     }
 

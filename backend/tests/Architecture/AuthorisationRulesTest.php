@@ -8,6 +8,8 @@ use Cmp\Application\Shared\ApplicationService;
 use Cmp\Application\Shared\Authorisation\AuthorisationPolicy;
 use Cmp\Application\Shared\Authorisation\Authoriser;
 use Cmp\Application\Shared\Authorisation\Operation;
+use Cmp\Application\Shared\Evidence\RecordsEvidence;
+use Cmp\Infrastructure\Authorisation\EvidentialAuthorisationRefusals;
 use Cmp\Infrastructure\Laravel\Providers\AuthorisationServiceProvider;
 use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
@@ -125,6 +127,49 @@ final class AuthorisationRulesTest extends TestCase
 
         self::assertFalse($policy->statesARuleFor(Operation::named('test.anything')));
         self::assertNull($policy->ruleFor(Operation::named('test.anything')));
+    }
+
+    public function test_a_refusal_is_recorded_evidentially_and_by_nothing_else(): void
+    {
+        // SEC-057 ‡: every refused authorisation is recorded, and BE-202 says
+        // operational logging "shall not substitute for" the evidential log. A
+        // second implementation of the contract would be a place a refusal could
+        // be recorded without reaching `ev_`, which is the shape of the interim
+        // this replaced.
+        $implementations = [];
+
+        foreach (self::sourceFiles() as $relative => $contents) {
+            if (str_contains($contents, 'implements RecordsAuthorisationRefusals')) {
+                $implementations[] = $relative;
+            }
+        }
+
+        self::assertSame(['src/Infrastructure/Authorisation/EvidentialAuthorisationRefusals.php'], $implementations);
+
+        // And it records evidence rather than merely logging: the constructor
+        // takes the writing contract, so a build that removed the evidential
+        // write would not type-check into this shape.
+        $parameters = (new ReflectionMethod(EvidentialAuthorisationRefusals::class, '__construct'))->getParameters();
+
+        self::assertSame(RecordsEvidence::class, (string) $parameters[0]->getType());
+    }
+
+    public function test_the_recorder_is_called_before_the_refusal_is_raised(): void
+    {
+        // FRD-FR-248 ‡: an outcome is not reported where its record could not be
+        // written. Authoriser records first and raises second, so a write failure
+        // replaces the refusal instead of accompanying it. Asserted on the source
+        // because the ordering is the property, and a test that only observed a
+        // successful write could not see it.
+        $source = file_get_contents(self::basePath('src/Application/Shared/Authorisation/Authoriser.php'));
+        self::assertIsString($source);
+
+        $recordAt = strpos($source, '$this->refusals->record(');
+        $raiseAt = strpos($source, 'throw AuthorisationRefused::because(');
+
+        self::assertIsInt($recordAt);
+        self::assertIsInt($raiseAt);
+        self::assertLessThan($raiseAt, $recordAt, 'SEC-057 ‡: the record exists before the refusal is reported.');
     }
 
     /**
