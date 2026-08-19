@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Cmp\Infrastructure\Laravel\ScheduledWork;
 use Cmp\Interface\Console\ListJobFamiliesCommand;
 use Cmp\Interface\Console\ProvisionDatabaseAccountsCommand;
 use Cmp\Interface\Console\VerifySchemaCommand;
@@ -21,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ProvisionDatabaseAccountsCommand::class,
         VerifySchemaCommand::class,
     ])
+    // OPS-039 ‡ / BE-148: scheduled work is declared in exactly one place.
+    ->withSchedule(ScheduledWork::declare(...))
     ->withMiddleware(function (Middleware $middleware): void {
         //
     })
