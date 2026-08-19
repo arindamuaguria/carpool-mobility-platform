@@ -8,15 +8,15 @@
 | Document Name | Documentation Index |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 3.6 |
+| Version | 3.7 |
 | Status | Draft |
-| Date | 2026-08-19 |
+| Date | 2026-08-20 |
 | Author | Documentation Manager (AI-assisted) |
 | Reviewer | [TBD] |
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 3.5 (2026-08-19) |
+| Previous Version | 3.6 (2026-08-19) |
 | Related Documents | README.md, Documentation_Status.md, Document_Change_Log.md, Glossary.md, Master_Traceability_Matrix.md |
 
 ---
@@ -33,11 +33,11 @@ approved, superseded, or deprecated.
 | ID | Document | Version | Status | Location |
 |---|---|---|---|---|
 | CMP-CTRL-README | Documentation Repository README | **0.4** | Draft | `Document/00_Project_Control/README.md` |
-| CMP-CTRL-INDEX | Documentation Index | **3.6** | Draft | `Document/00_Project_Control/Documentation_Index.md` |
-| CMP-CTRL-STATUS | Documentation Status | **3.6** | Draft | `Document/00_Project_Control/Documentation_Status.md` |
-| CMP-CTRL-CHANGELOG | Document Change Log | **3.6** | Draft | `Document/00_Project_Control/Document_Change_Log.md` |
+| CMP-CTRL-INDEX | Documentation Index | **3.7** | Draft | `Document/00_Project_Control/Documentation_Index.md` |
+| CMP-CTRL-STATUS | Documentation Status | **3.7** | Draft | `Document/00_Project_Control/Documentation_Status.md` |
+| CMP-CTRL-CHANGELOG | Document Change Log | **3.7** | Draft | `Document/00_Project_Control/Document_Change_Log.md` |
 | CMP-CTRL-GLOSSARY | Glossary | 3.1 | Draft | `Document/00_Project_Control/Glossary.md` |
-| CMP-CTRL-RTM | Master Traceability Matrix | 3.1 | Draft | `Document/00_Project_Control/Master_Traceability_Matrix.md` |
+| CMP-CTRL-RTM | Master Traceability Matrix | **3.2** | Draft | `Document/00_Project_Control/Master_Traceability_Matrix.md` |
 
 ## 3. Formal Document Register (DOC-01 … DOC-20)
 
@@ -55,13 +55,13 @@ approved, superseded, or deprecated.
 | CMP-DOC-10 | API Specification | API | **0.1** | **Draft** | `Document/10_API_Specification/DOC-10-API-CMP-API-Specification.md` + `.docx` |
 | CMP-DOC-11 | Database Design Document | DATABASE | **0.1** | **Draft** | `Document/11_Database_Design/DOC-11-DATABASE-CMP-Database-Design.md` + `.docx` |
 | CMP-DOC-12 | UI/UX Specification | UIUX | **0.1** | **Draft** | `Document/12_UI_UX_Specification/DOC-12-UIUX-CMP-UI-UX-Specification.md` + `.docx` |
-| CMP-DOC-13 | Security Design | SECURITY | **0.1** | **Draft** | `Document/13_Security/DOC-13-SECURITY-CMP-Security-Design.md` + `.docx` |
+| CMP-DOC-13 | Security Design | SECURITY | **0.2** | **Draft** | `Document/13_Security/DOC-13-SECURITY-CMP-Security-Design.md` + `.docx` |
 | CMP-DOC-14 | Payment & UPI Specification | PAYMENT | **0.1** | **Draft** | `Document/14_Payment_UPI/DOC-14-PAYMENT-CMP-Payment-UPI-Specification.md` + `.docx` |
 | CMP-DOC-15 | GPS / Live Trip Specification | GPS | **0.1** | **Draft** | `Document/15_GPS_Live_Trip/DOC-15-GPS-CMP-Live-Trip-Specification.md` + `.docx` |
 | CMP-DOC-16 | Communication & Notification Specification | NOTIFICATION | **0.1** | **Draft** | `Document/16_Communication_Notifications/DOC-16-NOTIFICATION-CMP-Communication-Notifications.md` + `.docx` |
 | CMP-DOC-17 | Admin / Filament Specification | ADMIN | **0.1** | **Draft** | `Document/17_Admin_Filament/DOC-17-ADMIN-CMP-Filament-Specification.md` + `.docx` |
 | CMP-DOC-18 | Testing & QA Documentation | TESTING | **0.1** | **Draft** | `Document/18_Testing_QA/DOC-18-TESTING-CMP-Testing-QA.md` + `.docx` |
-| CMP-DOC-19 | DevOps / Deployment Documentation | DEVOPS | **0.1** | **Draft** | `Document/19_DevOps_Deployment/DOC-19-DEVOPS-CMP-Deployment.md` + `.docx` |
+| CMP-DOC-19 | DevOps / Deployment Documentation | DEVOPS | **0.2** | **Draft** | `Document/19_DevOps_Deployment/DOC-19-DEVOPS-CMP-Deployment.md` + `.docx` |
 | CMP-DOC-20 | Requirements Traceability & Release Documentation | TRACEABILITY | **0.2** | **Draft** | `Document/20_Traceability_Release/DOC-20-TRACEABILITY-CMP-Traceability-Release.md` + `.docx` |
 | **CMP-DOC-20A** | **Review of the 37 Uncited Integrity-Critical Requirements** (Annex A to CMP-DOC-20) | TRACEABILITY | **0.1** | **Draft** | `Document/20_Traceability_Release/DOC-20A-TRACEABILITY-CMP-Uncited-Requirement-Review.md` + `.docx` |
 
@@ -135,6 +135,14 @@ the corresponding document is explicitly requested by the Project Owner.
 | CMP-DOC-20 | `DOC-20-TRACEABILITY-CMP-Traceability-Release.md` ✔ created | `DOC-20-TRACEABILITY-CMP-Traceability-Release.docx` ✔ created |
 | CMP-DOC-20A | `DOC-20A-TRACEABILITY-CMP-Uncited-Requirement-Review.md` ✔ created | `DOC-20A-TRACEABILITY-CMP-Uncited-Requirement-Review.docx` ✔ created |
 
+> **OUTSTANDING (2026-08-20).** The `.docx` renderings of **CMP-DOC-13** and **CMP-DOC-19**
+> were created at v0.1 and have **not been regenerated for v0.2**, so README §8.2 —
+> *"Both must carry equivalent information"* — is not currently satisfied for those two
+> documents. The `.md` is the source of truth and carries the change; the `.docx` is a
+> generated presentation. **No project process authorises Claude Code to generate a `.docx`**,
+> so the regeneration is recorded here as outstanding for the Project Owner rather than
+> performed. The same position applies to `CMP-Implementation-Tracker.docx` (§3A).
+
 > **ASSUMPTION.** Filenames for DOC-04 through DOC-20 follow the naming pattern
 > established by the three examples given in the Master Documentation Control Prompt
 > (DOC-01, DOC-02, DOC-03). These may be adjusted by the Project Owner before the
@@ -156,13 +164,13 @@ the corresponding document is explicitly requested by the Project Owner.
 | CMP-DOC-10 API | `API-` | 001+ | **`API-001` … `API-216` (216 issued, v0.1)** |
 | CMP-DOC-11 DATABASE | `DB-` | 001+ | **`DB-001` … `DB-232` (232 issued, v0.1)** |
 | CMP-DOC-12 UIUX | `UX-` | 001+ | **`UX-001` … `UX-224` (224 issued, v0.1)** — prefix allocated here, see `CC-014` |
-| CMP-DOC-13 SECURITY | `SEC-` | 001+ | **`SEC-001` … `SEC-240` (240 issued, v0.1)** |
+| CMP-DOC-13 SECURITY | `SEC-` | 001+ | **`SEC-001` … `SEC-242` (242 issued, v0.2)** — `SEC-241`–`SEC-242` added to §14 at v0.2 |
 | CMP-DOC-14 PAYMENT | `PAY-` | 001+ | **`PAY-001` … `PAY-208` (208 issued, v0.1)** |
 | CMP-DOC-15 GPS | `GPS-` | 001+ | **`GPS-001` … `GPS-196` (196 issued, v0.1)** |
 | CMP-DOC-16 NOTIFICATION | `NOTIF-` | 001+ | **`NOTIF-001` … `NOTIF-188` (188 issued, v0.1)** |
 | CMP-DOC-17 ADMIN | `ADM-` | 001+ | **`ADM-001` … `ADM-204` (204 issued, v0.1)** |
 | CMP-DOC-18 TESTING | `TC-` | 001+ | **`TC-001` … `TC-216` (216 issued, v0.1)** |
-| CMP-DOC-19 DEVOPS | `OPS-` | 001+ | **`OPS-001` … `OPS-208` (208 issued, v0.1)** — prefix allocated here, see `CC-021` |
+| CMP-DOC-19 DEVOPS | `OPS-` | 001+ | **`OPS-001` … `OPS-210` (210 issued, v0.2)** — prefix allocated here, see `CC-021`; `OPS-209`–`OPS-210` added to §11 at v0.2 |
 | CMP-DOC-20 TRACEABILITY | `TR-` | 001+ | **`TR-001` … `TR-192` (192 issued, unchanged at v0.2)** — prefix allocated here, see `CC-023` |
 | CMP-DOC-20A (annex) | — | — | **No identifiers issued.** The annex records outcomes against existing identifiers and creates no traceability link (`TRDR-06`). |
 

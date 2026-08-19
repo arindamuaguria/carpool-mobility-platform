@@ -15,15 +15,15 @@
 | Short Name | SECURITY |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
-| Date | 2026-08-17 |
+| Date | 2026-08-20 |
 | Author | Security Analyst (AI-assisted) |
 | Reviewer | [TBD] |
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | None (initial issue) |
+| Previous Version | 0.1 (2026-08-17) |
 | Predecessor Documents | CMP-DOC-01 … CMP-DOC-11, **all Draft, none approved** (CMP-DOC-09 at v0.2, the remainder at v0.1). CMP-DOC-12 does not exist. |
 | Related Documents | `00_Project_Control/README.md`, `Documentation_Index.md`, `Documentation_Status.md`, `Document_Change_Log.md`, `Glossary.md`, `Master_Traceability_Matrix.md` |
 | Successor Documents | CMP-DOC-14 (Payment & UPI), CMP-DOC-15 (GPS / Live Trip), CMP-DOC-17 (Admin / Filament), CMP-DOC-18 (Testing & QA), CMP-DOC-19 (DevOps / Deployment) |
@@ -33,6 +33,7 @@
 | Version | Date | Author | Change | Status |
 |---|---|---|---|---|
 | 0.1 | 2026-08-17 | Security Analyst (AI-assisted) | Initial issue. Specifies the security mechanisms deferred here by five predecessors: 10 security drivers, **16 security decisions**, trust boundary defences, authentication, session management, authorisation, protection at rest and in transit, the evidential chain mechanism, injection defence, payment credential handling, client-side security, secrets and key management, abuse posture, the fraud position, logging and response, backup security, and verification. Issues 240 statements (`SEC-001` … `SEC-240`). | Draft |
+| 0.2 | 2026-08-20 | Security Analyst (AI-assisted) | **The evidential chain construction ratified and recorded in §14.2.** `SEC-107` required a keyed message authentication construction over a canonical serialisation and left the specific algorithm to §14.2 as a technical decision; §14.2 named no algorithm. The Project Owner ratified **HMAC-SHA-256 over the length-prefixed canonical serialisation of `SEC-108` ‡** on 2026-08-20, and it is now recorded at `SEC-241`. `SEC-242` records that this does not close `SEC-174`: each record continues to carry the construction that produced it, so the choice remains replaceable by a staged migration. Issues 2 statements (`SEC-241`, `SEC-242`); §14 now holds 18. **No existing statement was altered, no ‡ marking changed, and no compliance claim is made — §0.6.2 continues to apply.** | Draft |
 
 ## 0.3 Distribution List
 
@@ -221,7 +222,7 @@ its violation would permit an absolute business rule to be broken.
 |---|---|
 | Security drivers | 10 |
 | **Security Decision Records** | **16** |
-| Security design statements | **240** (`SEC-001` … `SEC-240`) |
+| Security design statements | **242** (`SEC-001` … `SEC-242`) |
 | Trust boundaries defended | 4 |
 | Mechanisms specified for previously unmechanised properties | 4 |
 | Requirement-chain gaps adopted and closed | 2 |
@@ -907,7 +908,7 @@ This section supplies the mechanisms CMP-DOC-08 §17.5 required for `MOB-143`–
 |---|---|---|
 | Authentication material | Memory-hard, salted, tunable password hash | `SEC-028` |
 | Session token storage | One-way hash of a high-entropy random token | `SEC-036` |
-| Evidential chain | Keyed message authentication over canonical serialisation | `SEC-105`, `SEC-107` |
+| Evidential chain | Keyed message authentication over canonical serialisation | `SEC-105`, `SEC-107`, `SEC-241` |
 | Protected columns | Authenticated encryption | `SEC-084` |
 | Random generation | Cryptographically secure source | `SEC-019`, `SEC-035` |
 
@@ -921,6 +922,16 @@ This section supplies the mechanisms CMP-DOC-08 §17.5 required for `MOB-143`–
 | `SEC-176` | A secret shared between environments shall be treated as a production secret and rotated. | `SEC-170` |
 | `SEC-177` ‡ | Compromise of any secret shall have a stated response procedure; **the procedure is CMP-DOC-19's and its absence is recorded at `SEC-OQ-07`.** | `SADR-14`, §0.6.1 |
 | `SEC-178` | No key shall be derived from a value the platform also stores. | `SADR-05`, `SEC-072` |
+| `SEC-241` | The construction required by `SEC-107` shall be **HMAC-SHA-256** over the length-prefixed canonical serialisation of `SEC-108` ‡, in which each field is preceded by its own byte length, so that two records differing only in where a field boundary falls cannot serialise to the same bytes. | `SEC-105`, `SEC-107`, `SEC-108` |
+| `SEC-242` | `SEC-241` records the construction in use and **does not close `SEC-174`**: each evidential record shall carry the construction that produced it, and a replacement shall proceed as a staged migration under change control rather than as a rewrite of existing records. | `SEC-174`, `SEC-241` |
+
+**FACT (2026-08-20).** `SEC-241` was ratified by the Project Owner. It is an engineering
+decision recorded here because `SEC-107` places the algorithm in this section, and per
+§0.6.2 it constitutes **no compliance or certification claim**. A separator-joined
+serialisation was rejected: with a separator, an action of `a|b` with subject `c` and an
+action of `a` with subject `b|c` produce identical bytes, and two different records would
+share a hash. The length prefix is what `SEC-108` ‡ requires to be true in practice rather
+than in intent.
 
 ---
 
@@ -1280,8 +1291,8 @@ new.
 | 6 | **No compliance, certification or regulatory claim made** | Yes — §0.6.2; 0 claims |
 | 7 | No fraud rule, threshold or response invented | Yes — §16, `SEC-195` |
 | 8 | No rate limit, key rotation period or notification timing invented | Yes — all `[TBD]` |
-| 9 | Every statement names a source, and every cited identifier resolves to a statement that says what is claimed | Yes — 240 of 240 |
-| 10 | Statement identifiers contiguous and unique | Yes — `SEC-001` … `SEC-240` |
+| 9 | Every statement names a source, and every cited identifier resolves to a statement that says what is claimed | Yes — 242 of 242 |
+| 10 | Statement identifiers contiguous and unique | Yes — `SEC-001` … `SEC-242`. §14 holds `SEC-163`–`SEC-178` and `SEC-241`–`SEC-242`, the second range added at v0.2; identifiers are never renumbered. |
 | 11 | Properties that cannot be verified recorded as unverified | Yes — §19.4, 3 of them |
 | 12 | What the design does **not** defend against stated explicitly | Yes — §5.5, §13.6, `SEC-192` |
 
@@ -1295,9 +1306,9 @@ new.
 |---|---|
 | Security drivers | 10 (`SD-01` … `SD-10`) |
 | Security decisions | 16 (`SADR-01` … `SADR-16`) |
-| Security design statements | 240 (`SEC-001` … `SEC-240`) |
+| Security design statements | 242 (`SEC-001` … `SEC-242`) |
 | Integrity-critical statements (‡) | 135 |
-| Statements naming a source | 240 of 240 |
+| Statements naming a source | 242 of 242 |
 | Diagrams | 5 |
 | Trust boundaries defended | 4 |
 | Security quality requirements mechanised | 18 of 18; 16 verifiable |
@@ -1325,17 +1336,17 @@ new.
 | 11 | Input Handling and Injection Defence | 14 |
 | 12 | Payment Credential Handling | 12 |
 | 13 | Client-Side Security | 18 |
-| 14 | Secrets and Key Management | 16 |
+| 14 | Secrets and Key Management | 18 |
 | 15 | Abuse and Automated Access | 14 |
 | 16 | Fraud — An Unowned Obligation | 10 |
 | 17 | Security Logging and Response | 16 |
 | 18 | Backup and Restore Security | 10 |
 | 19 | Verification | 12 |
-| | **Total** | **240** |
+| | **Total** | **242** |
 
 ## 23.2 What This Document Deliberately Does Not Claim
 
-**135 of 240 statements are integrity-critical — 56%, the highest proportion in the
+**135 of 242 statements are integrity-critical — 56%, the highest proportion in the
 chain.** That is a measure of what security touches, not of how secure the platform is.
 
 This document makes **no claim** that the platform is secure, that it conforms to any
@@ -1396,6 +1407,7 @@ kind of invention in this chain, and §0.6.2 exists to prevent it.
 | `SEC-203` – `SEC-218` | Security Logging and Response |
 | `SEC-219` – `SEC-228` | Backup and Restore Security |
 | `SEC-229` – `SEC-240` | Verification |
+| `SEC-241` – `SEC-242` | Secrets and Key Management (added at v0.2) |
 
 ---
 

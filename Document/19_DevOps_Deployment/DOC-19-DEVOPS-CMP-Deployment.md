@@ -15,15 +15,15 @@
 | Short Name | DEVOPS |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
-| Date | 2026-08-17 |
+| Date | 2026-08-20 |
 | Author | DevOps Engineer (AI-assisted) |
 | Reviewer | [TBD] |
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | None (initial issue) |
+| Previous Version | 0.1 (2026-08-17) |
 | Predecessor Documents | CMP-DOC-01 … CMP-DOC-18, **all Draft, none approved** (CMP-DOC-09 at v0.2, the remainder at v0.1) |
 | Related Documents | `00_Project_Control/README.md`, `Documentation_Index.md`, `Documentation_Status.md`, `Document_Change_Log.md`, `Glossary.md`, `Master_Traceability_Matrix.md` |
 | Successor Documents | CMP-DOC-20 (Traceability & Release) |
@@ -33,6 +33,7 @@
 | Version | Date | Author | Change | Status |
 |---|---|---|---|---|
 | 0.1 | 2026-08-17 | DevOps Engineer (AI-assisted) | Initial issue. Specifies deployment as **properties independent of any provider**: the consolidated sizing register, environments and promotion, deployment topology and units, configuration, secret custody, the build and release pipeline, client build and distribution, database operations, observability and alerting, availability and the safety exception, incident response, what cannot be decided, and provisioning without a provider. Issues 208 statements (`OPS-001` … `OPS-208`). | Draft |
+| 0.2 | 2026-08-20 | DevOps Engineer (AI-assisted) | **The server configuration requirement created by `DB-120` ‡ meeting `OPS-123` ‡ recorded in §11.1.** A server with binary logging enabled — which `OPS-123` ‡ requires — refuses to create the evidential triggers `DB-120` ‡ requires unless it trusts the creating account or that account holds a privilege overriding the check. The privilege route was rejected because it would give the migration account far more than the trigger needs, permanently, against `OPS-127` ‡ and `DADR-09`. `OPS-209` ‡ now requires the refusal to be resolved by server configuration and never by `SUPER`, `SET_ANY_DEFINER` or any broader grant; `OPS-210` requires the configuration to be stated, documented and reviewed **per environment**. The Project Owner approved `log_bin_trust_function_creators=ON` **for the development environment only** on 2026-08-20, recorded as a FACT in §11.1; **no production means is stated**, and `OPS-210` is added to §17.5 as awaiting one. Issues 2 statements (`OPS-209`, `OPS-210`); §11 now holds 20, and the ‡ count rises to 120. **No existing statement was altered and no provider, service or product is named** — §11.1 names one server configuration key, which selects nothing. | Draft |
 
 ## 0.3 Distribution List
 
@@ -238,7 +239,7 @@ As `README.md` §9.1 of the control repository. Markers: **FACT**, **ASSUMPTION*
 |---|---|
 | Deployment drivers | 10 |
 | **Deployment Decision Records** | **14** |
-| Deployment specification statements | **208** (`OPS-001` … `OPS-208`) |
+| Deployment specification statements | **210** (`OPS-001` … `OPS-210`) |
 | **Obligations discharged from predecessors** | **16**, from 9 documents |
 | **Sizing decisions consolidated** | **18**, from 2 documents |
 | Environments specified | 4 |
@@ -909,6 +910,28 @@ be specified without knowing which supplier it applies to.
 | `OPS-122` ‡ | Enforcement shall be verified at deployment by attempting a violating write, not by reading a version string. | `DB-217`, `TC-047` |
 | `OPS-123` ‡ | Binary logging shall be enabled so that point-in-time recovery is possible. | `DB-224` |
 | `OPS-124` ‡ | The engine shall be crash-safe. | `DB-223`, `NFR-038` |
+| `OPS-209` ‡ | Where the server refuses to create the `DB-120` ‡ evidential triggers because binary logging is enabled (`OPS-123` ‡), the refusal shall be resolved by **server configuration**, and never by granting the migration account `SUPER`, `SET_ANY_DEFINER` or any broader privilege. | `DB-120`, `OPS-123`, `OPS-127` |
+| `OPS-210` | The configuration satisfying `OPS-209` shall be stated **per environment**, and shall be documented and reviewed before that environment passes its promotion gate. A setting approved for one environment carries no approval for another, and **the production means is not stated here**. | `OPS-209`, `DDR-08` |
+
+**Why `OPS-209` exists.** Two integrity-critical requirements meet at the evidential table.
+`DB-120` ‡ requires a trigger on it, as the second layer behind the withheld `UPDATE` and
+`DELETE` privilege. `OPS-123` ‡ requires binary logging, so that point-in-time recovery is
+possible. A server honouring both refuses the trigger unless it trusts the creating account
+or that account holds a privilege that overrides the check — so the two requirements cannot
+both be met without a deliberate deployment act.
+
+The privilege route was rejected. `OPS-127` ‡ and `DADR-09` withhold evidential alteration
+from every account that does not need it, and `SUPER` or `SET_ANY_DEFINER` would hand the
+migration account far more than a trigger creation requires, permanently, to satisfy a
+one-off act. Granting it would weaken the rule the trigger exists to reinforce.
+
+**FACT (2026-08-20).** The Project Owner approved `log_bin_trust_function_creators=ON`
+**for the development environment only**, applied as server configuration and recorded with
+that environment's definition. It is not approved for staging, pre-production or production,
+and `OPS-210` requires each of those to state and review its own means. Nothing here makes
+the development setting a default. This is the one place in this document where a concrete
+server configuration key is named; it names a setting, not a provider, a service or a
+product, and `DDR-01` is unaffected.
 
 ## 11.2 Accounts and Grants
 
@@ -1310,6 +1333,7 @@ discharged **structurally and not operationally** — §15.2 states why.
 | `OPS-181` | Administrative role set — `BAD-DEC-006` |
 | `OPS-182`, `OPS-183` | `SEC-OQ-02`, `SEC-OQ-07` |
 | `OPS-190` | Retention periods — `BAD-DEC-021` |
+| `OPS-210` | The production means of satisfying `DB-120` ‡ under `OPS-123` ‡ — deployment review, `BAD-DEP-009` |
 
 ## 17.6 Statements Originating in This Document
 
@@ -1381,7 +1405,7 @@ discharged **structurally and not operationally** — §15.2 states why.
 |---|---|---|
 | 1 | All 16 obligations placed directly on this document addressed | Yes — §17.2; 14 in full, 2 structurally, with the limits stated |
 | 2 | All 18 inherited sizing decisions consolidated into one register | Yes — §4.2 |
-| 3 | **No provider, service or product named** | Yes — §0.6.1; 0 named |
+| 3 | **No provider, service or product named** | Yes — §0.6.1; 0 named. §11.1 names one server configuration key (v0.2), which selects no provider, service or product. |
 | 4 | **No capacity, threshold, sizing or timing figure stated** | Yes — §0.6.2; 0 stated |
 | 5 | The four build gates provided as CMP-DOC-18 specifies them | Yes — §9.1 |
 | 6 | Secret custody specified for six unselected suppliers without naming one | Yes — §8.2 |
@@ -1389,8 +1413,8 @@ discharged **structurally and not operationally** — §15.2 states why.
 | 8 | The two owed procedures specified, and their incompleteness stated rather than concealed | Yes — §11.4, §14.3, §15.2 |
 | 9 | No operator route around the application layer | Yes — `DDR-13`, §14.2 |
 | 10 | What cannot be decided reported as its own section | Yes — §15 |
-| 11 | Every statement names a source, and every cited identifier resolves | Yes — 208 of 208 |
-| 12 | Statement identifiers contiguous and unique | Yes — `OPS-001` … `OPS-208` |
+| 11 | Every statement names a source, and every cited identifier resolves | Yes — 210 of 210 |
+| 12 | Statement identifiers contiguous and unique | Yes — `OPS-001` … `OPS-210`. §11 holds `OPS-121`–`OPS-138` and `OPS-209`–`OPS-210`, the second range added at v0.2; identifiers are never renumbered. |
 
 ---
 
@@ -1402,9 +1426,9 @@ discharged **structurally and not operationally** — §15.2 states why.
 |---|---|
 | Deployment drivers | 10 (`DD-01` … `DD-10`) |
 | Deployment decisions | 14 (`DDR-01` … `DDR-14`) |
-| Deployment specification statements | 208 (`OPS-001` … `OPS-208`) |
-| Integrity-critical statements (‡) | 119 |
-| Statements naming a source | 208 of 208 |
+| Deployment specification statements | 210 (`OPS-001` … `OPS-210`) |
+| Integrity-critical statements (‡) | 120 |
+| Statements naming a source | 210 of 210 |
 | Diagrams | 3 |
 | **Obligations discharged** | **16**, from 9 documents |
 | **Sizing register entries** | **21** (18 inherited, 3 added) |
@@ -1434,13 +1458,13 @@ discharged **structurally and not operationally** — §15.2 states why.
 | 8 | Secrets and Credential Custody | 18 |
 | 9 | Build and Release Pipeline | 18 |
 | 10 | Client Build and Distribution | 14 |
-| 11 | Database Operations | 18 |
+| 11 | Database Operations | 20 |
 | 12 | Observability and Alerting | 18 |
 | 13 | Availability, Maintenance and the Safety Exception | 16 |
 | 14 | Incident Response | 14 |
 | 15 | What This Document Cannot Decide | 12 |
 | 16 | Provisioning Without a Provider | 10 |
-| | **Total** | **208** |
+| | **Total** | **210** |
 
 ## 20.2 What Deployment Found
 
@@ -1510,6 +1534,7 @@ first release.
 | `OPS-173` – `OPS-186` | Incident Response |
 | `OPS-187` – `OPS-198` | What This Document Cannot Decide |
 | `OPS-199` – `OPS-208` | Provisioning Without a Provider |
+| `OPS-209` – `OPS-210` | Database Operations (added at v0.2) |
 
 ---
 
