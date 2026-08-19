@@ -1,24 +1,36 @@
 # TECHNICAL-DECISIONS.md — Carpool Mobility Platform (CMP)
 
-> **What this file is.** A record of the *technical* decisions that
+> **What this file is.** The record of the *technical* decisions that
 > `CLAUDE-READINESS-ANALYSIS.md` §21.1 and §22.1 identified as blocking the first line of
-> code (B1–B6 / T1–T6), taken under the Project Owner's standing instruction of
-> 2026-08-19 that the implementation agent is autonomous in technical implementation.
+> code (B1–B6 / T1–T6). They were taken under the Project Owner's instruction of
+> 2026-08-19 that the implementation agent is autonomous in technical implementation, and
+> **ratified by the Project Owner on 2026-08-19 exactly as recorded**.
 >
-> **What this file is not.** It is not a business decision record, it is not authoritative
-> documentation, and it does not sit in the `Document/` chain. Nothing here overrides
-> `Document/`. Each entry is **recorded, not approved** — the Project Owner ratifies, and
-> a ratified decision should be routed into a controlled document (readiness analysis §25
-> action 1).
+> **What this file is not.** It is not a specification document. It creates no requirement,
+> takes no business decision, closes no gap, and issues no identifier into the forward
+> traceability chain. It does not sit in the `Document/` chain and nothing here overrides
+> `Document/`. Like `CLAUDE.md` and `CLAUDE-READINESS-ANALYSIS.md` it is held at project
+> root and is not registered in `Documentation_Index.md`.
+>
+> **`TECH-DEC-001` … `TECH-DEC-005` are closed.** The Project Owner directed that they not
+> be modified, reinterpreted or extended. A change to any of them is a new decision, taken
+> by the Project Owner and recorded as a new entry — not an edit to an existing one.
 >
 > **Business decisions are not recorded here.** `BAD-DEC-*`, `FRD-GAP-*` and every
 > withheld area remain open and remain blockers. See `CLAUDE.md` §12.
 
 | Field | Value |
 |---|---|
-| Status | Recorded — awaiting Project Owner ratification |
+| Document Name | Technical Decisions Record |
+| Project Name | Carpool Mobility Platform |
+| Project Code | CMP |
+| Status | **Ratified** — `TECH-DEC-001` … `TECH-DEC-005`, Project Owner, 2026-08-19 |
 | Recorded | 2026-08-19 |
-| Basis | `CLAUDE-READINESS-ANALYSIS.md` §21.1, §22.1; Project Owner instruction 2026-08-19 |
+| Ratified | 2026-08-19, by the Project Owner |
+| Change control | `Document/00_Project_Control/Document_Change_Log.md` entry **087** |
+| Classification | Internal |
+| Basis | `CLAUDE-READINESS-ANALYSIS.md` §21.1, §22.1; Project Owner instructions of 2026-08-19 |
+| Related | `CLAUDE.md`, `CLAUDE-READINESS-ANALYSIS.md`, `backend/README.md` |
 
 ---
 
@@ -117,3 +129,4 @@ the hosting decision (`BAD-DEP-009`) and the 21 sizing decisions, all of which a
 | Date | Entry | Change |
 |---|---|---|
 | 2026-08-19 | `TECH-DEC-001` … `TECH-DEC-005` | Initial record. Taken to unblock `CMP-IMP-021` and `CMP-IMP-022`. |
+| 2026-08-19 | `TECH-DEC-001` … `TECH-DEC-005` | **Ratified by the Project Owner, exactly as recorded.** Recorded through the change-control process at `Document_Change_Log.md` entry 087. The Project Owner directed that they not be modified, reinterpreted or extended, and that `T5` and `T6` remain undecided. |

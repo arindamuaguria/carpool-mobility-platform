@@ -8,7 +8,7 @@
 | Document Name | Documentation Repository README |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | Draft |
 | Date | 2026-08-19 |
 | Author | Documentation Manager (AI-assisted) |
@@ -16,7 +16,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 0.2 (2026-08-19) |
+| Previous Version | 0.3 (2026-08-19) |
 | Related Documents | Documentation_Index.md, Documentation_Status.md, Document_Change_Log.md, Glossary.md, Master_Traceability_Matrix.md |
 
 ---
@@ -297,10 +297,11 @@ record of what changed and when is `Document_Change_Log.md`, not this table.
 | Project Control files | 6 of 6 created; see `Documentation_Index.md` §2 for current versions |
 | Formal documents (DOC-01 … DOC-20) | **All 20 created**, v0.1 except CMP-DOC-09 and CMP-DOC-20 at v0.2, plus annex CMP-DOC-20A. **None approved.** |
 | Planning artefacts | Implementation Work Register and Implementation Analysis — `Documentation_Index.md` §3A |
-| Application source code | **None.** `backend/` and `Mobile/` exist and are empty, awaiting Laravel and Android tooling. |
-| Version control | **Not initialised.** No repository, no commits. No Git policy exists in the documentation — see `CLAUDE-READINESS-ANALYSIS.md` §14. |
-| Development gate | **NO** — see `CLAUDE-READINESS-ANALYSIS.md` §23 |
-| Next expected action | Project Owner review and approval of CMP-DOC-01 … CMP-DOC-20 in chain order, and the technical decisions recorded in `CLAUDE-READINESS-ANALYSIS.md` §22.1 |
+| Technical decisions | `TECHNICAL-DECISIONS.md` at project root — `TECH-DEC-001` … `TECH-DEC-005`, **ratified by the Project Owner 2026-08-19**. `T5` monetary precision and `T6` route overlap remain **open**. |
+| Application source code | `backend/` — Laravel 13 on the four documented namespaces, the error model, the schema conventions, the three database accounts and the idempotency registry. `Mobile/` — **still empty**; no Android toolchain decision has been taken and `CMP-IMP-010` is `Blocked` on `MOB-OQ-001`. |
+| Version control | **Initialised.** Git repository at `https://github.com/arindamuaguria/carpool-mobility-platform.git`, trunk `main`. The working Git policy is `TECH-DEC-002`; it is a placeholder for a Delivery Lead decision, not a substitute for one. |
+| Development gate | **OPEN for the backend.** Blockers B1–B6 of `CLAUDE-READINESS-ANALYSIS.md` §21.1 are closed by `TECH-DEC-001` … `TECH-DEC-005`. The **deployment** gate remains **NO** (§24), and every business blocker B7–B22 remains open. |
+| Next expected action | Project Owner review and approval of CMP-DOC-01 … CMP-DOC-20 in chain order. Implementation continues on the ~180 requirements CMP-DOC-04 §1.4 confirms carry no open business dependency. |
 
 > **FACT — historical, retained.** At initialization (2026-08-16) the project root was
 > `F:\Workspace-2026\Application - 2026\bikeride-app` and it contained no files or
@@ -310,6 +311,10 @@ record of what changed and when is `Document_Change_Log.md`, not this table.
 > **FACT — 2026-08-19.** The repository root was relocated to `carpool-mobility-platform`
 > and the `Document/` tree moved intact, verified file-by-file. See `Document_Change_Log.md`
 > entry 085. The statement above is preserved because it was accurate on the date it records.
+>
+> **FACT — 2026-08-19.** Implementation began. The technical decisions blocking it were
+> recorded and then ratified by the Project Owner; see `Document_Change_Log.md` entry 087.
+> The two statements above are preserved because each was accurate on the date it records.
 
 ---
 

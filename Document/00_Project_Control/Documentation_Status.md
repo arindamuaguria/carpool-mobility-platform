@@ -8,7 +8,7 @@
 | Document Name | Documentation Status |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 3.5 |
+| Version | 3.6 |
 | Status | Draft |
 | Date | 2026-08-19 |
 | Author | Documentation Manager (AI-assisted) |
@@ -16,7 +16,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 3.4 (2026-08-19) |
+| Previous Version | 3.5 (2026-08-19) |
 | Related Documents | README.md, Documentation_Index.md, Document_Change_Log.md, Glossary.md, Master_Traceability_Matrix.md |
 
 ---
@@ -69,10 +69,10 @@ authoritative answer to *"where are we in the documentation programme?"*
 
 | ID | File | Version | Status | Last Updated |
 |---|---|---|---|---|
-| CMP-CTRL-README | README.md | **0.3** | Draft | **2026-08-19** |
-| CMP-CTRL-INDEX | Documentation_Index.md | **3.5** | Draft | **2026-08-19** |
-| CMP-CTRL-STATUS | Documentation_Status.md | **3.5** | Draft | **2026-08-19** |
-| CMP-CTRL-CHANGELOG | Document_Change_Log.md | **3.5** | Draft | **2026-08-19** |
+| CMP-CTRL-README | README.md | **0.4** | Draft | **2026-08-19** |
+| CMP-CTRL-INDEX | Documentation_Index.md | **3.6** | Draft | **2026-08-19** |
+| CMP-CTRL-STATUS | Documentation_Status.md | **3.6** | Draft | **2026-08-19** |
+| CMP-CTRL-CHANGELOG | Document_Change_Log.md | **3.6** | Draft | **2026-08-19** |
 | CMP-CTRL-GLOSSARY | Glossary.md | 3.1 | Draft | 2026-08-17 |
 | CMP-CTRL-RTM | Master_Traceability_Matrix.md | 3.1 | Draft | 2026-08-17 |
 
@@ -145,10 +145,18 @@ over from the formal chain:
 | Blocked on an unset value or unselected supplier | 11 |
 | Work IDs issued / withdrawn | 562 / **55** |
 | Staleness against the chain | **Current** as at 2026-08-19. Any revision to CMP-DOC-01 … CMP-DOC-20 makes both artefacts stale; record it here. |
+| Register corrections outstanding | **2.** `CC-026` — `CMP-IMP-047` named an *"evidential-write account"* the design does not define; corrected 2026-08-19 on Project Owner instruction. `CC-027` — `CMP-IMP-025` describes the table in the singular where `DB-015` requires the plural; **correction outstanding**. |
 
 > **Both artefacts were produced from twenty unapproved predecessors.** Recorded as `CC-024`
 > in `Document_Change_Log.md`, rated **High** impact. **The register must not be treated as a
 > construction baseline until the chain is approved.**
+
+> **Status columns are the Project Owner's.** Implementation began on 2026-08-19 under the
+> technical decisions ratified in `Document_Change_Log.md` entry 087, and work items
+> `CMP-IMP-021` … `CMP-IMP-025`, `034`, `038`, `039`, `044` … `047` have been implemented,
+> tested and committed. **No status column in the register has been changed**, so the counts
+> above still read as at issue. What has actually been built is recorded in the Git history
+> of `https://github.com/arindamuaguria/carpool-mobility-platform.git`, not here.
 
 ## 6. Prerequisite / Dependency View
 
