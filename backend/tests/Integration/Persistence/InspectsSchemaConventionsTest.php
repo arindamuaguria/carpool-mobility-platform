@@ -6,6 +6,7 @@ namespace Tests\Integration\Persistence;
 
 use Cmp\Application\Shared\Schema\InspectsSchemaConventions;
 use Cmp\Application\Shared\Schema\SchemaViolation;
+use Cmp\Infrastructure\Persistence\Schema\SchemaConventionInspector;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Integration\IntegrationTestCase;
 
@@ -25,6 +26,7 @@ final class InspectsSchemaConventionsTest extends IntegrationTestCase
     protected function tearDown(): void
     {
         $this->migrationConnection()->statement('DROP TABLE IF EXISTS '.self::OFFENDING_TABLE);
+        $this->migrationConnection()->statement('DROP TABLE IF EXISTS op_inspector_probe_children');
         $this->migrationConnection()->statement('DROP TABLE IF EXISTS op_inspector_probes');
 
         parent::tearDown();
@@ -130,6 +132,103 @@ final class InspectsSchemaConventionsTest extends IntegrationTestCase
             $violations,
             static fn (string $v): bool => str_contains($v, 'DB-019'),
         ), implode(' | ', $violations));
+    }
+
+    #[Test]
+    public function a_foreign_key_cascading_a_delete_into_evidence_is_reported(): void
+    {
+        // Negative test for DB-030 ‡. DADR-12 gives the reason: retention removal
+        // "never deletes a row that another party is entitled to as evidence",
+        // because row deletion would break the evidential hash chain. A cascade is
+        // how such a deletion happens without anyone writing one.
+        $this->createCascadingPair();
+
+        $violations = $this->describe($this->inspector()->inspect());
+
+        self::assertNotEmpty(array_filter(
+            $violations,
+            static fn (string $v): bool => str_contains($v, 'DB-030'),
+        ), implode(' | ', $violations));
+    }
+
+    #[Test]
+    public function a_restricting_foreign_key_into_the_same_table_is_not_reported(): void
+    {
+        // TC-041: the rule must produce no false positive in correct code. The one
+        // foreign key the schema actually has — cfg_policy_versions into
+        // cfg_policy_values — is RESTRICT, and the same shape with RESTRICT into
+        // op_ is correct and must pass.
+        $this->createCascadingPair('RESTRICT');
+
+        $violations = $this->describe($this->inspector()->inspect());
+
+        self::assertSame([], array_values(array_filter(
+            $violations,
+            static fn (string $v): bool => str_contains($v, 'DB-030'),
+        )), implode(' | ', $violations));
+    }
+
+    #[Test]
+    public function foreign_keys_the_server_has_been_told_to_ignore_are_reported(): void
+    {
+        // Negative test for DB-029: "foreign keys shall be declared and enforced
+        // by the database". A key the server ignores is a key in name only, and
+        // DB-012 ‡, DB-013 and DB-030 ‡ all rest on the server applying what the
+        // schema declares.
+        $connection = $this->applicationConnection();
+        $connection->statement('SET SESSION foreign_key_checks = 0');
+
+        try {
+            $violations = $this->describe((new SchemaConventionInspector($connection))->inspect());
+
+            self::assertNotEmpty(array_filter(
+                $violations,
+                static fn (string $v): bool => str_contains($v, 'DB-029'),
+            ), implode(' | ', $violations));
+        } finally {
+            $connection->statement('SET SESSION foreign_key_checks = 1');
+        }
+    }
+
+    #[Test]
+    public function the_deployed_session_enforces_foreign_keys(): void
+    {
+        // The positive half of DB-029, stated separately so a green suite is not
+        // resting on the negative test having restored the switch.
+        $violations = $this->describe($this->inspector()->inspect());
+
+        self::assertSame([], array_values(array_filter(
+            $violations,
+            static fn (string $v): bool => str_contains($v, 'DB-029'),
+        )));
+    }
+
+    /**
+     * A parent in `op_` and a child pointing at it, so that the delete rule is
+     * the only thing under test.
+     *
+     * `op_` is one of the three domains `DB-030` ‡ protects, and the pair is
+     * dropped in `tearDown()`. Creating a fixture table is not a migration —
+     * `CheckConstraintEnforcementProbe` does the same thing for `OPS-024` ‡ — so
+     * `DB-213`'s forward-only rule is not in play.
+     */
+    private function createCascadingPair(string $deleteRule = 'CASCADE'): void
+    {
+        $migration = $this->migrationConnection();
+
+        $migration->statement(
+            'CREATE TABLE op_inspector_probes (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY) '
+            .'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_as_cs'
+        );
+
+        $migration->statement(
+            'CREATE TABLE op_inspector_probe_children ('
+            .'id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, '
+            .'op_inspector_probe_id BIGINT UNSIGNED NOT NULL, '
+            .'CONSTRAINT op_inspector_probe_children_op_inspector_probe_id_foreign '
+            .'FOREIGN KEY (op_inspector_probe_id) REFERENCES op_inspector_probes (id) ON DELETE '.$deleteRule
+            .') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_as_cs'
+        );
     }
 
     /**

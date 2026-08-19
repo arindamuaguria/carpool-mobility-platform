@@ -22,6 +22,15 @@ use Illuminate\Database\ConnectionInterface;
  */
 final class SchemaConventionInspector implements InspectsSchemaConventions
 {
+    /**
+     * The domains holding a record another party is entitled to as evidence
+     * (`DB-030` ‡). See {@see inspectDeleteRules()} for why these three and not
+     * the other three.
+     *
+     * @var list<string>
+     */
+    private const EVIDENCE_BEARING_DOMAINS = ['op_', 'ev_', 'led_'];
+
     public function __construct(private readonly ConnectionInterface $connection) {}
 
     /**
@@ -37,6 +46,8 @@ final class SchemaConventionInspector implements InspectsSchemaConventions
             ...$this->inspectIndexes($schema),
             ...$this->inspectConstraints($schema),
             ...$this->inspectForeignKeys($schema),
+            ...$this->inspectDeleteRules($schema),
+            ...$this->inspectForeignKeyEnforcement(),
         ];
     }
 
@@ -247,6 +258,103 @@ final class SchemaConventionInspector implements InspectsSchemaConventions
         }
 
         return $violations;
+    }
+
+    /**
+     * `DB-030` ‡: *"No foreign key shall cascade a delete into a record another
+     * party is entitled to as evidence."*
+     *
+     * `DADR-12` gives the reason in plainer words — retention removal *"never
+     * deletes a row that another party is entitled to as evidence"*, because
+     * **row deletion would break the evidential hash chain**. A cascade is the
+     * way such a deletion happens without anybody writing it: a parent goes, and
+     * the database takes the evidence with it.
+     *
+     * The rule is narrowed to the domains that hold such a record, each with its
+     * reason for being in or out:
+     *
+     * - `op_` — the live operational record a counterparty is party to.
+     * - `ev_` — the chain itself; `DB-125` ‡ forbids deleting a record at all.
+     * - `led_` — the financial record, which `DB-030` ‡'s *"another party"* is
+     *   most obviously entitled to.
+     *
+     * and the three that are out: `proj_` is rebuildable from authoritative state
+     * (`ARCH-113`), `mch_` is machinery and `DB-156` makes it prunable, and `cfg_`
+     * is configuration nobody is a party to.
+     *
+     * `SET NULL` is refused alongside `CASCADE`. It does not delete the row, but
+     * it destroys the association that made the row evidence of anything, which
+     * is the same loss by a quieter route.
+     *
+     * @return list<SchemaViolation>
+     */
+    private function inspectDeleteRules(string $schema): array
+    {
+        $violations = [];
+
+        foreach ($this->rows(
+            'SELECT CONSTRAINT_NAME, TABLE_NAME, REFERENCED_TABLE_NAME, DELETE_RULE'
+            .' FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = ?',
+            [$schema],
+        ) as $row) {
+            $rule = strtoupper((string) $row['DELETE_RULE']);
+
+            if ($rule !== 'CASCADE' && $rule !== 'SET NULL') {
+                continue;
+            }
+
+            $referenced = (string) $row['REFERENCED_TABLE_NAME'];
+
+            if (! in_array(SchemaConventions::domainOf($referenced), self::EVIDENCE_BEARING_DOMAINS, true)) {
+                continue;
+            }
+
+            $violations[] = new SchemaViolation(
+                'DB-030',
+                (string) $row['TABLE_NAME'].'.'.(string) $row['CONSTRAINT_NAME'],
+                sprintf(
+                    'ON DELETE %s into %s; a record another party is entitled to as evidence is not removed by a '
+                    .'cascade, and DADR-12 removes personal data in place instead',
+                    $rule,
+                    $referenced,
+                ),
+            );
+        }
+
+        return $violations;
+    }
+
+    /**
+     * `DB-029`: *"Foreign keys shall be declared and enforced **by the
+     * database**."*
+     *
+     * Declared is what {@see inspectForeignKeys()} reads. Enforced is this: a
+     * foreign key the server has been told to ignore is a foreign key in name
+     * only, and `DB-012` ‡, `DB-013` and `DB-030` ‡ all rest on the server
+     * actually applying what the schema declares.
+     *
+     * The same reasoning as `OPS-122` ‡, which requires `CHECK` enforcement to be
+     * verified *"by attempting a violating write, not by reading a version
+     * string"* — the difference being that `foreign_key_checks` is a switch rather
+     * than a capability, so reading it is reading the thing itself.
+     *
+     * @return list<SchemaViolation>
+     */
+    private function inspectForeignKeyEnforcement(): array
+    {
+        $rows = $this->rows('SELECT @@SESSION.foreign_key_checks AS enforced', []);
+        $enforced = $rows === [] ? null : (int) $rows[0]['enforced'];
+
+        if ($enforced === 1) {
+            return [];
+        }
+
+        return [new SchemaViolation(
+            'DB-029',
+            'session.foreign_key_checks',
+            'foreign key checks are disabled, so every declared key is unenforced and DB-012 ‡, DB-013 and DB-030 ‡ '
+            .'hold only on paper',
+        )];
     }
 
     /**
