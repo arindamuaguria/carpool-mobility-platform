@@ -17,11 +17,12 @@ use Illuminate\Console\Scheduling\Schedule;
  * `withoutOverlapping()`, which is a second layer and not the primary
  * mechanism.
  *
- * `BE-148`: scheduled work frequency is **configuration**, not code. `BADR-12`
- * puts configuration in the typed, versioned policy store, which is
- * `CMP-IMP-031` and does not exist yet. No frequency is written here in the
- * meantime, because a frequency in code is exactly what `BE-148` forbids and
- * would have to be found and removed later.
+ * `BE-148`: scheduled work frequency is **configuration**, not code. The typed,
+ * versioned policy store `BADR-12` calls for now exists (`CMP-IMP-031`) — but
+ * CMP-DOC-09 §13.2 records the frequency itself as
+ * `[TBD – Technical Decision Required]`, so there is no value to configure. No
+ * frequency is written here in the meantime, because a frequency in code is
+ * exactly what `BE-148` forbids and would have to be found and removed later.
  *
  * ---
  *
@@ -32,7 +33,7 @@ use Illuminate\Console\Scheduling\Schedule;
  * |---|---|---|
  * | Recurring ride generation (`BE-143`, `BE-144` ‡) | `scheduled-generation` | **Withheld.** Recurring commute carries **zero functional requirements** (CMP-DOC-04 §9.2). `BE-144` ‡ has nothing to be idempotent about, and `ADM-187`/`ADM-191` forbid stubbing a withheld area. |
  * | Pending-payment resolution (`BE-145`) | `reconciliation` | The `Payment` aggregate does not exist (FEAT-016), and `FRD-FR-131` cannot be realised without it. |
- * | Evidential chain verification (`BE-146`) | `reconciliation` | `ev_evidential_records` does not exist. `CMP-IMP-448` schedules it, once `CMP-IMP-438` and `CMP-IMP-439` have built the log. |
+ * | Evidential chain verification (`BE-146`, `SEC-113`) | `reconciliation` | **The pass exists** and runs on demand — `evidence:verify-chain`, from `CMP-IMP-441`. `CMP-IMP-448` schedules it, and cannot yet: `BE-148` puts the frequency in policy configuration, and CMP-DOC-09 §13.2 records scheduled work frequency as `[TBD – Technical Decision Required]`. |
  * | Retention enforcement (`BE-147`) | `maintenance` | **Blocked on a business decision.** `BAD-DEC-021` is open and 8 of 9 retention periods are unset (CMP-DOC-11 §13.2). Enforcing retention against a guessed period would delete evidence a party is entitled to. |
  *
  * An entry is added here on the commit that makes its work exist — never before,

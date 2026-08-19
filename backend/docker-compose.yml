@@ -33,6 +33,20 @@ services:
       # DB-034: one time zone reference; the instant is recorded, not a local
       # wall-clock reading.
       - --default-time-zone=+00:00
+      # DB-120 ‡ requires a trigger rejecting UPDATE and DELETE on the evidential
+      # domain, as a second layer behind the withheld privilege (SEC-110 ‡).
+      # Under binary logging MySQL refuses CREATE TRIGGER unless the creator holds
+      # SUPER or this is on. The alternative is granting SUPER to the migration
+      # account, which would let it stop threads, change any global variable and
+      # bypass read_only — an enormous widening for one trigger.
+      #
+      # MySQL calls this "less safe": the risk is a non-deterministic routine
+      # breaking statement-based replication. The binlog format here is ROW, and
+      # the trigger is a SIGNAL that writes nothing.
+      #
+      # This is a DEPLOYMENT REQUIREMENT of DB-120 ‡ that neither DADR-09 nor
+      # CMP-DOC-19 anticipates, and it is reported as such.
+      - --log-bin-trust-function-creators=ON
     ports:
       - '${DB_PORT:-3306}:3306'
     volumes:

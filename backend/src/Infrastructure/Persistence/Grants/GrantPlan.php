@@ -127,6 +127,22 @@ final class GrantPlan
     /**
      * `DB-215`: the migration account is the only account holding `DDL`.
      *
+     * `TRIGGER` is in the list because `DB-120` ‡ requires a trigger rejecting
+     * `UPDATE` and `DELETE` on the evidential domain.
+     *
+     * **A trigger additionally needs a server setting, not a broader grant.**
+     * Under binary logging MySQL refuses `CREATE TRIGGER` unless the creator holds
+     * `SUPER` or `log_bin_trust_function_creators` is on. `SET_ANY_DEFINER` — the
+     * 8.4 replacement for the deprecated `SET_USER_ID` — does **not** satisfy that
+     * check; it governs setting another account as the definer, which is a
+     * different thing. It was tried and is not granted, because granting a
+     * privilege that does not help is worse than not granting it.
+     *
+     * `SUPER` is not granted either. It would let this account stop threads,
+     * change any global variable and bypass `read_only` — an enormous widening for
+     * one trigger. The server setting is applied instead, in docker-compose for
+     * development and as a deployment requirement elsewhere, and is reported.
+     *
      * @return list<string>
      */
     public function migrationGrants(string $user, string $host = '%'): array
