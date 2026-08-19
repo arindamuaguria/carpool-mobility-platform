@@ -1,0 +1,150 @@
+# Carpool Mobility Platform (CMP) — repository ignore rules
+#
+# Scope: this file covers the repository root, secrets, operating-system and editor
+# noise, and defensive patterns for the two application stacks.
+#
+# Laravel and Android Studio each ship their own .gitignore when the project is
+# scaffolded. Those will appear at backend/.gitignore and Mobile/.gitignore and are
+# authoritative for their own trees — this file does not attempt to replace them.
+# The stack patterns below exist so that nothing dangerous can be staged in the
+# window before that tooling has run.
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SECRETS AND CREDENTIALS — never committed
+#
+# CMP-DOC-13 SADR-14 and CMP-DOC-19 OPS-098: secrets are injected at deploy time
+# and shall never appear in an artefact, repository or build log.
+# CMP-DOC-19 OPS-116: the signing key shall be held in the secret store and shall
+# never appear in a repository or a build log.
+# ─────────────────────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.p8
+*.jks
+*.keystore
+auth.json
+secrets.*
+credentials.*
+service-account*.json
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OPERATING SYSTEM
+# ─────────────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OFFICE LOCK FILES
+#
+# Document/ tracks .docx and .xlsx deliberately (README §8.2 dual-format rule).
+# Word and Excel create ~$ lock files alongside them while open; those are
+# transient and must never be committed.
+# ─────────────────────────────────────────────────────────────────────────────
+~$*
+*.tmp
+*.temp
+.~lock.*#
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# EDITORS AND IDEs
+# ─────────────────────────────────────────────────────────────────────────────
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+!.vscode/extensions.json
+.fleet/
+*.swp
+*.swo
+*~
+.history/
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BACKEND — Laravel / PHP
+# ─────────────────────────────────────────────────────────────────────────────
+backend/vendor/
+backend/node_modules/
+backend/public/build/
+backend/public/hot/
+backend/public/storage/
+backend/storage/*.key
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/testing/*
+backend/storage/framework/views/*
+backend/storage/logs/*
+backend/bootstrap/cache/*
+backend/.phpunit.result.cache
+backend/.phpunit.cache/
+backend/.php-cs-fixer.cache
+backend/.psalm/
+backend/Homestead.json
+backend/Homestead.yaml
+backend/npm-debug.log
+backend/yarn-error.log
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MOBILE — Android / Kotlin / Gradle
+#
+# local.properties holds machine-specific SDK paths and is never shared.
+# CMP-DOC-08 MOB-013: the client shall not embed any environment-specific value
+# in its artefact.
+# ─────────────────────────────────────────────────────────────────────────────
+Mobile/local.properties
+Mobile/.gradle/
+Mobile/build/
+Mobile/*/build/
+Mobile/captures/
+Mobile/.externalNativeBuild/
+Mobile/.cxx/
+Mobile/app/release/
+Mobile/app/debug/
+Mobile/lint-results*.html
+Mobile/lint-results*.xml
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+*.hprof
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BUILD, TEST AND COVERAGE OUTPUT
+# ─────────────────────────────────────────────────────────────────────────────
+/build/
+/dist/
+/out/
+/coverage/
+*.log
+*.lcov
+.nyc_output/
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LOCAL SCRATCH
+#
+# Not a substitute for a decision: anything that belongs in the repository
+# belongs in a documented location, not in an ignored scratch directory.
+# ─────────────────────────────────────────────────────────────────────────────
+/.scratch/
+/tmp/
