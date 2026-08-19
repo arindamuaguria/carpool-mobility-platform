@@ -40,6 +40,51 @@ php artisan key:generate
 `.env.example` is the environment variable inventory (`TECH-DEC-005`). It carries names
 and non-secret defaults only — never a value (`BE-015`, `SADR-14`).
 
+### Database
+
+`DADR-09` requires **three** accounts against the one schema of `DB-001`:
+
+| Connection | Account | Holds |
+|---|---|---|
+| `mysql` | application | `SELECT INSERT UPDATE DELETE` on `op_`, `proj_`, `mch_`; `SELECT INSERT` only on `ev_` and `led_`; **no DDL** (`DB-118` ‡, `DB-119` ‡) |
+| `mysql_migration` | migration | DDL. Used only by migrations (`DB-215`) |
+| `mysql_read` | read | `SELECT`. Reporting |
+
+A fourth connection, `mysql_provisioning`, exists only for `db:provision-accounts` and is
+never used at runtime: `DB-122` ‡ requires that no credential able to alter the evidential
+domain be available to the application **in any environment, development included**.
+
+A local MySQL 8.4 for development — a real server, because `TC-030` ‡ forbids an in-memory
+substitute and `OPS-024` ‡ requires one that enforces `CHECK`:
+
+```bash
+docker compose up -d
+```
+
+Then create the accounts and run migrations:
+
+```bash
+composer db:up
+```
+
+`composer migrate` runs migrations under the migration account. Running them as any other
+account is refused (`DB-215`), and the application account could not perform DDL in any
+case — which is the point of `DB-119` ‡.
+
+Every migration additionally verifies, without being asked:
+
+- `DB-218` ‡ — no migration drops a column, a table or a constraint without an approval
+  recorded in `database/migrations/DESTRUCTIVE-APPROVALS.md`. Approval is the Project
+  Owner's; nothing here may record one on its own behalf.
+- `OPS-024` ‡ / `DB-217` ‡ — the server enforces `CHECK`, proven by attempting a violating
+  write. A server that accepts the clause and ignores it looks identical in the schema, and
+  fourteen of the twenty-one constraints in the CMP-DOC-11 §15 register would be decoration.
+- `DB-002`, `DB-009` ‡, `DB-010`, `DB-012` ‡, `DB-013`, `DB-015`–`DB-020` ‡ — storage-domain
+  membership, engine, collation, and the naming rules, including that **no identifier
+  incorporates a city, corridor, region or market**.
+
+`php artisan schema:verify` runs the same checks on demand, in any environment (`TC-040` ‡).
+
 ## Verification
 
 Six levels, in order, a failure stopping the later ones (`TC-025`, `TC-028`):
