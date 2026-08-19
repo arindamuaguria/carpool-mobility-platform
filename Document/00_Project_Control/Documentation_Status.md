@@ -8,7 +8,7 @@
 | Document Name | Documentation Status |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 3.7 |
+| Version | 3.8 |
 | Status | Draft |
 | Date | 2026-08-20 |
 | Author | Documentation Manager (AI-assisted) |
@@ -16,7 +16,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 3.6 (2026-08-19) |
+| Previous Version | 3.7 (2026-08-20) |
 | Related Documents | README.md, Documentation_Index.md, Document_Change_Log.md, Glossary.md, Master_Traceability_Matrix.md |
 
 ---
@@ -70,9 +70,9 @@ authoritative answer to *"where are we in the documentation programme?"*
 | ID | File | Version | Status | Last Updated |
 |---|---|---|---|---|
 | CMP-CTRL-README | README.md | **0.4** | Draft | **2026-08-19** |
-| CMP-CTRL-INDEX | Documentation_Index.md | **3.7** | Draft | **2026-08-20** |
-| CMP-CTRL-STATUS | Documentation_Status.md | **3.7** | Draft | **2026-08-20** |
-| CMP-CTRL-CHANGELOG | Document_Change_Log.md | **3.7** | Draft | **2026-08-20** |
+| CMP-CTRL-INDEX | Documentation_Index.md | **3.8** | Draft | **2026-08-20** |
+| CMP-CTRL-STATUS | Documentation_Status.md | **3.8** | Draft | **2026-08-20** |
+| CMP-CTRL-CHANGELOG | Document_Change_Log.md | **3.8** | Draft | **2026-08-20** |
 | CMP-CTRL-GLOSSARY | Glossary.md | 3.1 | Draft | 2026-08-17 |
 | CMP-CTRL-RTM | Master_Traceability_Matrix.md | **3.2** | Draft | **2026-08-20** |
 
@@ -440,7 +440,7 @@ This is advice; the Project Owner may direct otherwise.
 | Glossary terms pending addition | 0 | CMP-DOC-03 Appendix C — **added in Glossary v0.4** |
 | Known requirement gap | Fraud detection & response | `BRD-OQ-010`, `BAD-OQ-014`, `GAP-005` |
 | **Known product gaps in the core journey** | **2** | `GAP-008` driver cancellation · `GAP-009` return of value |
-| **Formal documents whose `.docx` rendering is not regenerated** | **2** — CMP-DOC-13, CMP-DOC-19 at v0.2 | README §8.2, Index §4 |
+| **Formal documents whose `.docx` rendering is not regenerated** | **2** — CMP-DOC-13, CMP-DOC-19 at v0.2. **`CC-028` is held Open by Project Owner instruction; no `.docx` is to be generated or modified until authorised.** | README §8.2, Index §4, `CC-028` |
 
 > **NOTE (2026-08-20).** *Chain totals, measured* above is **CMP-DOC-20's measurement at its
 > own issue** and is not recalculated here. CMP-DOC-13 v0.2 and CMP-DOC-19 v0.2 have since
