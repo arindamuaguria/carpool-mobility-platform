@@ -11,6 +11,10 @@
 - Absolute business rules live here and are **not reachable for override** (`BE-012`).
 - Unit-testable without a database, a framework or a network (`BE-040`, `TC-029`).
 
+Ports are declared here, in domain terms, naming no provider (`BE-036`, `BE-150`),
+and every one returns a `CapabilityResult` — `Verified`, `Reported`, `Unavailable`
+or `Rejected` (`BE-151`). A provider type appears only in an adapter (`BE-153` ‡).
+
 Organised by domain area (`BE-004`). The nine aggregates are fixed by `BE-017`:
 `User`, `Vehicle`, `Ride`, `RideRequest`, `Booking`, `Payment`, `Trip`,
 `SafetyIncident`, `OperatorCase`. `Ride` owns `SeatAllocation` (`BE-018`).
