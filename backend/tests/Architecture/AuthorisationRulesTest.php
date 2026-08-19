@@ -129,6 +129,60 @@ final class AuthorisationRulesTest extends TestCase
         self::assertNull($policy->ruleFor(Operation::named('test.anything')));
     }
 
+    public function test_the_adapter_never_decides_what_a_representation_discloses(): void
+    {
+        // CMP-IMP-466. API-050 ‡: "entitlement shall be evaluated in the
+        // application layer and never by the adapter." API-049 ‡ is what it
+        // protects — a representation includes only the fields the caller's
+        // relationship entitles them to — and AADR-08 chose relationship over
+        // role because two passengers on the same ride are entitled to different
+        // things about each other.
+        //
+        // An adapter that filtered fields itself would be a second disclosure
+        // decision, and SADR-06's objection applies unchanged: two paths diverge,
+        // and the one used less is the one that rots.
+        $offenders = [];
+
+        foreach (self::sourceFiles() as $relative => $contents) {
+            if (! str_starts_with($relative, self::INTERFACE_DIRECTORY)) {
+                continue;
+            }
+
+            foreach (['->holds(', '->holdsRoleOfKind(', 'partyReferences(', 'entitlementSubject('] as $decision) {
+                if (str_contains($contents, $decision)) {
+                    $offenders[] = $relative.' → '.$decision;
+                }
+            }
+        }
+
+        self::assertSame(
+            [],
+            $offenders,
+            'API-050 ‡: the adapter serialises what it is given; it does not decide what the caller may see.',
+        );
+    }
+
+    public function test_the_disclosure_mechanism_is_recorded_as_awaiting_its_first_resource(): void
+    {
+        // The honest half of CMP-IMP-466. API-049 ‡'s per-relationship field
+        // sets, API-055's marking of which fields are relationship-dependent and
+        // API-056's rule that absence must not reveal the value are all
+        // properties of a representation, and the surface serves no resource
+        // representation yet — CMP-DOC-10 §11's catalogue needs application
+        // services and BE-017's nine aggregates are unbuilt.
+        //
+        // The rule above lands first, so the first representation is written
+        // against a check that already exists. This assertion is what fails when
+        // one is added, so the mechanism is built then rather than forgotten.
+        $representations = array_keys(array_filter(
+            self::sourceFiles(),
+            static fn (string $relative): bool => str_starts_with($relative, self::INTERFACE_DIRECTORY.'Rest/Representation'),
+            ARRAY_FILTER_USE_KEY,
+        ));
+
+        self::assertSame([], $representations, 'A representation now exists; API-049 ‡ and API-055 need building with it.');
+    }
+
     public function test_a_refusal_is_recorded_evidentially_and_by_nothing_else(): void
     {
         // SEC-057 ‡: every refused authorisation is recorded, and BE-202 says
