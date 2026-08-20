@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cmp\Infrastructure\Laravel\Providers;
 
 use Cmp\Application\Shared\Authorisation\AuthorisationPolicy;
+use Cmp\Application\Shared\Authorisation\AuthorisationRule;
 use Cmp\Application\Shared\Authorisation\Authoriser;
 use Cmp\Application\Shared\Authorisation\RecordsAuthorisationRefusals;
 use Cmp\Application\Shared\Authorisation\Role;
@@ -27,18 +28,20 @@ final class AuthorisationServiceProvider extends ServiceProvider
     /**
      * The platform's authorisation policy.
      *
-     * **Empty.** `SEC-055` ‡ makes an operation with no stated rule refused, and
-     * no application service exists yet to state one for. `SADR-06` accepts the
-     * consequence: *"Every operation needs an explicit rule before it works at
-     * all."*
+     * **Two rules, both added on 2026-08-20 with the operations they govern** —
+     * see {@see sessionRules()}. That is the standing rule: a rule is added on
+     * the commit that adds the operation it governs, never ahead of it, because
+     * a rule for an operation that does not exist permits nothing and reviews as
+     * though something had been decided.
      *
-     * A rule is added on the commit that adds the operation it governs — never
-     * ahead of it, because a rule for an operation that does not exist permits
-     * nothing and reviews as though something had been decided.
+     * Everything else is still refused, and `SEC-055` ‡ is why that is the
+     * correct behaviour rather than a shortfall: an operation with no stated rule
+     * **is refused**. `SADR-06` accepts the consequence in terms — *"Every
+     * operation needs an explicit rule before it works at all."*
      */
     public static function policy(): AuthorisationPolicy
     {
-        return AuthorisationPolicy::of([]);
+        return AuthorisationPolicy::of(self::sessionRules());
     }
 
     /**
@@ -60,6 +63,30 @@ final class AuthorisationServiceProvider extends ServiceProvider
     public static function roles(): array
     {
         return [];
+    }
+
+    /**
+     * The two operations a caller may perform on the session they hold.
+     *
+     * Both take {@see AuthorisationRule::requiringParty()} — no capability, no
+     * role kind, nothing that touches the role set `SEC-063` leaves undecided.
+     * `SEC-066` ‡ is the whole rule: *"a user shall access only records to which
+     * they are a party"*, and `SEC-044` ‡ binds a session to exactly one actor,
+     * so the party is unambiguous and there is no list to get wrong.
+     *
+     * **Neither alters entitlement**, so neither is marked
+     * {@see AuthorisationRule::alteringEntitlement()}. `SEC-058` ‡ and
+     * `API-105` ‡ guard a caller changing their own permissions; terminating or
+     * refreshing a session changes what the caller holds, not what they may do.
+     *
+     * @return array<string, AuthorisationRule>
+     */
+    public static function sessionRules(): array
+    {
+        return [
+            'sessions.current.terminate' => AuthorisationRule::requiringParty(),
+            'sessions.current.refresh' => AuthorisationRule::requiringParty(),
+        ];
     }
 
     public function register(): void

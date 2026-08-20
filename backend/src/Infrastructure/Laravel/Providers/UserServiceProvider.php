@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace Cmp\Infrastructure\Laravel\Providers;
 
+use Cmp\Application\Shared\Authorisation\Authoriser;
+use Cmp\Application\Shared\Evidence\RecordsEvidence;
 use Cmp\Application\Shared\Policy\ChangePolicyValue;
+use Cmp\Application\Shared\Transaction\TransactionBoundary;
 use Cmp\Application\User\HashesSessionTokens;
+use Cmp\Application\User\RefreshCurrentSession;
 use Cmp\Application\User\ResolveSession;
+use Cmp\Application\User\TerminateCurrentSession;
 use Cmp\Domain\Shared\Policy\PolicyStore;
 use Cmp\Domain\Shared\Time\Clock;
 use Cmp\Domain\User\SessionRepository;
@@ -80,6 +85,32 @@ final class UserServiceProvider extends ServiceProvider
                 $app->make(PolicyStore::class),
                 $app->make(Clock::class),
                 PolicyServiceProvider::sessionLifetime(),
+            ),
+        );
+
+        // CMP-IMP-057 / CMP-IMP-056. Both are ApplicationServices, so both go
+        // through the single authorisation evaluation SADR-06 requires, and
+        // AuthorisationServiceProvider::sessionRules() states the rule each needs.
+        $this->app->bind(
+            TerminateCurrentSession::class,
+            static fn (Application $app): TerminateCurrentSession => new TerminateCurrentSession(
+                $app->make(Authoriser::class),
+                $app->make(TransactionBoundary::class),
+                $app->make(SessionRepository::class),
+                $app->make(RecordsEvidence::class),
+                $app->make(Clock::class),
+            ),
+        );
+
+        $this->app->bind(
+            RefreshCurrentSession::class,
+            static fn (Application $app): RefreshCurrentSession => new RefreshCurrentSession(
+                $app->make(Authoriser::class),
+                $app->make(TransactionBoundary::class),
+                $app->make(SessionRepository::class),
+                $app->make(HashesSessionTokens::class),
+                $app->make(RecordsEvidence::class),
+                $app->make(Clock::class),
             ),
         );
     }
