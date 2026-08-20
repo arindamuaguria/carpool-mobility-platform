@@ -8,7 +8,7 @@
 | Document Name | Documentation Status |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 4.3 |
+| Version | 4.4 |
 | Status | Draft |
 | Date | 2026-08-20 |
 | Author | Documentation Manager (AI-assisted) |
@@ -16,7 +16,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 4.2 (2026-08-20) |
+| Previous Version | 4.3 (2026-08-20) |
 | Related Documents | README.md, Documentation_Index.md, Document_Change_Log.md, Glossary.md, Master_Traceability_Matrix.md |
 
 ---
@@ -56,10 +56,10 @@ authoritative answer to *"where are we in the documentation programme?"*
 | Superseded | 0 |
 | Deprecated | 0 |
 | Overall documentation completion | **100% drafted, 0% approved** |
-| Traceable IDs issued | 3,820 (78 `BAD-BR` + 188 `BRD-REQ` + 83 `UC` + 260 `FRD-FR` + 162 `NFR` + 184 `SRS-REQ` + 148 `ARCH` + 168 `MOB` + 218 `BE` + 219 `API` + 232 `DB` + 242 `SEC` + 224 `UX` + 208 `PAY` + 196 `GPS` + 188 `NOTIF` + 204 `ADM` + 216 `TC` + 210 `OPS` + 192 `TR`) |
+| Traceable IDs issued | 3,822 (78 `BAD-BR` + 188 `BRD-REQ` + 83 `UC` + 260 `FRD-FR` + 162 `NFR` + 184 `SRS-REQ` + 148 `ARCH` + 168 `MOB` + 218 `BE` + 219 `API` + 232 `DB` + 244 `SEC` + 224 `UX` + 208 `PAY` + 196 `GPS` + 188 `NOTIF` + 204 `ADM` + 216 `TC` + 210 `OPS` + 192 `TR`) |
 | All statements issued | 1,992 |
 | Planning artefacts issued | **2** (§5A) — outside the formal chain |
-| Planning identifiers issued | 562 `CMP-IMP-` (507 live, 55 withdrawn) + 45 `FEAT-` — **not counted in the 3,820** |
+| Planning identifiers issued | 562 `CMP-IMP-` (507 live, 55 withdrawn) + 45 `FEAT-` — **not counted in the 3,822** |
 
 > **The two counts are separate on purpose.** `CMP-IMP-` and `FEAT-` are planning
 > identifiers, not chain identifiers; folding them into the 3,813 would overstate the
@@ -70,11 +70,11 @@ authoritative answer to *"where are we in the documentation programme?"*
 | ID | File | Version | Status | Last Updated |
 |---|---|---|---|---|
 | CMP-CTRL-README | README.md | **0.4** | Draft | **2026-08-19** |
-| CMP-CTRL-INDEX | Documentation_Index.md | **4.3** | Draft | **2026-08-20** |
-| CMP-CTRL-STATUS | Documentation_Status.md | **4.3** | Draft | **2026-08-20** |
-| CMP-CTRL-CHANGELOG | Document_Change_Log.md | **4.3** | Draft | **2026-08-20** |
+| CMP-CTRL-INDEX | Documentation_Index.md | **4.4** | Draft | **2026-08-20** |
+| CMP-CTRL-STATUS | Documentation_Status.md | **4.4** | Draft | **2026-08-20** |
+| CMP-CTRL-CHANGELOG | Document_Change_Log.md | **4.4** | Draft | **2026-08-20** |
 | CMP-CTRL-GLOSSARY | Glossary.md | 3.1 | Draft | 2026-08-17 |
-| CMP-CTRL-RTM | Master_Traceability_Matrix.md | **3.7** | Draft | **2026-08-20** |
+| CMP-CTRL-RTM | Master_Traceability_Matrix.md | **3.8** | Draft | **2026-08-20** |
 
 ## 5. Documentation Roadmap Status
 
@@ -92,7 +92,7 @@ authoritative answer to *"where are we in the documentation programme?"*
 | DOC-10 | API | API Specification | **0.3** | **Draft — awaiting Project Owner review** | Software Architect / Backend Lead |
 | DOC-11 | DATABASE | Database Design Document | **0.1** | **Draft — awaiting Project Owner review** | Software Architect / Backend Lead |
 | DOC-12 | UI/UX | UI/UX Specification | **0.1** | **Draft — awaiting Project Owner review** | UI/UX Designer |
-| DOC-13 | SECURITY | Security Design | **0.4** | **Draft — awaiting Project Owner review** | Security Analyst |
+| DOC-13 | SECURITY | Security Design | **0.5** | **Draft — awaiting Project Owner review** | Security Analyst |
 | DOC-14 | PAYMENT | Payment & UPI Specification | **0.1** | **Draft — awaiting Project Owner review** | Solution Architect / Payments |
 | DOC-15 | GPS | GPS / Live Trip Specification | **0.1** | **Draft — awaiting Project Owner review** | Software Architect |
 | DOC-16 | NOTIFICATION | Communication & Notification Specification | **0.1** | **Draft — awaiting Project Owner review** | Software Architect |
@@ -343,9 +343,9 @@ This is advice; the Project Owner may direct otherwise.
 | Absolute rules enforced by the database | 7 of 10; the other 3 are behavioural | CMP-DOC-11 §18.4 |
 | **Sizing decisions blocked by `GAP-016`** | **7** | CMP-DOC-11 §14.5 |
 | **Retention periods set** | **1 of 9** | CMP-DOC-11 §13.2 |
-| Security design statements issued | 242 (240 at v0.1; `SEC-241`–`SEC-242` at v0.2) | CMP-DOC-13 §23.1 |
+| Security design statements issued | 244 (240 at v0.1; `SEC-241`–`SEC-242` at v0.2; `SEC-243`–`SEC-244` at v0.5) | CMP-DOC-13 §23.1 |
 | Security Decision Records | 16 | CMP-DOC-13 Appendix B |
-| — integrity-critical (‡) | **135 — 56%, the highest proportion in the chain** | CMP-DOC-13 §23.2 |
+| — integrity-critical (‡) | **137 — 56%, the highest proportion in the chain** | CMP-DOC-13 §23.2 |
 | Security quality requirements mechanised | 18 of 18; **16 verifiable, 2 not** | CMP-DOC-13 §20.2 |
 | `AR-09` unmechanised properties closed | **3 of 4** — fraud remains | CMP-DOC-13 §20.3 |
 | **Requirement-chain gaps closed** | **2** — payment credentials, injection | CMP-DOC-13 §20.4 |
