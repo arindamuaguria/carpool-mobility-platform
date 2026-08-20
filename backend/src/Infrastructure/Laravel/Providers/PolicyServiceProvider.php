@@ -21,6 +21,7 @@ use Cmp\Domain\Shared\Time\Clock;
 use Cmp\Infrastructure\Persistence\Policy\DatabasePolicyChangeRecorder;
 use Cmp\Infrastructure\Persistence\Policy\DatabasePolicyStore;
 use Cmp\Infrastructure\Persistence\StateMachine\DatabaseStateModelRepository;
+use Cmp\Infrastructure\User\Argon2idAuthenticationMaterial;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\ConnectionResolverInterface;
 use Illuminate\Support\ServiceProvider;
@@ -40,11 +41,17 @@ final class PolicyServiceProvider extends ServiceProvider
     /**
      * The platform's declared policy values.
      *
-     * **One key, declared on 2026-08-20 with the code that reads it** —
-     * {@see sessionLifetime()}, for `SEC-039` ‡. That is the rule this register
-     * follows: a key is declared on the commit that gives something the code to
-     * read it, because declaring one earlier would create the accessor `BADR-12`
-     * says must not exist, for behaviour nothing yet performs.
+     * **Four keys, each declared on the commit that gave it a reader** —
+     * {@see sessionLifetime()} for `SEC-039` ‡, and {@see authenticationHashCost()}'s
+     * three for `SEC-030`. That is the rule this register follows: a key is
+     * declared on the commit that gives something the code to read it, because
+     * declaring one earlier would create the accessor `BADR-12` says must not
+     * exist, for behaviour nothing yet performs.
+     *
+     * All four are **unset**. `BADR-12` applies a value by an operator action
+     * `BE-173` evidences, so the platform ships with the keys and none of the
+     * figures — and `SRS-REQ-158` rejects an attempt to use an unconfigured one
+     * rather than falling back to something nobody chose.
      *
      * CMP-DOC-09 §13.2 lists eleven **further** values that will be held as
      * policy configuration, and says of them: *"Their **existence** is
@@ -70,7 +77,59 @@ final class PolicyServiceProvider extends ServiceProvider
      */
     public static function declaredValues(): PolicyRegister
     {
-        return PolicyRegister::of(self::sessionLifetime());
+        return PolicyRegister::of(
+            self::sessionLifetime(),
+            ...self::authenticationHashCost(),
+        );
+    }
+
+    /**
+     * `SEC-030` / `SEC-031` — Argon2id's memory, time and parallelism costs.
+     *
+     * Three keys rather than one, because `SEC-244` ‡ states a floor for each
+     * separately and an operator raises them independently: memory is bought with
+     * RAM, iterations with latency, lanes with cores. A single composite key would
+     * make raising one of the three a rewrite of all three.
+     *
+     * **Declared here on the commit that gives them a reader**, which is
+     * {@see Argon2idAuthenticationMaterial}. Declared and
+     * **unset**: `SEC-031` makes the operating values deployment-time, set against
+     * the deployed hardware, and `BAD-DEP-009` has selected no hosting — so no
+     * hardware exists to set them against and none is assumed. Until an operator
+     * applies each, the store raises `PolicyNotSet` and nothing hashes, which is
+     * `SRS-REQ-158` working.
+     *
+     * `BE-172` ‡ is satisfied in the direction that matters: none of the three can
+     * relax `SEC-028` ‡, because a value beneath `SEC-244` ‡'s floor is refused
+     * rather than applied. Raising the cost is always permitted; lowering it past
+     * the floor is not a configuration the platform will run at.
+     *
+     * @return list<PolicyKey>
+     */
+    public static function authenticationHashCost(): array
+    {
+        return [
+            PolicyKey::of(
+                Argon2idAuthenticationMaterial::MEMORY_KEY,
+                PolicyType::Integer,
+                'Argon2id memory cost in KiB (SEC-030, SEC-244 ‡). Read by Argon2idAuthenticationMaterial on '
+                .'every hash and every rehash check, so BE-170 lets a re-tuning under SEC-030 take effect '
+                .'without a restart. It cannot relax SEC-028 ‡: a value below SEC-244 ‡\'s floor of 19456 KiB '
+                .'is refused, not applied.',
+            ),
+            PolicyKey::of(
+                Argon2idAuthenticationMaterial::ITERATIONS_KEY,
+                PolicyType::Integer,
+                'Argon2id time cost, in iterations (SEC-030, SEC-244 ‡). Read on every hash. It cannot relax '
+                .'SEC-028 ‡: a value below the floor of 2 is refused, not applied.',
+            ),
+            PolicyKey::of(
+                Argon2idAuthenticationMaterial::LANES_KEY,
+                PolicyType::Integer,
+                'Argon2id parallelism, in lanes (SEC-030, SEC-244 ‡). Read on every hash. It cannot relax '
+                .'SEC-028 ‡: a value below the floor of 1 is refused, not applied.',
+            ),
+        ];
     }
 
     /**
