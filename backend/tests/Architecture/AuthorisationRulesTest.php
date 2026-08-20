@@ -106,17 +106,43 @@ final class AuthorisationRulesTest extends TestCase
         self::assertSame('void', (string) $authorise->getReturnType());
     }
 
-    public function test_the_platform_policy_is_empty_and_the_role_set_is_blocked(): void
+    public function test_the_policy_states_a_rule_for_every_operation_and_no_others(): void
     {
-        // SEC-055 ‡: an operation with no stated rule is refused, and no
-        // application service exists to state one for.
-        //
+        // SEC-055 ‡: an operation with no stated rule is refused. The policy holds
+        // exactly the rules for the operations that exist — two, added on
+        // 2026-08-20 with CMP-IMP-056 and CMP-IMP-057 — and a rule ahead of its
+        // operation would permit nothing while reviewing as though something had
+        // been decided.
+        self::assertSame(
+            ['sessions.current.terminate', 'sessions.current.refresh'],
+            array_keys(AuthorisationServiceProvider::sessionRules()),
+        );
+
+        self::assertSame(
+            count(AuthorisationServiceProvider::sessionRules()),
+            AuthorisationServiceProvider::policy()->count(),
+        );
+    }
+
+    public function test_no_stated_rule_depends_on_the_undecided_role_set(): void
+    {
         // SEC-063: "Role definitions and their capabilities are [TBD – Business
         // Decision Required]; the mechanism is specified and the role set is
         // not." BAD-DEC-006 is open and ADM-168 records that the administrative
         // unit cannot start without it.
-        self::assertSame(0, AuthorisationServiceProvider::policy()->count());
+        //
+        // So the role set is still empty, and every rule stated so far turns on
+        // SEC-066 ‡ — being a party to the record — which needs no role at all.
+        // A rule requiring a capability would be a rule nobody could ever satisfy,
+        // and it would look like an implementation.
         self::assertSame([], AuthorisationServiceProvider::roles());
+
+        foreach (AuthorisationServiceProvider::sessionRules() as $operation => $rule) {
+            self::assertNull($rule->capability(), $operation.' must not require a capability while SEC-063 is open.');
+            self::assertNull($rule->requiresRoleOfKind(), $operation.' must not require a role kind while SEC-063 is open.');
+            self::assertTrue($rule->requiresParty(), $operation.' turns on SEC-066 ‡, being a party to the record.');
+            self::assertFalse($rule->altersEntitlement(), $operation.' alters what the caller holds, not what they may do.');
+        }
     }
 
     public function test_a_policy_absent_of_an_operation_states_no_rule_for_it(): void
