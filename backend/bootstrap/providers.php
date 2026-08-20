@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Cmp\Infrastructure\Laravel\Providers\AppServiceProvider;
 use Cmp\Infrastructure\Laravel\Providers\AuthorisationServiceProvider;
+use Cmp\Infrastructure\Laravel\Providers\ConfigurationServiceProvider;
 use Cmp\Infrastructure\Laravel\Providers\DegradationServiceProvider;
 use Cmp\Infrastructure\Laravel\Providers\EventServiceProvider;
 use Cmp\Infrastructure\Laravel\Providers\EvidentialServiceProvider;
@@ -22,5 +23,6 @@ return [
     EvidentialServiceProvider::class,
     UserServiceProvider::class,
     // Last: its register declares capabilities against keys the providers above own.
+    ConfigurationServiceProvider::class,
     DegradationServiceProvider::class,
 ];

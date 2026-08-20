@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Cmp\Interface\Rest\Controller;
 
+use Cmp\Application\Shared\Configuration\ConfigurationVersion;
 use Cmp\Application\Shared\Degradation\ReportPlatformHealth;
 use Cmp\Application\Shared\Response\EvaluationTime;
 use Cmp\Interface\Rest\Envelope;
@@ -54,6 +55,7 @@ final class HealthController
     public function __construct(
         private readonly ReportPlatformHealth $health,
         private readonly EvaluationTime $evaluatedAt,
+        private readonly ConfigurationVersion $configurationVersion,
     ) {}
 
     public function __invoke(): JsonResponse
@@ -77,7 +79,7 @@ final class HealthController
                 // the two cannot disagree.
                 'fully_available' => $health->isFullyAvailable(),
             ],
-            Envelope::meta(ServedVersions::CURRENT, $this->evaluatedAt->stamp()),
+            Envelope::meta(ServedVersions::CURRENT, $this->evaluatedAt->stamp(), $this->configurationVersion->current()),
         );
     }
 }

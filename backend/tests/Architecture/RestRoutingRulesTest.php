@@ -54,17 +54,16 @@ final class RestRoutingRulesTest extends TestCase
      *
      * §9.1 names **five** operations: version discovery, session establishment,
      * phone verification initiation and completion, the public configuration
-     * subset, and platform health. Two are routed. The other three are not built
+     * subset, and platform health. Three are routed. The other two are not built
      * — session establishment and both verification operations are blocked at
-     * `CC-034`, and the configuration resource belongs to CMP-DOC-10 §14 — so
-     * naming them here would exempt paths that do not exist.
+     * `CC-034` — so naming them here would exempt paths that do not exist.
      *
      * `API-110` puts this list in §9.1 *"and nowhere else"*, which is why it is
      * asserted against rather than merely used.
      *
      * @var list<string>
      */
-    private const REACHABLE_WITHOUT_A_SESSION = ['versions', 'health'];
+    private const REACHABLE_WITHOUT_A_SESSION = ['versions', 'health', 'configuration'];
 
     public function test_no_path_segment_encodes_an_action(): void
     {
@@ -155,7 +154,7 @@ final class RestRoutingRulesTest extends TestCase
         // this test may grow. Three of §9.1's five are unrouted — session
         // establishment and both verification operations are blocked at CC-034 —
         // and this fails if a sixth path is ever exempted here.
-        self::assertSame(['versions', 'health'], self::REACHABLE_WITHOUT_A_SESSION);
+        self::assertSame(['versions', 'health', 'configuration'], self::REACHABLE_WITHOUT_A_SESSION);
 
         foreach (self::REACHABLE_WITHOUT_A_SESSION as $exempt) {
             self::assertContains(
