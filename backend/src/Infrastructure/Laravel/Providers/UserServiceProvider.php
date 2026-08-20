@@ -8,6 +8,7 @@ use Cmp\Application\Shared\Authorisation\Authoriser;
 use Cmp\Application\Shared\Evidence\RecordsEvidence;
 use Cmp\Application\Shared\Policy\ChangePolicyValue;
 use Cmp\Application\Shared\Transaction\TransactionBoundary;
+use Cmp\Application\User\EstablishSession;
 use Cmp\Application\User\HashesAuthenticationMaterial;
 use Cmp\Application\User\HashesSessionTokens;
 use Cmp\Application\User\RefreshCurrentSession;
@@ -16,7 +17,9 @@ use Cmp\Application\User\TerminateCurrentSession;
 use Cmp\Domain\Shared\Policy\PolicyStore;
 use Cmp\Domain\Shared\Time\Clock;
 use Cmp\Domain\User\SessionRepository;
+use Cmp\Domain\User\UserRepository;
 use Cmp\Infrastructure\Persistence\User\DatabaseSessionRepository;
+use Cmp\Infrastructure\Persistence\User\DatabaseUserRepository;
 use Cmp\Infrastructure\User\Argon2idAuthenticationMaterial;
 use Cmp\Infrastructure\User\RandomSessionTokens;
 use Illuminate\Contracts\Foundation\Application;
@@ -41,7 +44,7 @@ use Illuminate\Support\ServiceProvider;
  * | `SEC-039` ‡ session lifetime | 24 hours | **Yes** — {@see ResolveSession}, on every request |
  * | `SEC-030` Argon2id memory, iterations, lanes | Deployment-time (`SEC-031`) | **Yes** — {@see Argon2idAuthenticationMaterial}, on every hash |
  * | `SEC-017` demonstration lifetime | 10 minutes | No — nothing issues or checks a demonstration yet |
- * | `SEC-049` concurrent session limit | 3 | No — it bites at establishment, which is unbuilt |
+ * | `SEC-049` concurrent session limit | 3 | **Yes** — {@see EstablishSession}, once per establishment |
  *
  * ## None of the values is set here either
  *
@@ -97,6 +100,34 @@ final class UserServiceProvider extends ServiceProvider
                 $app->make(PolicyStore::class),
                 $app->make(Clock::class),
                 PolicyServiceProvider::sessionLifetime(),
+            ),
+        );
+
+        $this->app->singleton(
+            UserRepository::class,
+            fn (Application $app): DatabaseUserRepository => new DatabaseUserRepository(
+                $app->make(ConnectionResolverInterface::class)
+                    ->connection(PersistenceServiceProvider::APPLICATION_CONNECTION),
+                $app->make(Clock::class),
+            ),
+        );
+
+        // CMP-IMP-053. SEC-051 ‡, FRD-FR-018 and SEC-243 ‡ are stated once here,
+        // for every caller that ever establishes a session — which is why the
+        // authentication that precedes it is not this service's.
+        $this->app->bind(
+            EstablishSession::class,
+            static fn (Application $app): EstablishSession => new EstablishSession(
+                $app->make(Authoriser::class),
+                $app->make(TransactionBoundary::class),
+                $app->make(UserRepository::class),
+                $app->make(SessionRepository::class),
+                $app->make(HashesSessionTokens::class),
+                $app->make(PolicyStore::class),
+                $app->make(RecordsEvidence::class),
+                $app->make(Clock::class),
+                PolicyServiceProvider::sessionLifetime(),
+                PolicyServiceProvider::concurrentSessionLimit(),
             ),
         );
 

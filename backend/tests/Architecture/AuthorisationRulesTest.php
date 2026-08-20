@@ -109,12 +109,12 @@ final class AuthorisationRulesTest extends TestCase
     public function test_the_policy_states_a_rule_for_every_operation_and_no_others(): void
     {
         // SEC-055 ‡: an operation with no stated rule is refused. The policy holds
-        // exactly the rules for the operations that exist — two, added on
-        // 2026-08-20 with CMP-IMP-056 and CMP-IMP-057 — and a rule ahead of its
+        // exactly the rules for the operations that exist — three, added with
+        // CMP-IMP-053, CMP-IMP-056 and CMP-IMP-057 — and a rule ahead of its
         // operation would permit nothing while reviewing as though something had
         // been decided.
         self::assertSame(
-            ['sessions.current.terminate', 'sessions.current.refresh'],
+            ['sessions.establish', 'sessions.current.terminate', 'sessions.current.refresh'],
             array_keys(AuthorisationServiceProvider::sessionRules()),
         );
 
