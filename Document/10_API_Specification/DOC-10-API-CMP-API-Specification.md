@@ -15,7 +15,7 @@
 | Short Name | API |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | Draft |
 | Date | 2026-08-20 |
 | Author | Solution Architect / Backend Lead (AI-assisted) |
@@ -23,7 +23,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 0.1 (2026-08-17) |
+| Previous Version | 0.2 (2026-08-20) |
 | Predecessor Documents | CMP-DOC-01 … CMP-DOC-09, **all Draft, none approved** (CMP-DOC-09 at v0.2, the remainder at v0.1) |
 | Related Documents | `00_Project_Control/README.md`, `Documentation_Index.md`, `Documentation_Status.md`, `Document_Change_Log.md`, `Glossary.md`, `Master_Traceability_Matrix.md` |
 | Successor Documents | CMP-DOC-11 (Database), CMP-DOC-14 (Payment & UPI), CMP-DOC-15 (GPS / Live Trip), CMP-DOC-16 (Communication & Notification) |
@@ -34,6 +34,7 @@
 |---|---|---|---|---|
 | 0.1 | 2026-08-17 | Solution Architect / Backend Lead (AI-assisted) | Initial issue. Specifies the platform's external interface: 10 interface drivers, **14 API decisions**, the interface model and conventions, versioning and negotiation, representation rules, idempotency, the four-branch error model, authorisation and session carriage, collections, the resource catalogue across 13 functional areas, the safety surface, the provider callback surface, configuration delivery, rate limiting posture and interface quality obligations. Issues 216 statements (`API-001` … `API-216`). | Draft |
 | 0.2 | 2026-08-20 | Solution Architect / Backend Lead (AI-assisted) | **Three implementation readings ratified and recorded.** Building `FEAT-035` found three places where this document states a requirement without stating how it is met, and the implementation had to choose in order to meet it at all. Each choice was reported rather than taken silently, and the Project Owner ratified all three on 2026-08-20. **`API-217`** records the response envelope: `API-022`, `API-023`, `API-043` ‡ and `API-064` each require a marking and none says where it goes, so all four are carried in one `meta` object beside `data` — one envelope rather than four separate inventions. The four error branch shapes of `API-072` ‡ are unchanged and do not use `data`. **`API-218`** records `426 Upgrade Required` as the status of the version-unsupported outcome, which §5 describes without a code and §8.6 places outside the four branches; `API-024` ‡’s constraint is that it is **not** a not-found outcome, and that is preserved. **`API-219`** records the reading of `API-071` ‡ that a request naming no operation — an unrouted path or method — is not an operation failing, so the framework’s own not-found and method-not-allowed responses are not forced into the four branches. Issues 3 statements (`API-217` … `API-219`); §5, §6 and §8 gain one each. **No existing statement was altered, no ‡ marking changed, and no operation, resource or field was added.** | Draft |
+| 0.3 | 2026-08-20 | Solution Architect / Backend Lead (AI-assisted) | **§15.3’s session lifetime bound is no longer unset.** `SEC-039` ‡ was decided as **twenty-four hours** on 2026-08-20 and `API-104` cites it, so the tuning-value register records the figure and the count of unset values there falls from nine to eight. **The value is not stated in this document’s own terms** — CMP-DOC-13 owns it and this is a pointer, which is why §15.3’s preamble that *"their existence is specified here; their values are not invented"* is unchanged. **No statement was created or altered.** | Draft |
 
 ## 0.3 Distribution List
 
@@ -1162,7 +1163,7 @@ Their **existence** is specified here; their **values** are not invented.
 | Verification attempt limit per number | `[TBD – Business Decision Required]` |
 | Request payload size bound | `[TBD – Technical Decision Required]` |
 | Idempotency key retention duration | `[TBD – Technical Decision Required]` |
-| Session lifetime bound | `[TBD – Business Decision Required]` |
+| Session lifetime bound | **Decided 2026-08-20 — twenty-four hours** (`SEC-039` ‡; CMP-DOC-13 owns the value) |
 | Position staleness bound | `[TBD – Technical Decision Required]` |
 
 > No value above is asserted anywhere in this document. Nine values are configurable
