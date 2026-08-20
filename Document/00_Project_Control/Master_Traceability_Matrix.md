@@ -8,7 +8,7 @@
 | Document Name | Master Traceability Matrix |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 3.2 |
+| Version | 3.3 |
 | Status | Draft |
 | Date | 2026-08-20 |
 | Author | Documentation Manager (AI-assisted) |
@@ -16,7 +16,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 3.1 (2026-08-17) |
+| Previous Version | 3.2 (2026-08-20) |
 | Related Documents | README.md, Documentation_Index.md, Documentation_Status.md, Document_Change_Log.md, Glossary.md |
 
 ---
@@ -122,13 +122,14 @@ the same way.
 | CMP-DOC-12 UIUX v0.1 | `UX-001` … `UX-224` | 224 | 0 | Contiguous, no gaps, no duplicates. `TRACEABILITY: TBD` — CMP-DOC-18 does not exist. Use case tiers and citations resolved against source text at issue. |
 | CMP-DOC-13 SECURITY v0.2 | `SEC-001` … `SEC-242` | 242 | 0 | Unique, no duplicates. `TRACEABILITY: TBD` — CMP-DOC-14 … CMP-DOC-19 do not exist. Citations resolved against source text at issue. **v0.2 adds `SEC-241`–`SEC-242` to §14**, so §14 is `SEC-163`–`SEC-178` plus `SEC-241`–`SEC-242` and the section is no longer one contiguous block; identifiers are never renumbered (Index §6). |
 | CMP-DOC-11 DATABASE v0.1 | `DB-001` … `DB-232` | 232 | 0 | Contiguous, no gaps, no duplicates. `TRACEABILITY: TBD` — CMP-DOC-13 … CMP-DOC-19 do not exist. Citations resolved against source text at issue. |
-| CMP-DOC-10 API v0.1 | `API-001` … `API-216` | 216 | 0 | Contiguous, no gaps, no duplicates. `TRACEABILITY: TBD` — CMP-DOC-11 … CMP-DOC-18 do not exist. Citations resolved against source text at issue. |
+| CMP-DOC-10 API v0.2 | `API-001` … `API-219` | 219 | 0 | Unique, no duplicates. `TRACEABILITY: TBD` — CMP-DOC-11 … CMP-DOC-18 do not exist. Citations resolved against source text at issue. **v0.2 adds `API-217` to §6, `API-218` to §5 and `API-219` to §8**, so three sections are no longer contiguous blocks; identifiers are never renumbered (Index §6). |
 | CMP-DOC-09 BACKEND v0.2 | `BE-001` … `BE-218` | 218 | 0 | Contiguous, no gaps, no duplicates. `TRACEABILITY: TBD` — CMP-DOC-10, 11, 17 and 18 do not exist. **Upward citations re-resolved against source text at v0.2**; 7 statements with no upstream counterpart disclosed in §18.7. |
 
 > **NOTE (2026-08-20).** The chain totals recorded in the CMP-DOC-20 row above — 3,621
 > statements and 1,412 ‡ — are **CMP-DOC-20's measurement at its own issue** and are not
-> recalculated here. Since that measurement CMP-DOC-13 v0.2 and CMP-DOC-19 v0.2 have added
-> four statements, one of them ‡, so the chain now holds 3,625 statements and 1,413 ‡.
+> recalculated here. Since that measurement three documents have reached v0.2 and added
+> seven statements, one of them ‡ — four at CMP-DOC-13 v0.2 and CMP-DOC-19 v0.2, three at
+> CMP-DOC-10 v0.2 — so the chain now holds 3,628 statements and 1,413 ‡.
 > CMP-DOC-20 is **not** revised by this change; its figures continue to read as at issue.
 
 **Distribution by domain** (per CMP-DOC-01 §28):
