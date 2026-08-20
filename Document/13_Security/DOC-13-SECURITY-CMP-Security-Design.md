@@ -15,7 +15,7 @@
 | Short Name | SECURITY |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | Draft |
 | Date | 2026-08-20 |
 | Author | Security Analyst (AI-assisted) |
@@ -23,7 +23,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 0.2 (2026-08-20) |
+| Previous Version | 0.3 (2026-08-20) |
 | Predecessor Documents | CMP-DOC-01 … CMP-DOC-11, **all Draft, none approved** (CMP-DOC-09 at v0.2, the remainder at v0.1). CMP-DOC-12 does not exist. |
 | Related Documents | `00_Project_Control/README.md`, `Documentation_Index.md`, `Documentation_Status.md`, `Document_Change_Log.md`, `Glossary.md`, `Master_Traceability_Matrix.md` |
 | Successor Documents | CMP-DOC-14 (Payment & UPI), CMP-DOC-15 (GPS / Live Trip), CMP-DOC-17 (Admin / Filament), CMP-DOC-18 (Testing & QA), CMP-DOC-19 (DevOps / Deployment) |
@@ -35,6 +35,7 @@
 | 0.1 | 2026-08-17 | Security Analyst (AI-assisted) | Initial issue. Specifies the security mechanisms deferred here by five predecessors: 10 security drivers, **16 security decisions**, trust boundary defences, authentication, session management, authorisation, protection at rest and in transit, the evidential chain mechanism, injection defence, payment credential handling, client-side security, secrets and key management, abuse posture, the fraud position, logging and response, backup security, and verification. Issues 240 statements (`SEC-001` … `SEC-240`). | Draft |
 | 0.2 | 2026-08-20 | Security Analyst (AI-assisted) | **The evidential chain construction ratified and recorded in §14.2.** `SEC-107` required a keyed message authentication construction over a canonical serialisation and left the specific algorithm to §14.2 as a technical decision; §14.2 named no algorithm. The Project Owner ratified **HMAC-SHA-256 over the length-prefixed canonical serialisation of `SEC-108` ‡** on 2026-08-20, and it is now recorded at `SEC-241`. `SEC-242` records that this does not close `SEC-174`: each record continues to carry the construction that produced it, so the choice remains replaceable by a staged migration. Issues 2 statements (`SEC-241`, `SEC-242`); §14 now holds 18. **No existing statement was altered, no ‡ marking changed, and no compliance claim is made — §0.6.2 continues to apply.** | Draft |
 | 0.3 | 2026-08-20 | Security Analyst (AI-assisted) | **`SEC-025` decided: five attempts per phone number per hour, and no account lockout.** `SEC-024` holds the limit, the window and the lockout behaviour as policy configuration; all three now have a value, and the third is **none**. A dated **FACT** records two consequences. First, this single bound serves both `SEC-022` ‡ and `SEC-023` ‡ rather than only the latter: `SEC-015` makes authentication *the* demonstration of possession of a verified number, so an authentication attempt and a verification attempt are the same act against the same number, and the Project Owner’s *"no account lockout"* settles the account dimension explicitly. Second, **no account lockout means no locked-account state and therefore no column holding one** — the bound is enforced against the attempts `DB-043` retains, which is what that statement asks for. The four remaining authentication values (`SEC-017`, `SEC-031`, `SEC-039`, `SEC-049`) are **still undecided** and are named as such. **No statement other than `SEC-025` was altered and no ‡ marking changed.** | Draft |
+| 0.4 | 2026-08-20 | Security Analyst (AI-assisted) | **Three of the four remaining authentication values decided: `SEC-017` ten minutes, `SEC-039` twenty-four hours, `SEC-049` three concurrent sessions.** Each is a bound `BADR-12` holds as policy configuration, so each is recorded here as the decided figure and applied through the policy store rather than compiled in. `SEC-049` leaves §20.8’s awaiting-decision register and §23.1’s business-decision marker count falls from 20 to 19. **Two things are explicitly not decided by this entry.** `SEC-031`’s hash cost parameters remain `[TBD – Technical Decision Required]`, and `SEC-030`/`SEC-031` require them set against deployed hardware, which `BAD-DEP-009` has not selected. And **`SEC-049` now has a number but still no behaviour**: no statement in this document or in CMP-DOC-10 says what happens when the limit is reached — whether the new session is refused or the oldest evicted — and none is invented. A dated **FACT** in §6 records that gap so it is not mistaken for settled. **No statement other than the three was altered and no ‡ marking changed.** | Draft |
 
 ## 0.3 Distribution List
 
@@ -545,7 +546,7 @@ flowchart LR
 |---|---|---|
 | `SEC-015` | Authentication shall be demonstration of possession of a verified phone number. | `SADR-02`, `FRD-FR-007` |
 | `SEC-016` ‡ | A demonstration shall be stored only in non-recoverable form. | `SADR-04`, `NFR-053` |
-| `SEC-017` | A demonstration shall have a bounded lifetime, and the bound shall be policy configuration. | `NFR-055`, `BADR-12` |
+| `SEC-017` | A demonstration shall have a bounded lifetime, and the bound shall be policy configuration. **Decided 2026-08-20: ten minutes.** | `NFR-055`, `BADR-12` |
 | `SEC-018` ‡ | A demonstration shall be single-use; acceptance shall invalidate it. | `SADR-02` |
 | `SEC-019` | A demonstration shall be generated with a cryptographically secure random source. | `SADR-04` |
 | `SEC-020` ‡ | Comparison of a demonstration shall be performed in constant time with respect to its content. | `SADR-04` |
@@ -642,7 +643,7 @@ stateDiagram-v2
 | `SEC-036` ‡ | The platform shall store a hash of the token, never the token. | `SADR-04`, `NFR-053` |
 | `SEC-037` ‡ | A token shall be carried in a request header and never in a URI, a query parameter or a body field. | `API-100`, `NFR-062` |
 | `SEC-038` ‡ | A token shall never appear in a response body, in a log, in a diagnostic record or in an error message. | `API-101`, `NFR-123` |
-| `SEC-039` ‡ | Session lifetime shall be bounded, and the bound shall be policy configuration. | `NFR-055`, `API-104` |
+| `SEC-039` ‡ | Session lifetime shall be bounded, and the bound shall be policy configuration. **Decided 2026-08-20: twenty-four hours**, measured from establishment. | `NFR-055`, `API-104` |
 | `SEC-040` ‡ | A terminated session shall be recorded as terminated and shall be unusable thereafter. | `NFR-054`, `DB-044` |
 | `SEC-041` ‡ | Session state shall be held in the store and not in application-instance memory. | `ARCH-139`, `ARCH-138` |
 | `SEC-042` | Session validation shall be a hash-and-lookup against the store on every request. | `SADR-04`, `SEC-036` |
@@ -652,10 +653,27 @@ stateDiagram-v2
 | `SEC-046` | Terminating all of a user's sessions shall be possible as a single operation, for use when compromise is suspected. | `NFR-054`, `SADR-13` |
 | `SEC-047` | Session records shall be retained after termination for the period `DB-169` sets, so that reuse attempts remain detectable. | `DB-044`, `NFR-054` |
 | `SEC-048` ‡ | A request bearing a terminated, expired or unknown token shall be refused identically, so that the three are indistinguishable to a caller. | `API-107`, `NFR-061` |
-| `SEC-049` | Concurrent sessions per user shall be permitted, and their number shall be policy configuration. | `BADR-12`, `[TBD – Business Decision Required]` |
+| `SEC-049` | Concurrent sessions per user shall be permitted, and their number shall be policy configuration. **Decided 2026-08-20: three.** What happens when the limit is reached is **not stated by any requirement** and is not decided here — see the FACT below. | `BADR-12` |
 | `SEC-050` | Session establishment, refresh and termination shall each be evidenced. | `SADR-15`, `NFR-125` |
 | `SEC-051` ‡ | No session shall be established for a caller whose account state does not permit it. | `SADR-06`, `DB-045` |
 | `SEC-052` | Session material on the device is `SADR-13`'s subject and is specified in §13.1. | §13.1 |
+
+> **FACT (2026-08-20).** `SEC-017`, `SEC-039` and `SEC-049` were decided by the Project
+> Owner as **ten minutes**, **twenty-four hours** and **three** respectively. Each remains
+> policy configuration under `BADR-12`: the figure is recorded here and applied through the
+> policy store, so changing it is an operator action that `BE-173` evidences, not a release.
+>
+> **`SEC-049` has a number and no behaviour.** It says concurrent sessions *"shall be
+> permitted, and their number shall be policy configuration"*, and **no statement here or
+> in CMP-DOC-10 §11.1 says what the platform does when a fourth session is requested**:
+> refusing the new one and evicting the oldest are both defensible, and they differ for a
+> user whose device was lost. `SEC-046` covers terminating **all** of a user’s sessions
+> deliberately, which is a different act. **No eviction policy is invented**, so session
+> establishment cannot be implemented against this limit until the behaviour is decided.
+>
+> `SEC-031` is also still open. `SEC-030` requires the cost parameters to be re-tuned when
+> hardware changes and `SEC-031` requires them set against deployed hardware, which
+> `BAD-DEP-009` has not selected.
 
 ---
 
@@ -1250,7 +1268,6 @@ new.
 | `SEC-183` | Rate limits, windows and thresholds — `GAP-012`. **`SEC-025` left this row on 2026-08-20**, decided at v0.3. |
 | `SEC-031`, `SEC-175` | Hash and algorithm parameters — deployed hardware |
 | `SEC-034` | Account recovery — `SEC-OQ-05` |
-| `SEC-049` | Concurrent session limit |
 | `SEC-063` | Role set — CMP-DOC-17 |
 | `SEC-070` | Disclosure scopes — `NFR-066` |
 | `SEC-171` | Key rotation periods |
@@ -1341,7 +1358,7 @@ new.
 | Statements with no upstream counterpart | 4 |
 | **Compliance or certification claims** | **0** |
 | Assumptions / Risks / Open questions | 6 / 8 / 8 |
-| `[TBD – Business Decision Required]` markers | 20 (21 at v0.1; `SEC-025` decided at v0.3) |
+| `[TBD – Business Decision Required]` markers | 19 (21 at v0.1; `SEC-025` at v0.3, `SEC-049` at v0.4) |
 | `[TBD – Technical Decision Required]` markers | 6 |
 
 ### Statements by Section

@@ -8,7 +8,7 @@
 | Document Name | Documentation Index |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 4.2 |
+| Version | 4.3 |
 | Status | Draft |
 | Date | 2026-08-20 |
 | Author | Documentation Manager (AI-assisted) |
@@ -16,7 +16,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 4.1 (2026-08-20) |
+| Previous Version | 4.2 (2026-08-20) |
 | Related Documents | README.md, Documentation_Status.md, Document_Change_Log.md, Glossary.md, Master_Traceability_Matrix.md |
 
 ---
@@ -33,11 +33,11 @@ approved, superseded, or deprecated.
 | ID | Document | Version | Status | Location |
 |---|---|---|---|---|
 | CMP-CTRL-README | Documentation Repository README | **0.4** | Draft | `Document/00_Project_Control/README.md` |
-| CMP-CTRL-INDEX | Documentation Index | **4.2** | Draft | `Document/00_Project_Control/Documentation_Index.md` |
-| CMP-CTRL-STATUS | Documentation Status | **4.2** | Draft | `Document/00_Project_Control/Documentation_Status.md` |
-| CMP-CTRL-CHANGELOG | Document Change Log | **4.2** | Draft | `Document/00_Project_Control/Document_Change_Log.md` |
+| CMP-CTRL-INDEX | Documentation Index | **4.3** | Draft | `Document/00_Project_Control/Documentation_Index.md` |
+| CMP-CTRL-STATUS | Documentation Status | **4.3** | Draft | `Document/00_Project_Control/Documentation_Status.md` |
+| CMP-CTRL-CHANGELOG | Document Change Log | **4.3** | Draft | `Document/00_Project_Control/Document_Change_Log.md` |
 | CMP-CTRL-GLOSSARY | Glossary | 3.1 | Draft | `Document/00_Project_Control/Glossary.md` |
-| CMP-CTRL-RTM | Master Traceability Matrix | **3.6** | Draft | `Document/00_Project_Control/Master_Traceability_Matrix.md` |
+| CMP-CTRL-RTM | Master Traceability Matrix | **3.7** | Draft | `Document/00_Project_Control/Master_Traceability_Matrix.md` |
 
 ## 3. Formal Document Register (DOC-01 … DOC-20)
 
@@ -52,10 +52,10 @@ approved, superseded, or deprecated.
 | CMP-DOC-07 | System Architecture Document | SAD | **0.1** | **Draft** | `Document/07_System_Architecture/DOC-07-SAD-CMP-System-Architecture.md` + `.docx` |
 | CMP-DOC-08 | Mobile Architecture Document | MOBILE | **0.1** | **Draft** | `Document/08_Mobile_Architecture/DOC-08-MOBILE-CMP-Mobile-Architecture.md` + `.docx` |
 | CMP-DOC-09 | Backend Architecture Document | BACKEND | **0.2** | **Draft** | `Document/09_Backend_Architecture/DOC-09-BACKEND-CMP-Backend-Architecture.md` + `.docx` |
-| CMP-DOC-10 | API Specification | API | **0.2** | **Draft** | `Document/10_API_Specification/DOC-10-API-CMP-API-Specification.md` + `.docx` |
+| CMP-DOC-10 | API Specification | API | **0.3** | **Draft** | `Document/10_API_Specification/DOC-10-API-CMP-API-Specification.md` + `.docx` |
 | CMP-DOC-11 | Database Design Document | DATABASE | **0.1** | **Draft** | `Document/11_Database_Design/DOC-11-DATABASE-CMP-Database-Design.md` + `.docx` |
 | CMP-DOC-12 | UI/UX Specification | UIUX | **0.1** | **Draft** | `Document/12_UI_UX_Specification/DOC-12-UIUX-CMP-UI-UX-Specification.md` + `.docx` |
-| CMP-DOC-13 | Security Design | SECURITY | **0.3** | **Draft** | `Document/13_Security/DOC-13-SECURITY-CMP-Security-Design.md` + `.docx` |
+| CMP-DOC-13 | Security Design | SECURITY | **0.4** | **Draft** | `Document/13_Security/DOC-13-SECURITY-CMP-Security-Design.md` + `.docx` |
 | CMP-DOC-14 | Payment & UPI Specification | PAYMENT | **0.1** | **Draft** | `Document/14_Payment_UPI/DOC-14-PAYMENT-CMP-Payment-UPI-Specification.md` + `.docx` |
 | CMP-DOC-15 | GPS / Live Trip Specification | GPS | **0.1** | **Draft** | `Document/15_GPS_Live_Trip/DOC-15-GPS-CMP-Live-Trip-Specification.md` + `.docx` |
 | CMP-DOC-16 | Communication & Notification Specification | NOTIFICATION | **0.1** | **Draft** | `Document/16_Communication_Notifications/DOC-16-NOTIFICATION-CMP-Communication-Notifications.md` + `.docx` |
