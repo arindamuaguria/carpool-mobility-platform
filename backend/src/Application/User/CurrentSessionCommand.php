@@ -36,6 +36,20 @@ final class CurrentSessionCommand implements AuthorisationTarget, StateChangingC
         private readonly IdempotencyKey $idempotencyKey,
     ) {}
 
+    /**
+     * Built from what the interface layer was handed, rather than from a session
+     * it named itself.
+     *
+     * `BE-002` keeps an adapter out of the `Domain` layer, so a REST controller
+     * cannot hold a {@see Session} to pass here. It holds an
+     * {@see AuthenticatedCaller} — this layer's — and this reads the session out
+     * of it, on this side of the boundary.
+     */
+    public static function from(AuthenticatedCaller $caller, IdempotencyKey $idempotencyKey): self
+    {
+        return new self($caller->session(), $idempotencyKey);
+    }
+
     public function session(): Session
     {
         return $this->session;

@@ -70,7 +70,8 @@
             "@test:architecture",
             "@test:domain",
             "@test:integration",
-            "@test:contract"
+            "@test:contract",
+            "@test:system"
         ],
         "migrate": [
             "@php artisan migrate --database=mysql_migration"

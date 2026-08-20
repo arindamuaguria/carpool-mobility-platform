@@ -94,19 +94,37 @@ final class RestRoutingRulesTest extends TestCase
         self::assertStringContainsString('RequireSupportedVersion::class', $routes);
         self::assertStringContainsString('ServeJsonOnly::class', $routes);
 
-        // One group, so there is no second place a route could be registered
-        // without them.
-        self::assertSame(1, substr_count($routes, '->group('));
+        // One outer group, so there is no second place a route could be
+        // registered without them. The inner group adds RequireSession to a
+        // subset; it cannot remove what the outer one applied.
+        self::assertSame(1, substr_count($routes, "->middleware([\n"));
     }
 
-    public function test_the_surface_declares_only_operations_reachable_without_a_session(): void
+    public function test_every_operation_outside_section_9_1_sits_behind_a_session(): void
     {
         // API-110: "which operations are reachable without a session is stated in
-        // §9.1 and nowhere else." §9.1 names five; the surface serves one of them
-        // and nothing else, so no operation is currently unauthenticated by
-        // accident. API-095 ‡ will require the rest to carry a session, and this
-        // assertion is what will fail when the first one is added without it.
-        self::assertSame(['versions'], self::declaredPaths());
+        // §9.1 and nowhere else." §9.1 names five; `versions` is the one the
+        // surface serves. API-095 ‡ requires everything else to carry a session,
+        // so every other declared path must sit inside the RequireSession group —
+        // and this fails if one is ever added outside it.
+        $routes = self::routeFile();
+        $guarded = substr($routes, strpos($routes, 'RequireSession::class') ?: 0);
+
+        foreach (self::declaredPaths() as $path) {
+            if ($path === 'versions') {
+                continue;
+            }
+
+            self::assertStringContainsString(
+                "'".$path."'",
+                $guarded,
+                'API-095 ‡: '.$path.' is not among CMP-DOC-10 §9.1\'s five, so it requires an authenticated session.',
+            );
+        }
+
+        // And `versions` is not behind it — API-026 needs the unsupported-version
+        // outcome and the range reachable before a client can authenticate.
+        self::assertStringNotContainsString("'versions'", $guarded);
     }
 
     /**

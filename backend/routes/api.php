@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use Cmp\Interface\Rest\Controller\CurrentSessionController;
 use Cmp\Interface\Rest\Controller\VersionsController;
 use Cmp\Interface\Rest\Middleware\RequireIdempotencyKey;
+use Cmp\Interface\Rest\Middleware\RequireSession;
 use Cmp\Interface\Rest\Middleware\RequireSupportedVersion;
 use Cmp\Interface\Rest\Middleware\ServeJsonOnly;
 use Cmp\Interface\Rest\ServedVersions;
@@ -19,8 +21,10 @@ use Illuminate\Support\Facades\Route;
  * would produce the `404` that statement forbids.
  *
  * `API-110`: which operations are reachable without a session is stated in
- * CMP-DOC-10 §9.1 and nowhere else. Every operation below is one of the five it
- * names; no session middleware exists yet because no operation needing one does.
+ * CMP-DOC-10 §9.1 and nowhere else. `versions` is one of the five it names;
+ * everything else sits inside the `RequireSession` group, and
+ * `RestRoutingRulesTest` fails the build if an operation is ever added outside
+ * it.
  *
  * **The catalogue is nearly empty, and that is the specification's shape rather
  * than this file's.** CMP-DOC-10 §11 lists the operations for behaviour
@@ -47,4 +51,19 @@ Route::prefix(ServedVersions::PREFIX.'/{version}')
     ->group(function (): void {
         // API-027 / §9.1 — reachable without a session.
         Route::get('versions', VersionsController::class)->name('versions.show');
+
+        // API-095 ‡: everything CMP-DOC-10 §9.1 does not name requires an
+        // authenticated session. RequireSession establishes who is calling;
+        // SEC-054 ‡ and API-097 ‡ leave whether they may to the application
+        // service, which evaluates the rule AuthorisationServiceProvider states.
+        //
+        // AADR-07 / API-006: `sessions/current` is a resource and `refresh` is
+        // its sub-resource, not a verb — the method carries the action.
+        Route::middleware(RequireSession::class)->group(function (): void {
+            Route::delete('sessions/current', [CurrentSessionController::class, 'destroy'])
+                ->name('sessions.current.terminate');
+
+            Route::post('sessions/current/refresh', [CurrentSessionController::class, 'refresh'])
+                ->name('sessions.current.refresh');
+        });
     });
