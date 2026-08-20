@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Tests;
 
 /**
- * The twenty-one constraints of CMP-DOC-11 §15, as one list.
+ * The integrity constraint register — CMP-DOC-11 §15's twenty-one, and the two
+ * `CMP-IMP-051` added under `DB-208`.
  *
  * `DB-212` is why this is one file rather than a comment beside each migration:
  * *"the register shall be reviewable as a single list, which is why it appears
@@ -17,14 +18,19 @@ namespace Tests;
  * objects**, and are asserted the same way: by attempting the forbidden
  * operation.
  *
- * ## Eleven hold; ten do not, and each says why
+ * ## Fourteen hold; eight do not, and each says why
  *
- * The register ships complete and mostly unenforced, which is the honest state
- * and not a gap. Ten constraints protect tables that do not exist, because
+ * The register ships complete and partly unenforced, which is the honest state
+ * and not a gap. Eight constraints protect tables that do not exist, because
  * `BE-017`'s nine aggregates are unbuilt and several are blocked on a business
  * decision nobody has taken. `DB-208` requires a constraint added later to reach
  * this register **and its test set in the same change**, so an entry moving from
  * absent to enforced is one edit, in one place, that the build checks.
+ *
+ * `CMP-IMP-051` was the first change to exercise that: it moved constraint 4 from
+ * absent to enforced — `op_users` is the first entity exposed through the
+ * interface — and issued **22** and **23** for the phone number and the session
+ * token hash. Numbering continues from twenty-one and is never reused.
  *
  * **Constraint 18 is different from the other nine.** It is not waiting: ratings
  * is a withheld area carrying zero functional requirements (CMP-DOC-04 §9.2), and
@@ -89,11 +95,13 @@ final class IntegrityConstraints
             4 => [
                 'constraint' => 'UNIQUE external identifier per exposed table',
                 'protects' => 'API-014, DB-022',
-                'status' => self::ABSENT,
+                'status' => self::ENFORCED,
                 'kind' => 'unique',
-                'object' => null,
-                'violationTest' => null,
-                'note' => 'No table is exposed through an interface yet; FEAT-035 brings the first.',
+                'object' => 'op_users_external_id_unique',
+                'violationTest' => 'tests/Integration/Persistence/UserSchemaTest.php',
+                'note' => 'op_users is the first entity exposed through the interface (CMP-IMP-051). DB-023 ‡ '
+                    .'requires the identifier to be randomly generated and to encode no meaning, sequence or '
+                    .'timestamp; the constraint enforces uniqueness and the generator enforces the rest.',
             ],
             5 => [
                 'constraint' => 'UNIQUE idempotency actor, operation, key',
@@ -197,7 +205,9 @@ final class IntegrityConstraints
                 'object' => 'cfg_policy_versions_policy_value_id_foreign',
                 'violationTest' => 'tests/Integration/Persistence/InspectsSchemaConventionsTest.php',
                 'note' => 'CMP-IMP-048 made this a rule over the whole schema rather than a property of one key: the '
-                    .'inspector refuses ON DELETE CASCADE or SET NULL into op_, ev_ or led_.',
+                    .'inspector refuses ON DELETE CASCADE or SET NULL into op_, ev_ or led_. CMP-IMP-051 added '
+                    .'the first two operational keys under it — op_user_credentials and op_sessions both '
+                    .'RESTRICT into op_users.',
             ],
             16 => [
                 'constraint' => 'CHECK seats offered does not exceed vehicle lawful capacity at insert',
@@ -255,6 +265,41 @@ final class IntegrityConstraints
                 'violationTest' => 'tests/Integration/Persistence/InspectsSchemaConventionsTest.php',
                 'note' => 'Enforced by inspection rather than by a schema object, because it is a rule about the '
                     .'absence of one. ARCH-114: losing a projection degrades performance, never correctness.',
+            ],
+
+            // ---------------------------------------------------------------
+            // Added at CMP-IMP-051, under DB-208: "a constraint added later
+            // shall be added to this register and to its test set in the same
+            // change". Numbering continues from CMP-DOC-11 §15's twenty-one;
+            // identifiers are never renumbered.
+            // ---------------------------------------------------------------
+
+            22 => [
+                'constraint' => 'UNIQUE phone number across accounts',
+                'protects' => 'FRD-FR-004, DB-028, DB-209',
+                'status' => self::ENFORCED,
+                'kind' => 'unique',
+                'object' => 'op_users_phone_number_unique',
+                'violationTest' => 'tests/Integration/Persistence/UserSchemaTest.php',
+                'note' => 'FRD-FR-004 refuses a registration whose number is already registered, and DB-209 ‡ '
+                    .'requires a rule enforceable by the database to be enforced by it as well as by the '
+                    .'application. BAD-RULE-043 makes the number the one mandatory identifying detail, so it is '
+                    .'the natural key DB-028 asks to be constrained. FRD-FR-013 permits registration to be '
+                    .'restarted with the same number, which this shapes toward reusing the existing unverified '
+                    .'account rather than creating a second — a registration-flow consequence, not a schema one.',
+            ],
+
+            23 => [
+                'constraint' => 'UNIQUE session token hash',
+                'protects' => 'SEC-036, SEC-042',
+                'status' => self::ENFORCED,
+                'kind' => 'unique',
+                'object' => 'op_sessions_token_hash_unique',
+                'violationTest' => 'tests/Integration/Persistence/UserSchemaTest.php',
+                'note' => 'SEC-042 makes session validation a hash-and-lookup against the store, which is only '
+                    .'a lookup if the hash resolves to at most one session. SEC-035 ‡ gives the token enough '
+                    .'entropy that a collision is infeasible; the constraint is what makes that assumption '
+                    .'checkable rather than assumed.',
             ],
         ];
     }

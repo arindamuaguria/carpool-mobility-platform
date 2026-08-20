@@ -34,13 +34,14 @@ final class IntegrityConstraintRegisterTest extends TestCase
      */
     private const NAMES_A_BLOCKER = '/(not exist|none exists|no \w+ table|is open|GAP-\d|FEAT-\d|BAD-DEC-\d|BE-017|undecided|excluded)/i';
 
-    public function test_the_register_holds_all_twenty_one_constraints(): void
+    public function test_the_register_holds_every_constraint_in_order(): void
     {
-        // DB-212: reviewable as a single list. Twenty-one is the number
-        // CMP-DOC-11 §15 states, and a register that had grown or shrunk without
-        // a documentation change would be the register disagreeing with its own
-        // source.
-        self::assertSame(range(1, 21), array_keys(IntegrityConstraints::all()));
+        // DB-212: reviewable as a single list. Twenty-one is the number CMP-DOC-11
+        // §15 states; 22 and 23 were issued by CMP-IMP-051 under DB-208, which
+        // requires a constraint added later to reach this register and its test
+        // set in the same change. A register that had grown any other way would
+        // be disagreeing with its own source.
+        self::assertSame(range(1, 23), array_keys(IntegrityConstraints::all()));
     }
 
     public function test_every_constraint_names_what_it_protects(): void
@@ -168,8 +169,8 @@ final class IntegrityConstraintRegisterTest extends TestCase
         // constraint.
         $byStatus = array_count_values(array_column(IntegrityConstraints::all(), 'status'));
 
-        self::assertSame(11, $byStatus[IntegrityConstraints::ENFORCED] ?? 0);
-        self::assertSame(9, $byStatus[IntegrityConstraints::ABSENT] ?? 0);
+        self::assertSame(14, $byStatus[IntegrityConstraints::ENFORCED] ?? 0);
+        self::assertSame(8, $byStatus[IntegrityConstraints::ABSENT] ?? 0);
         self::assertSame(1, $byStatus[IntegrityConstraints::WITHHELD] ?? 0);
     }
 
