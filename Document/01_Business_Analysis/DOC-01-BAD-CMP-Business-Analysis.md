@@ -14,15 +14,15 @@
 | Short Name | BAD |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
-| Date | 2026-08-16 |
+| Date | 2026-08-20 |
 | Author | Business Analyst (AI-assisted) |
 | Reviewer | [TBD] |
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | None (initial issue) |
+| Previous Version | 0.1 (2026-08-16) |
 | Related Documents | `00_Project_Control/README.md`, `Documentation_Index.md`, `Documentation_Status.md`, `Document_Change_Log.md`, `Glossary.md`, `Master_Traceability_Matrix.md` |
 | Successor Documents | CMP-DOC-02 (BRD) — Not Started |
 
@@ -31,6 +31,7 @@
 | Version | Date | Author | Change | Status |
 |---|---|---|---|---|
 | 0.1 | 2026-08-16 | Business Analyst (AI-assisted) | Initial issue. Full business analysis baseline derived from the approved product concept. 78 preliminary business requirements issued (BAD-BR-001 … BAD-BR-078). | Draft |
+| 0.2 | 2026-08-20 | Business Analyst (AI-assisted) | **Three account decisions taken by the Project Owner.** `BAD-RULE-006` gains the verification standing vocabulary — `UNVERIFIED` and `VERIFIED`, where `VERIFIED` means control of the registered phone number has been demonstrated. `BAD-RULE-010` moves out of `[TBD – BAD-DEC-006]`: the permitted account states are `ACTIVE`, `SUSPENDED` and `DEACTIVATED`, only `ACTIVE` permits authenticated use, and neither of the other two regains an active session except through a defined transition. **`BAD-RULE-043` is issued**, fixing the mandatory identifying detail for registration at the **verified phone number and nothing else**. `BAD-DEC-005` and `BAD-DEC-006` are **partially resolved** and both remain open for what each still does not answer — verification levels and evidence beyond phone possession (`BAD-RULE-008`), and who may transition an account state and on what grounds (`FRD-GAP-024`). **No other rule was altered, and §14.9’s bucket counts were not recomputed — see the note there.** | Draft |
 
 ## 0.3 Distribution List
 
@@ -1430,12 +1431,13 @@ integrity, safety, or the legal position. Rules marked `[TBD]` state only what i
 |---|---|---|
 | `BAD-RULE-004` | A user must have a registered account before publishing, requesting or booking. | FACT |
 | `BAD-RULE-005` | Control of the registered phone number must be verified. | FACT — mechanism TBD |
-| `BAD-RULE-006` | Verification status is determined and held by the backend; it is never asserted by a client. | **Absolute** — FACT |
+| `BAD-RULE-006` | Verification status is determined and held by the backend; it is never asserted by a client. **The verification standing vocabulary is `UNVERIFIED` and `VERIFIED`**; an account is `VERIFIED` when control of its registered phone number has been demonstrated, and `UNVERIFIED` until then. An `UNVERIFIED` account follows the verification flow of `FRD-FR-007`, `FRD-FR-008` and `FRD-FR-018`. | **Absolute** — FACT (vocabulary decided 2026-08-20) |
 | `BAD-RULE-007` | Verification status must be visible to a counterparty **before** they commit to travel. | RECOMMENDATION (proposed absolute) |
-| `BAD-RULE-008` | What verification levels exist, what evidence each requires, and what each level permits. | `[TBD – BAD-DEC-005]` |
+| `BAD-RULE-008` | What verification levels **beyond phone-number standing** exist, what evidence each requires, and what each level permits. Phone-number standing is `BAD-RULE-006` and is decided; identity and vehicle verification evidence (`IS-05`, `IS-09`) and driver eligibility are not. | `[TBD – BAD-DEC-005]` |
 | `BAD-RULE-009` | A user may hold both passenger and driver roles on one account. | ASSUMPTION |
-| `BAD-RULE-010` | Permitted user account states and the transitions between them. | `[TBD – BAD-DEC-006]` |
-| `BAD-RULE-011` | A suspended user may not publish, request, book, or travel. | RECOMMENDATION |
+| `BAD-RULE-010` | The permitted user account states are **`ACTIVE`, `SUSPENDED` and `DEACTIVATED`**. `ACTIVE` permits normal authenticated use; `SUSPENDED` and `DEACTIVATED` each prevent it. A `SUSPENDED` or `DEACTIVATED` account **shall not regain an active session** other than through a defined account-state transition. **Who may perform such a transition, on what grounds, and with what appeal remains undecided** — `FRD-GAP-024`, `BAD-DEC-006` / `BAD-DEC-016`. | **Absolute** — FACT (states decided 2026-08-20; transition authority still `[TBD]`) |
+| `BAD-RULE-011` | A suspended user may not publish, request, book, or travel. **Subsumed in effect by `BAD-RULE-010`**, which prevents authenticated use entirely and therefore prevents all four. Retained because it states the business intent at a level that survives a change to the state model. | RECOMMENDATION |
+| `BAD-RULE-043` | **The mandatory identifying detail for account registration is the verified phone number, and no other attribute is mandatory.** Name, email address, date of birth, address and other profile attributes are **not collected at registration**. This answers the deferral in `FRD-FR-002` (*"the identifying details the business defines as mandatory"*). A later decision may add an attribute; none may be added on the ground that it may be useful. | **Absolute** — FACT (decided 2026-08-20) |
 
 ## 14.3 Vehicle Rules
 
@@ -1509,6 +1511,16 @@ integrity, safety, or the legal position. Rules marked `[TBD]` state only what i
 
 **Twenty-six per cent of the rule set is undecided.** These eleven gaps are consolidated
 in Section 27.
+
+> **NOTE (2026-08-20).** The rule set is now **43** rules: `BAD-RULE-010` moved out of
+> `[TBD]` and `BAD-RULE-043` was issued. **The four bucket counts above have not been
+> recomputed**, because they do not sum to the rule set as issued: the class column carries
+> six distinct forms (`Absolute`, `FACT`, `FACT — mechanism TBD`, `RECOMMENDATION`,
+> `ASSUMPTION`, `[TBD – …]`) and the summary has four buckets, so which bucket the plain
+> `FACT` rows belong to cannot be read off the register. **A mechanical count of rows whose
+> class is a `[TBD]` marker gives 13 at v0.1, not 11.** The discrepancy predates this
+> revision and is reported rather than silently corrected — recomputing it would require
+> the author’s intent for the four buckets, which is not recorded.
 
 ---
 
@@ -2261,8 +2273,8 @@ owned by the Project Owner unless stated. None may be resolved by analysis alone
 | `BAD-DEC-002` | Commission validation research with real commuters, and set a delivery horizon. | Requirements rest on unvalidated hypotheses. | BRD confidence, roadmap dates | **Critical** |
 | `BAD-DEC-003` | Fare model: who sets the fare, any platform constraint, per-seat vs per-booking, and whether a platform fee exists and on what basis. | Payment, wallet, earnings and matching design all stall. | `BAD-RULE-018`, `BAD-RULE-035`, DOC-14 | **Critical** |
 | `BAD-DEC-004` | Driver settlement: how and when drivers receive funds. | Payment architecture cannot be completed. | `BAD-RULE-036`, DOC-14 | **Critical** |
-| `BAD-DEC-005` | Verification policy: levels, evidence accepted per level, and what each level permits for users and vehicles. | Trust model undefined; `BAD-PER-003` unserved. | `BAD-RULE-008`, `014`, DOC-13 | **Critical** |
-| `BAD-DEC-006` | Permitted user account states and transitions. | Account lifecycle undefined. | `BAD-RULE-010` | High |
+| `BAD-DEC-005` | **PARTIALLY RESOLVED 2026-08-20** — the verification **standing vocabulary** is decided at `BAD-RULE-006` (`UNVERIFIED`, `VERIFIED`). Still required: verification **levels beyond phone possession**, the evidence accepted for each, and what each permits for users and vehicles. | Trust model still undefined above phone possession; `BAD-PER-003` unserved. | `BAD-RULE-008`, `BAD-RULE-014`, DOC-13 | **Critical** |
+| `BAD-DEC-006` | **PARTIALLY RESOLVED 2026-08-20** — the permitted **states** are decided at `BAD-RULE-010` (`ACTIVE`, `SUSPENDED`, `DEACTIVATED`). Still required: **who may transition an account between them, on what grounds, and with what appeal** (`FRD-GAP-024`, with `BAD-DEC-016`). | An account can be suspended or deactivated with no specified way back, and a suspended user cannot authenticate to learn why. | `BAD-RULE-010`, `FRD-GAP-024` | High |
 | `BAD-DEC-007` | Booking model: does a request require driver acceptance; are seats held during payment and for how long; is payment taken at booking or completion. | Booking flow cannot be specified. | `BAD-RULE-029`, `030`, `BAD-BP-005` | **Critical** |
 | `BAD-DEC-008` | Recurring commute rules: generation horizon, pause semantics, holiday handling, verified-peer auto-acceptance. | Phase 2 cannot be specified. | `BAD-BP-009` | High |
 | `BAD-DEC-009` | Cancellation rules: windows, permitted parties, penalties, no-show treatment. | `BAD-BP-010` unspecifiable; `BAD-RISK-017` unmitigated. | `BAD-RULE-040` | **Critical** |
