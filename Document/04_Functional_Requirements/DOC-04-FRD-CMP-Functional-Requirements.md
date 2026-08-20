@@ -14,7 +14,7 @@
 | Short Name | FRD |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | Draft |
 | Date | 2026-08-20 |
 | Author | Product Analyst (AI-assisted) |
@@ -22,7 +22,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 0.1 (2026-08-16) |
+| Previous Version | 0.2 (2026-08-20) |
 | Predecessor Documents | CMP-DOC-01 (BAD) v0.1, CMP-DOC-02 (BRD) v0.1, CMP-DOC-03 (USECASE) v0.1 — **all Draft, none approved** |
 | Related Documents | `00_Project_Control/README.md`, `Documentation_Index.md`, `Documentation_Status.md`, `Document_Change_Log.md`, `Glossary.md`, `Master_Traceability_Matrix.md` |
 | Successor Documents | CMP-DOC-05 (NFR) — Not Started; CMP-DOC-06 (SRS) — Not Started |
@@ -33,6 +33,7 @@
 |---|---|---|---|---|
 | 0.1 | 2026-08-16 | Product Analyst (AI-assisted) | Initial issue. Decomposes the 50 use cases carrying written flows into 260 functional requirements (`FRD-FR-001` … `FRD-FR-260`) across 12 functional areas, each with source, verification method, priority and release. The 33 Outlined use cases are **not** decomposed; the reason is recorded per use case in §9. | Draft |
 | 0.2 | 2026-08-20 | Product Analyst (AI-assisted) | **Two gaps partially closed and one deferral answered, by Project Owner decision.** `FRD-GAP-002`’s verification **standing vocabulary** half is closed by `BAD-RULE-006`; its **driver eligibility** half remains open on `BAD-DEC-005`. `FRD-GAP-003` is closed for the account **state model** by `BAD-RULE-010`; account state **change and appeal** was already registered separately at `FRD-GAP-024` and remains open. `FRD-FR-002`’s deferral to *"the identifying details the business defines as mandatory"* is answered by the new `BAD-RULE-043`: the **verified phone number and nothing else**. **No functional requirement text was altered** — this document defers to the business and the business has answered; the answers are held in CMP-DOC-01 §14.2 and cited here. The gap count is unchanged at 29 and the Critical count at eleven, because a partially closed gap is not a removed one. | Draft |
+| 0.3 | 2026-08-20 | Product Analyst (AI-assisted) | **`FRD-FR-013`’s restart interpretation ratified.** A registration restarted with a number already held by an **unverified** account **reuses that account** rather than creating a second `op_users` row, and no duplicate account is created for one number. Recorded as a dated **FACT** in §4.1 with the reconciliation it rests on: `UC-001` A2 says the account *"remains unverified and unusable"* and that the person *"may restart registration with the same number"*, and never says a second account is created; step 5’s *"creates the account"* is on the main path only. `FRD-FR-004`’s *"already registered to an **active** account"* is read as **an account that can be logged into**, because A1 offers the login path and `FRD-FR-018` routes an unverified user to verification rather than into the application — offering login to an unverified account would contradict it. **No requirement text was altered.** **A gap opened by this reading is reported and not closed**: neither `UC-001` nor any requirement says what happens when registration is attempted with a number held by a `SUSPENDED` or `DEACTIVATED` account. The case did not exist before `BAD-RULE-010` was decided on 2026-08-20. Recorded at `CC-031`, **Open**. | Draft |
 
 ## 0.3 Distribution List
 
@@ -414,6 +415,27 @@ behaviour.**
 | `FRD-FR-030` | The system shall allow a user to take the driver role, subject to the eligibility the business defines. | `UC-008` | 012, 013 | S | T |
 | `FRD-FR-031` | The system shall state what is outstanding where a user is not eligible for the driver role. | `UC-008` | 012 | S | T |
 | `FRD-FR-032` | The system shall permit a single account to hold both the passenger and driver roles concurrently. | `UC-008` | 013 | S | T |
+
+> **FACT (2026-08-20).** The Project Owner ratified how `FRD-FR-013`’s restart works: a
+> registration restarted with a number already held by an **unverified** account **reuses
+> that account**, and no second `op_users` row is created for one number.
+>
+> **It reconciles with `FRD-FR-004` rather than competing with it.** `UC-001` A2 says the
+> abandoned account *"remains unverified and unusable"* and that the person *"may restart
+> registration with the same number"* — it never says a second account is created, and step
+> 5’s *"creates the account"* belongs to the main path. `FRD-FR-004`’s *"already registered
+> to an **active** account"* is therefore read as **an account that can be logged into**:
+> A1 offers the login path, and `FRD-FR-018` routes an unverified user to verification
+> rather than into the application, so offering login to an unverified account would
+> contradict it.
+>
+> **A third case has no specified behaviour.** Neither `UC-001` nor any requirement here
+> says what happens when registration is attempted with a number held by a `SUSPENDED` or
+> `DEACTIVATED` account. Reuse would let a suspended person regain access, which
+> `BAD-RULE-010` forbids; a second account is forbidden by the ratification above and
+> prevented by the schema. **The case did not exist before `BAD-RULE-010` was decided on
+> 2026-08-20**, which is why no flow covers it. Reported at `CC-031` and **not resolved**
+> here — `FRD-RISK-002` is the risk of a developer implementing a gap, and this is one.
 
 ### 4.1.1 Functional Gaps in This Area
 
