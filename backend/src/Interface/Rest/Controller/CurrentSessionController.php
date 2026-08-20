@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cmp\Interface\Rest\Controller;
 
 use Cmp\Application\Shared\Authorisation\Actor;
+use Cmp\Application\Shared\Configuration\ConfigurationVersion;
 use Cmp\Application\Shared\Idempotency\IdempotencyKey;
 use Cmp\Application\Shared\Response\EvaluationTime;
 use Cmp\Application\User\AuthenticatedCaller;
@@ -48,6 +49,7 @@ final class CurrentSessionController
         private readonly TerminateCurrentSession $terminate,
         private readonly RefreshCurrentSession $refresh,
         private readonly EvaluationTime $evaluatedAt,
+        private readonly ConfigurationVersion $configurationVersion,
     ) {}
 
     /**
@@ -66,7 +68,7 @@ final class CurrentSessionController
         // with it. The body says what happened and carries nothing else.
         return Envelope::of(
             ['terminated' => true],
-            Envelope::meta(ServedVersions::CURRENT, $this->evaluatedAt->stamp()),
+            Envelope::meta(ServedVersions::CURRENT, $this->evaluatedAt->stamp(), $this->configurationVersion->current()),
         );
     }
 
@@ -91,7 +93,7 @@ final class CurrentSessionController
             // API-064: a client can tell a fresh outcome from a replayed one, and
             // SEC-038 ‡ keeps the token itself out of here.
             ['refreshed' => true],
-            Envelope::meta(ServedVersions::CURRENT, $this->evaluatedAt->stamp()),
+            Envelope::meta(ServedVersions::CURRENT, $this->evaluatedAt->stamp(), $this->configurationVersion->current()),
         );
 
         return $response->withHeaders([SessionCarriage::ISSUE_HEADER => $token]);

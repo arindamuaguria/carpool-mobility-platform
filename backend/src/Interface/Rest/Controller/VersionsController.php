@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Cmp\Interface\Rest\Controller;
 
+use Cmp\Application\Shared\Configuration\ConfigurationVersion;
 use Cmp\Application\Shared\Response\EvaluationTime;
 use Cmp\Interface\Rest\Envelope;
 use Cmp\Interface\Rest\ServedVersions;
@@ -39,7 +40,10 @@ use Illuminate\Http\JsonResponse;
  */
 final class VersionsController
 {
-    public function __construct(private readonly EvaluationTime $evaluatedAt) {}
+    public function __construct(
+        private readonly EvaluationTime $evaluatedAt,
+        private readonly ConfigurationVersion $configurationVersion,
+    ) {}
 
     public function __invoke(): JsonResponse
     {
@@ -53,7 +57,7 @@ final class VersionsController
                 // platform did not say".
                 'preceding' => ServedVersions::preceding(),
             ],
-            Envelope::meta(ServedVersions::CURRENT, $this->evaluatedAt->stamp()),
+            Envelope::meta(ServedVersions::CURRENT, $this->evaluatedAt->stamp(), $this->configurationVersion->current()),
         );
     }
 }

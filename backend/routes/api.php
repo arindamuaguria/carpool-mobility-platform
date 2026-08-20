@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Cmp\Interface\Rest\Controller\ConfigurationController;
 use Cmp\Interface\Rest\Controller\CurrentSessionController;
 use Cmp\Interface\Rest\Controller\HealthController;
 use Cmp\Interface\Rest\Controller\VersionsController;
@@ -58,6 +59,11 @@ Route::prefix(ServedVersions::PREFIX.'/{version}')
         // placement is the point: a client that cannot authenticate because the
         // capability that authenticates is withdrawn must still learn why.
         Route::get('health', HealthController::class)->name('health.show');
+
+        // §14.1 / MADR-11 — the public subset, which §9.1 makes reachable
+        // without a session because API-193's conservative defaults are what a
+        // cold client runs on until it has fetched them.
+        Route::get('configuration', ConfigurationController::class)->name('configuration.show');
 
         // API-095 ‡: everything CMP-DOC-10 §9.1 does not name requires an
         // authenticated session. RequireSession establishes who is calling;

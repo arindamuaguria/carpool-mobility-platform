@@ -56,9 +56,19 @@ final class Envelope
      *
      * @return array<string, mixed>
      */
-    public static function meta(int $version, string $evaluatedAt): array
+    public static function meta(int $version, string $evaluatedAt, ?string $configurationVersion = null): array
     {
         return [
+            // API-189: any response on any surface may indicate that
+            // configuration has changed, so the client refetches without
+            // polling — which API-190 ‡ forbids it doing on its own interval.
+            //
+            // Present and null where the platform could not produce one, rather
+            // than absent: a client can tell "the platform did not say" from
+            // "the platform says nothing changed", and SRS-REQ-113 forbids the
+            // second being invented. ConfigurationVersion says why it may be
+            // null.
+            'configuration_version' => $configurationVersion,
             // API-022: the version that served it, on every response.
             'interface_version' => $version,
             // API-023: only the preceding version is deprecated, and it says so
