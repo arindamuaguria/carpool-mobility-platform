@@ -8,10 +8,12 @@ use Cmp\Application\Shared\Authorisation\AuthorisationPolicy;
 use Cmp\Application\Shared\Authorisation\AuthorisationRule;
 use Cmp\Application\Shared\Authorisation\Authoriser;
 use Cmp\Application\Shared\Authorisation\RecordsAuthorisationRefusals;
+use Cmp\Application\Shared\Authorisation\ResolvesActorRoles;
 use Cmp\Application\Shared\Authorisation\Role;
 use Cmp\Application\Shared\Evidence\RecordsEvidence;
 use Cmp\Domain\Shared\Time\Clock;
 use Cmp\Infrastructure\Authorisation\EvidentialAuthorisationRefusals;
+use Cmp\Infrastructure\Authorisation\RegisteredActorRoles;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Log\LogManager;
 use Illuminate\Support\ServiceProvider;
@@ -113,14 +115,24 @@ final class AuthorisationServiceProvider extends ServiceProvider
             ),
         );
 
-        // ResolvesActorRoles is deliberately unbound. SEC-045 ‡ requires an
-        // actor's entitlement to be evaluated against platform state, and the
-        // state it would read — op_users and its role assignment — arrives with
-        // FEAT-004 and FEAT-007. Binding a stub that returned an actor holding
-        // no roles would look like an implementation and behave like one, and
-        // ADM-187/ADM-191 forbid exactly that shape of placeholder.
-        //
-        // Nothing resolves an actor yet, because no interface surface exists to
-        // need one.
+        // CC-032: bound on 2026-08-20. SEC-045 ‡ evaluates entitlement against
+        // platform state, and the state is the role register — which SEC-063
+        // leaves empty, so every actor resolves with no roles. SEC-055 ‡ makes
+        // that safe in the refusing direction only, and RegisteredActorRoles
+        // raises rather than guessing the moment a role is declared without an
+        // assignment to read.
+        $this->app->singleton(
+            ResolvesActorRoles::class,
+            static fn (): RegisteredActorRoles => new RegisteredActorRoles(self::roles()),
+        );
+
+        // This binding was withheld until CC-032, on the ground that a stub
+        // returning an actor with no roles "would look like an implementation and
+        // behave like one". CC-032 settled that it is not a stub: an actor holds
+        // the roles the register assigns, the register is empty, and that is the
+        // recorded consequence of SEC-063 rather than a decision. What made the
+        // difference is that RegisteredActorRoles reads the register instead of
+        // returning a constant, and raises the moment a role exists without an
+        // assignment — so it cannot outlive the condition that makes it correct.
     }
 }

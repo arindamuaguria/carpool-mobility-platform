@@ -34,11 +34,13 @@ use Tests\Integration\IntegrationTestCase;
  * transaction, and `SEC-050`'s evidential record sharing that transaction under
  * `BE-106` ‡.
  *
- * The actor is constructed here rather than resolved. `ResolvesActorRoles` is
- * **deliberately unbound** — `SEC-063` leaves the role set undecided — and both
- * rules turn on `SEC-066` ‡, being a party to the record, which needs no role.
- * That is also why neither operation is reachable over HTTP yet; see the commit
- * message.
+ * The actor is constructed here rather than resolved, so that a failure at this
+ * level is the operation's rather than the resolution's. `CC-032` settled how an
+ * actor is resolved while `SEC-063` leaves the role set undecided —
+ * `RegisteredActorRolesTest` covers that at level 2, and
+ * `Tests\System\SessionEndpointTest` covers the two together over HTTP at level
+ * 5. Both rules here turn on `SEC-066` ‡, being a party to the record, which
+ * needs no role.
  */
 final class SessionLifecycleTest extends IntegrationTestCase
 {
