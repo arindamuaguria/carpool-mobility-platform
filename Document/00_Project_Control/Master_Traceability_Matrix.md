@@ -8,7 +8,7 @@
 | Document Name | Master Traceability Matrix |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 3.3 |
+| Version | 3.4 |
 | Status | Draft |
 | Date | 2026-08-20 |
 | Author | Documentation Manager (AI-assisted) |
@@ -16,7 +16,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 3.2 (2026-08-20) |
+| Previous Version | 3.3 (2026-08-20) |
 | Related Documents | README.md, Documentation_Index.md, Documentation_Status.md, Document_Change_Log.md, Glossary.md |
 
 ---
@@ -104,10 +104,10 @@ the same way.
 
 | Source | ID range | Count | Traced forward | Note |
 |---|---|---|---|---|
-| CMP-DOC-01 BAD v0.1 | `BAD-BR-001` … `BAD-BR-078` | 78 | **78 (100%)** | Contiguous, no gaps, no duplicates. |
+| CMP-DOC-01 BAD v0.2 | `BAD-BR-001` … `BAD-BR-078` | 78 | **78 (100%)** | Contiguous, no gaps, no duplicates. **v0.2 issued no `BAD-BR-`**; it issued `BAD-RULE-043`, an auxiliary prefix that Index §5.1 records as outside the forward traceability chain. |
 | CMP-DOC-02 BRD v0.1 | `BRD-REQ-001` … `BRD-REQ-188` | 188 | **184 (98%) + 4 justified** | Contiguous, no gaps, no duplicates. |
 | CMP-DOC-03 USECASE v0.1 | `UC-001` … `UC-083` | 83 | **50 (60%)** | 33 withheld — behaviour undecided, not a traceability failure. |
-| CMP-DOC-04 FRD v0.1 | `FRD-FR-001` … `FRD-FR-260` | 260 | 0 | Contiguous, no gaps, no duplicates. `TRACEABILITY: TBD` |
+| CMP-DOC-04 FRD v0.2 | `FRD-FR-001` … `FRD-FR-260` | 260 | 0 | Contiguous, no gaps, no duplicates. `TRACEABILITY: TBD`. **v0.2 issued nothing** — it partially closed two rows of the §9.3 gap register and altered no requirement. |
 | CMP-DOC-05 NFR v0.1 | `NFR-001` … `NFR-162` | 162 | **162 (100%)** | All allocated to an accountable software element by CMP-DOC-06. |
 | CMP-DOC-06 SRS v0.1 | `SRS-REQ-001` … `SRS-REQ-184` | 184 | **96** | 96 architecture statements derive from a software requirement. |
 | CMP-DOC-07 SAD v0.1 | `ARCH-001` … `ARCH-148` | 148 | **70** | 46 realised by CMP-DOC-08 (14 of 14 client obligations) and 24 by CMP-DOC-09 (24 of 24 backend obligations). |

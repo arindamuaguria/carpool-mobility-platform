@@ -8,7 +8,7 @@
 | Document Name | Documentation Index |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 3.9 |
+| Version | 4.0 |
 | Status | Draft |
 | Date | 2026-08-20 |
 | Author | Documentation Manager (AI-assisted) |
@@ -16,7 +16,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 3.8 (2026-08-20) |
+| Previous Version | 3.9 (2026-08-20) |
 | Related Documents | README.md, Documentation_Status.md, Document_Change_Log.md, Glossary.md, Master_Traceability_Matrix.md |
 
 ---
@@ -33,20 +33,20 @@ approved, superseded, or deprecated.
 | ID | Document | Version | Status | Location |
 |---|---|---|---|---|
 | CMP-CTRL-README | Documentation Repository README | **0.4** | Draft | `Document/00_Project_Control/README.md` |
-| CMP-CTRL-INDEX | Documentation Index | **3.9** | Draft | `Document/00_Project_Control/Documentation_Index.md` |
-| CMP-CTRL-STATUS | Documentation Status | **3.9** | Draft | `Document/00_Project_Control/Documentation_Status.md` |
-| CMP-CTRL-CHANGELOG | Document Change Log | **3.9** | Draft | `Document/00_Project_Control/Document_Change_Log.md` |
+| CMP-CTRL-INDEX | Documentation Index | **4.0** | Draft | `Document/00_Project_Control/Documentation_Index.md` |
+| CMP-CTRL-STATUS | Documentation Status | **4.0** | Draft | `Document/00_Project_Control/Documentation_Status.md` |
+| CMP-CTRL-CHANGELOG | Document Change Log | **4.0** | Draft | `Document/00_Project_Control/Document_Change_Log.md` |
 | CMP-CTRL-GLOSSARY | Glossary | 3.1 | Draft | `Document/00_Project_Control/Glossary.md` |
-| CMP-CTRL-RTM | Master Traceability Matrix | **3.3** | Draft | `Document/00_Project_Control/Master_Traceability_Matrix.md` |
+| CMP-CTRL-RTM | Master Traceability Matrix | **3.4** | Draft | `Document/00_Project_Control/Master_Traceability_Matrix.md` |
 
 ## 3. Formal Document Register (DOC-01 … DOC-20)
 
 | ID | Document | Short Name | Version | Status | Location |
 |---|---|---|---|---|---|
-| CMP-DOC-01 | Business Analysis Document | BAD | **0.1** | **Draft** | `Document/01_Business_Analysis/DOC-01-BAD-CMP-Business-Analysis.md` + `.docx` |
+| CMP-DOC-01 | Business Analysis Document | BAD | **0.2** | **Draft** | `Document/01_Business_Analysis/DOC-01-BAD-CMP-Business-Analysis.md` + `.docx` |
 | CMP-DOC-02 | Business Requirements Document | BRD | **0.1** | **Draft** | `Document/02_Business_Requirements/DOC-02-BRD-CMP-Business-Requirements.md` + `.docx` |
 | CMP-DOC-03 | Stakeholder & Use Case Specification | USECASE | **0.1** | **Draft** | `Document/03_Stakeholders_Use_Cases/DOC-03-USECASE-CMP-Stakeholders-UseCases.md` + `.docx` |
-| CMP-DOC-04 | Functional Requirements Document | FRD | **0.1** | **Draft** | `Document/04_Functional_Requirements/DOC-04-FRD-CMP-Functional-Requirements.md` + `.docx` |
+| CMP-DOC-04 | Functional Requirements Document | FRD | **0.2** | **Draft** | `Document/04_Functional_Requirements/DOC-04-FRD-CMP-Functional-Requirements.md` + `.docx` |
 | CMP-DOC-05 | Non-Functional Requirements / Quality Attributes | NFR | **0.1** | **Draft** | `Document/05_Non_Functional_Requirements/DOC-05-NFR-CMP-Non-Functional-Requirements.md` + `.docx` |
 | CMP-DOC-06 | Software Requirements Specification | SRS | **0.1** | **Draft** | `Document/06_Software_Requirements/DOC-06-SRS-CMP-Software-Requirements.md` + `.docx` |
 | CMP-DOC-07 | System Architecture Document | SAD | **0.1** | **Draft** | `Document/07_System_Architecture/DOC-07-SAD-CMP-System-Architecture.md` + `.docx` |
@@ -188,7 +188,7 @@ chain. Recorded here so that no future document reuses them.
 | `BAD-SH-` | Stakeholder | 14 |
 | `BAD-PER-` | Persona | 7 |
 | `BAD-BP-` | Business Process | 12 |
-| `BAD-RULE-` | Business Rule | 42 |
+| `BAD-RULE-` | Business Rule | 42 — **43 at CMP-DOC-01 v0.2** (`BAD-RULE-043`, see change-log entry 094) |
 | `BAD-CAP-` | Business Capability | 32 |
 | `BAD-RISK-` | Risk | 24 |
 | `BAD-CON-` | Constraint | 18 |

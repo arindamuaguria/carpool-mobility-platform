@@ -14,15 +14,15 @@
 | Short Name | FRD |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
-| Date | 2026-08-16 |
+| Date | 2026-08-20 |
 | Author | Product Analyst (AI-assisted) |
 | Reviewer | [TBD] |
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | None (initial issue) |
+| Previous Version | 0.1 (2026-08-16) |
 | Predecessor Documents | CMP-DOC-01 (BAD) v0.1, CMP-DOC-02 (BRD) v0.1, CMP-DOC-03 (USECASE) v0.1 — **all Draft, none approved** |
 | Related Documents | `00_Project_Control/README.md`, `Documentation_Index.md`, `Documentation_Status.md`, `Document_Change_Log.md`, `Glossary.md`, `Master_Traceability_Matrix.md` |
 | Successor Documents | CMP-DOC-05 (NFR) — Not Started; CMP-DOC-06 (SRS) — Not Started |
@@ -32,6 +32,7 @@
 | Version | Date | Author | Change | Status |
 |---|---|---|---|---|
 | 0.1 | 2026-08-16 | Product Analyst (AI-assisted) | Initial issue. Decomposes the 50 use cases carrying written flows into 260 functional requirements (`FRD-FR-001` … `FRD-FR-260`) across 12 functional areas, each with source, verification method, priority and release. The 33 Outlined use cases are **not** decomposed; the reason is recorded per use case in §9. | Draft |
+| 0.2 | 2026-08-20 | Product Analyst (AI-assisted) | **Two gaps partially closed and one deferral answered, by Project Owner decision.** `FRD-GAP-002`’s verification **standing vocabulary** half is closed by `BAD-RULE-006`; its **driver eligibility** half remains open on `BAD-DEC-005`. `FRD-GAP-003` is closed for the account **state model** by `BAD-RULE-010`; account state **change and appeal** was already registered separately at `FRD-GAP-024` and remains open. `FRD-FR-002`’s deferral to *"the identifying details the business defines as mandatory"* is answered by the new `BAD-RULE-043`: the **verified phone number and nothing else**. **No functional requirement text was altered** — this document defers to the business and the business has answered; the answers are held in CMP-DOC-01 §14.2 and cited here. The gap count is unchanged at 29 and the Critical count at eleven, because a partially closed gap is not a removed one. | Draft |
 
 ## 0.3 Distribution List
 
@@ -983,8 +984,8 @@ except where noted · **Withheld:** `UC-068`, `UC-069`, `UC-074`, `UC-077` — s
 | ID | Gap | Area | Decision | Severity |
 |---|---|---|---|---|
 | `FRD-GAP-001` | Profile disclosure content | Account | `BAD-DEC-022` | Medium |
-| `FRD-GAP-002` | Verification standing vocabulary and driver eligibility | Account | `BAD-DEC-005` | High |
-| `FRD-GAP-003` | Account state behaviour | Account | `BAD-DEC-006` | High |
+| `FRD-GAP-002` | ~~Verification standing vocabulary~~ **CLOSED 2026-08-20 by `BAD-RULE-006`** (`UNVERIFIED`, `VERIFIED`) · **driver eligibility still open** | Account | `BAD-DEC-005` | High |
+| `FRD-GAP-003` | ~~Account state model~~ **CLOSED 2026-08-20 by `BAD-RULE-010`** (`ACTIVE`, `SUSPENDED`, `DEACTIVATED`) · **transition authority and appeal remain open at `FRD-GAP-024`** | Account | `BAD-DEC-006` | High |
 | `FRD-GAP-004` | Vehicle capacity source and unverified-vehicle publishing | Vehicle | `BAD-DEC-005` | High |
 | `FRD-GAP-005` | Fare establishment on a published ride | Publishing | `BAD-DEC-003` | **Critical** |
 | `FRD-GAP-006` | **Driver cancellation with confirmed bookings** | Publishing | `BAD-DEC-009` | **Critical** |
@@ -1013,6 +1014,20 @@ except where noted · **Withheld:** `UC-068`, `UC-069`, `UC-074`, `UC-077` — s
 | `FRD-GAP-029` | Account closure data treatment | Cross-cutting | `BAD-DEC-021` | High |
 
 **29 functional gaps. Eleven are Critical.**
+
+> **FACT (2026-08-20).** Three account decisions were taken by the Project Owner and are
+> held in **CMP-DOC-01 §14.2**, which is where a business rule lives (`CLAUDE.md` §3):
+> `BAD-RULE-006` fixes the verification standing vocabulary, `BAD-RULE-010` fixes the
+> account state model, and `BAD-RULE-043` fixes the mandatory identifying detail at the
+> verified phone number alone.
+>
+> **A struck-through gap is closed; the text beside it is what still is not.** Neither row
+> was removed, because neither gap is wholly answered, and the register’s count is a count
+> of gaps rather than of open questions.
+>
+> `FRD-FR-002`’s wording is deliberately unchanged. It defers to the business, and it should
+> continue to defer — a later decision may add a mandatory detail, and the requirement that
+> reads *"the identifying details the business defines as mandatory"* will still be correct.
 
 ## 9.4 The Two Gaps That Are Live Product Defects
 
