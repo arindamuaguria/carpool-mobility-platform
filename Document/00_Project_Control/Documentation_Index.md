@@ -8,7 +8,7 @@
 | Document Name | Documentation Index |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 4.0 |
+| Version | 4.1 |
 | Status | Draft |
 | Date | 2026-08-20 |
 | Author | Documentation Manager (AI-assisted) |
@@ -16,7 +16,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 3.9 (2026-08-20) |
+| Previous Version | 4.0 (2026-08-20) |
 | Related Documents | README.md, Documentation_Status.md, Document_Change_Log.md, Glossary.md, Master_Traceability_Matrix.md |
 
 ---
@@ -33,11 +33,11 @@ approved, superseded, or deprecated.
 | ID | Document | Version | Status | Location |
 |---|---|---|---|---|
 | CMP-CTRL-README | Documentation Repository README | **0.4** | Draft | `Document/00_Project_Control/README.md` |
-| CMP-CTRL-INDEX | Documentation Index | **4.0** | Draft | `Document/00_Project_Control/Documentation_Index.md` |
-| CMP-CTRL-STATUS | Documentation Status | **4.0** | Draft | `Document/00_Project_Control/Documentation_Status.md` |
-| CMP-CTRL-CHANGELOG | Document Change Log | **4.0** | Draft | `Document/00_Project_Control/Document_Change_Log.md` |
+| CMP-CTRL-INDEX | Documentation Index | **4.1** | Draft | `Document/00_Project_Control/Documentation_Index.md` |
+| CMP-CTRL-STATUS | Documentation Status | **4.1** | Draft | `Document/00_Project_Control/Documentation_Status.md` |
+| CMP-CTRL-CHANGELOG | Document Change Log | **4.1** | Draft | `Document/00_Project_Control/Document_Change_Log.md` |
 | CMP-CTRL-GLOSSARY | Glossary | 3.1 | Draft | `Document/00_Project_Control/Glossary.md` |
-| CMP-CTRL-RTM | Master Traceability Matrix | **3.4** | Draft | `Document/00_Project_Control/Master_Traceability_Matrix.md` |
+| CMP-CTRL-RTM | Master Traceability Matrix | **3.5** | Draft | `Document/00_Project_Control/Master_Traceability_Matrix.md` |
 
 ## 3. Formal Document Register (DOC-01 … DOC-20)
 
@@ -55,7 +55,7 @@ approved, superseded, or deprecated.
 | CMP-DOC-10 | API Specification | API | **0.2** | **Draft** | `Document/10_API_Specification/DOC-10-API-CMP-API-Specification.md` + `.docx` |
 | CMP-DOC-11 | Database Design Document | DATABASE | **0.1** | **Draft** | `Document/11_Database_Design/DOC-11-DATABASE-CMP-Database-Design.md` + `.docx` |
 | CMP-DOC-12 | UI/UX Specification | UIUX | **0.1** | **Draft** | `Document/12_UI_UX_Specification/DOC-12-UIUX-CMP-UI-UX-Specification.md` + `.docx` |
-| CMP-DOC-13 | Security Design | SECURITY | **0.2** | **Draft** | `Document/13_Security/DOC-13-SECURITY-CMP-Security-Design.md` + `.docx` |
+| CMP-DOC-13 | Security Design | SECURITY | **0.3** | **Draft** | `Document/13_Security/DOC-13-SECURITY-CMP-Security-Design.md` + `.docx` |
 | CMP-DOC-14 | Payment & UPI Specification | PAYMENT | **0.1** | **Draft** | `Document/14_Payment_UPI/DOC-14-PAYMENT-CMP-Payment-UPI-Specification.md` + `.docx` |
 | CMP-DOC-15 | GPS / Live Trip Specification | GPS | **0.1** | **Draft** | `Document/15_GPS_Live_Trip/DOC-15-GPS-CMP-Live-Trip-Specification.md` + `.docx` |
 | CMP-DOC-16 | Communication & Notification Specification | NOTIFICATION | **0.1** | **Draft** | `Document/16_Communication_Notifications/DOC-16-NOTIFICATION-CMP-Communication-Notifications.md` + `.docx` |
@@ -164,7 +164,7 @@ the corresponding document is explicitly requested by the Project Owner.
 | CMP-DOC-10 API | `API-` | 001+ | **`API-001` … `API-219` (219 issued, v0.2)** — `API-217` added to §6, `API-218` to §5 and `API-219` to §8 at v0.2 |
 | CMP-DOC-11 DATABASE | `DB-` | 001+ | **`DB-001` … `DB-232` (232 issued, v0.1)** |
 | CMP-DOC-12 UIUX | `UX-` | 001+ | **`UX-001` … `UX-224` (224 issued, v0.1)** — prefix allocated here, see `CC-014` |
-| CMP-DOC-13 SECURITY | `SEC-` | 001+ | **`SEC-001` … `SEC-242` (242 issued, v0.2)** — `SEC-241`–`SEC-242` added to §14 at v0.2 |
+| CMP-DOC-13 SECURITY | `SEC-` | 001+ | **`SEC-001` … `SEC-242` (242 issued, unchanged at v0.3)** — `SEC-241`–`SEC-242` added to §14 at v0.2; v0.3 issued none |
 | CMP-DOC-14 PAYMENT | `PAY-` | 001+ | **`PAY-001` … `PAY-208` (208 issued, v0.1)** |
 | CMP-DOC-15 GPS | `GPS-` | 001+ | **`GPS-001` … `GPS-196` (196 issued, v0.1)** |
 | CMP-DOC-16 NOTIFICATION | `NOTIF-` | 001+ | **`NOTIF-001` … `NOTIF-188` (188 issued, v0.1)** |
