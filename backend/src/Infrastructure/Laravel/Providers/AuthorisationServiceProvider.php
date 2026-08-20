@@ -30,7 +30,7 @@ final class AuthorisationServiceProvider extends ServiceProvider
     /**
      * The platform's authorisation policy.
      *
-     * **Two rules, both added on 2026-08-20 with the operations they govern** —
+     * **Three rules, each added with the operation it governs** —
      * see {@see sessionRules()}. That is the standing rule: a rule is added on
      * the commit that adds the operation it governs, never ahead of it, because
      * a rule for an operation that does not exist permits nothing and reviews as
@@ -68,24 +68,31 @@ final class AuthorisationServiceProvider extends ServiceProvider
     }
 
     /**
-     * The two operations a caller may perform on the session they hold.
+     * Establishing a session, and the two operations a caller may perform on one
+     * they already hold.
      *
-     * Both take {@see AuthorisationRule::requiringParty()} — no capability, no
-     * role kind, nothing that touches the role set `SEC-063` leaves undecided.
+     * All three take {@see AuthorisationRule::requiringParty()} — no capability,
+     * no role kind, nothing that touches the role set `SEC-063` leaves undecided.
      * `SEC-066` ‡ is the whole rule: *"a user shall access only records to which
      * they are a party"*, and `SEC-044` ‡ binds a session to exactly one actor,
      * so the party is unambiguous and there is no list to get wrong.
      *
-     * **Neither alters entitlement**, so neither is marked
+     * **None alters entitlement**, so none is marked
      * {@see AuthorisationRule::alteringEntitlement()}. `SEC-058` ‡ and
-     * `API-105` ‡ guard a caller changing their own permissions; terminating or
-     * refreshing a session changes what the caller holds, not what they may do.
+     * `API-105` ‡ guard a caller changing their own permissions; establishing,
+     * terminating or refreshing a session changes what the caller holds, not
+     * what they may do — `SEC-045` ‡ keeps every claim out of a session, so
+     * there is nothing in one to alter.
      *
      * @return array<string, AuthorisationRule>
      */
     public static function sessionRules(): array
     {
         return [
+            // CMP-IMP-053. The party is the identity the session will be bound
+            // to (`SEC-044` ‡), which is what stops a caller establishing one
+            // for somebody else — a rule rather than a check inside the service.
+            'sessions.establish' => AuthorisationRule::requiringParty(),
             'sessions.current.terminate' => AuthorisationRule::requiringParty(),
             'sessions.current.refresh' => AuthorisationRule::requiringParty(),
         ];

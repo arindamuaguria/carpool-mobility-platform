@@ -8,7 +8,7 @@
 | Document Name | Documentation Index |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 4.4 |
+| Version | 4.5 |
 | Status | Draft |
 | Date | 2026-08-20 |
 | Author | Documentation Manager (AI-assisted) |
@@ -16,7 +16,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 4.3 (2026-08-20) |
+| Previous Version | 4.4 (2026-08-20) |
 | Related Documents | README.md, Documentation_Status.md, Document_Change_Log.md, Glossary.md, Master_Traceability_Matrix.md |
 
 ---
@@ -33,9 +33,9 @@ approved, superseded, or deprecated.
 | ID | Document | Version | Status | Location |
 |---|---|---|---|---|
 | CMP-CTRL-README | Documentation Repository README | **0.4** | Draft | `Document/00_Project_Control/README.md` |
-| CMP-CTRL-INDEX | Documentation Index | **4.4** | Draft | `Document/00_Project_Control/Documentation_Index.md` |
-| CMP-CTRL-STATUS | Documentation Status | **4.4** | Draft | `Document/00_Project_Control/Documentation_Status.md` |
-| CMP-CTRL-CHANGELOG | Document Change Log | **4.4** | Draft | `Document/00_Project_Control/Document_Change_Log.md` |
+| CMP-CTRL-INDEX | Documentation Index | **4.5** | Draft | `Document/00_Project_Control/Documentation_Index.md` |
+| CMP-CTRL-STATUS | Documentation Status | **4.5** | Draft | `Document/00_Project_Control/Documentation_Status.md` |
+| CMP-CTRL-CHANGELOG | Document Change Log | **4.5** | Draft | `Document/00_Project_Control/Document_Change_Log.md` |
 | CMP-CTRL-GLOSSARY | Glossary | 3.1 | Draft | `Document/00_Project_Control/Glossary.md` |
 | CMP-CTRL-RTM | Master Traceability Matrix | **3.8** | Draft | `Document/00_Project_Control/Master_Traceability_Matrix.md` |
 

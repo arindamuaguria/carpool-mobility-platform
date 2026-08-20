@@ -64,6 +64,34 @@ final class DatabaseSessionRepository implements SessionRepository
         );
     }
 
+    public function usableCountFor(UserReference $user, Instant $now, int $lifetimeInSeconds): int
+    {
+        if ($lifetimeInSeconds < 1) {
+            throw new RuntimeException(
+                'SEC-039 ‡: a session lifetime is a positive bound, and counting against a bound of zero would '
+                .'report every user as holding none.'
+            );
+        }
+
+        // SEC-039 ‡ measured from establishment, in the same direction
+        // Session::hasExpiredAt() measures it: elapsed >= lifetime has expired,
+        // so still-usable is established_at > now - lifetime. The two are written
+        // once each and SessionLifecycleTest asserts they agree.
+        $earliestStillUsable = $now->toDateTime()->modify(sprintf('-%d seconds', $lifetimeInSeconds));
+
+        /** @var list<object{total: int|string}> $rows */
+        $rows = $this->connection->select(
+            'SELECT COUNT(*) AS total FROM '.self::TABLE.' AS s INNER JOIN op_users AS u ON u.id = s.user_id'
+            .' WHERE u.external_id = ? AND s.terminated_at IS NULL AND s.established_at > ?',
+            [$user->toString(), Instant::fromDateTime($earliestStillUsable)->toDatabaseString()],
+        );
+
+        // op_sessions_user_id_index (DB-216) is what keeps this an index range
+        // rather than a scan, and SEC-046's terminate-all is the other reason it
+        // exists.
+        return $rows === [] ? 0 : (int) $rows[0]->total;
+    }
+
     /**
      * Writes the session, inserting it where it is new.
      *

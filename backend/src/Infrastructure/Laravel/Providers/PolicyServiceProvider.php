@@ -10,6 +10,7 @@ use Cmp\Application\Shared\Policy\PolicyCache;
 use Cmp\Application\Shared\Policy\RecordsPolicyChanges;
 use Cmp\Application\Shared\StateMachine\ApplyTransition;
 use Cmp\Application\Shared\Transaction\TransactionBoundary;
+use Cmp\Application\User\EstablishSession;
 use Cmp\Application\User\ResolveSession;
 use Cmp\Domain\Shared\Policy\PolicyKey;
 use Cmp\Domain\Shared\Policy\PolicyRegister;
@@ -41,14 +42,15 @@ final class PolicyServiceProvider extends ServiceProvider
     /**
      * The platform's declared policy values.
      *
-     * **Four keys, each declared on the commit that gave it a reader** —
-     * {@see sessionLifetime()} for `SEC-039` ‡, and {@see authenticationHashCost()}'s
-     * three for `SEC-030`. That is the rule this register follows: a key is
-     * declared on the commit that gives something the code to read it, because
-     * declaring one earlier would create the accessor `BADR-12` says must not
-     * exist, for behaviour nothing yet performs.
+     * **Five keys, each declared on the commit that gave it a reader** —
+     * {@see sessionLifetime()} for `SEC-039` ‡, {@see concurrentSessionLimit()}
+     * for `SEC-049`, and {@see authenticationHashCost()}'s three for `SEC-030`.
+     * That is the rule this register follows: a key is declared on the commit
+     * that gives something the code to read it, because declaring one earlier
+     * would create the accessor `BADR-12` says must not exist, for behaviour
+     * nothing yet performs.
      *
-     * All four are **unset**. `BADR-12` applies a value by an operator action
+     * All five are **unset**. `BADR-12` applies a value by an operator action
      * `BE-173` evidences, so the platform ships with the keys and none of the
      * figures — and `SRS-REQ-158` rejects an attempt to use an unconfigured one
      * rather than falling back to something nobody chose.
@@ -79,6 +81,7 @@ final class PolicyServiceProvider extends ServiceProvider
     {
         return PolicyRegister::of(
             self::sessionLifetime(),
+            self::concurrentSessionLimit(),
             ...self::authenticationHashCost(),
         );
     }
@@ -130,6 +133,34 @@ final class PolicyServiceProvider extends ServiceProvider
                 .'SEC-028 ‡: a value below the floor of 1 is refused, not applied.',
             ),
         ];
+    }
+
+    /**
+     * `SEC-049` — how many sessions one user may hold at once.
+     *
+     * **Declared on the commit that gave it a reader**, which is
+     * {@see EstablishSession}. It could not be declared
+     * before `SEC-243` ‡, because until then `SEC-049` had a number and no
+     * behaviour — and a key read by code that did not know what to do at the
+     * limit would have been a value nobody could act on.
+     *
+     * **Declared and unset.** `SEC-049` was decided on 2026-08-20 as three, and
+     * the figure lives in CMP-DOC-13; applying it is an operator action `BE-173`
+     * evidences.
+     *
+     * `BE-172` ‡: raising it does not relax an absolute rule. `SEC-243` ‡ is the
+     * rule — a user past the limit is refused and nothing is evicted — and no
+     * value of this key produces eviction, because no code evicts.
+     */
+    public static function concurrentSessionLimit(): PolicyKey
+    {
+        return PolicyKey::of(
+            'session.concurrent_limit',
+            PolicyType::Integer,
+            'How many sessions one user may hold at once (SEC-049). Read by EstablishSession before a session '
+            .'is created, against a count of usable sessions. It cannot relax SEC-243 ‡: whatever the number, '
+            .'a user who has reached it is refused and no existing session is terminated to make room.',
+        );
     }
 
     /**

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Cmp\Domain\User;
 
+use Cmp\Domain\Shared\Time\Instant;
+
 /**
  * Where sessions are read and written.
  *
@@ -32,9 +34,10 @@ namespace Cmp\Domain\User;
  * capability, and `BAD-DEC-006` leaves the administrative role set undecided
  * (`ADM-168`). It arrives with the surface that calls it.
  *
- * And there is no count of active sessions, which `SEC-049`'s limit of three
- * would need. That limit bites at **establishment**, and establishment is
- * blocked: no statement says what the platform does when the limit is reached.
+ * There **is** a count of usable sessions ({@see usableCountFor()}), added when
+ * `SEC-243` ‡ settled what the limit does. It is a count and not a list: nothing
+ * needs to know which sessions a user holds, and a method returning them would be
+ * a way for one caller to learn about another's devices.
  */
 interface SessionRepository
 {
@@ -47,6 +50,26 @@ interface SessionRepository
      * different at the point where the code decides what to say.
      */
     public function forTokenHash(string $tokenHash): ?Session;
+
+    /**
+     * How many sessions this user currently holds that would still serve
+     * (`SEC-049`, counted for `SEC-243` ‡).
+     *
+     * **Usable, not merely un-terminated.** `SEC-039` ‡ bounds a session's
+     * lifetime and `DB-044` ‡ keeps a terminated row forever, so a count of rows
+     * would grow without limit and a count of un-terminated rows would include
+     * sessions that expired months ago. Either would refuse establishment to a
+     * user holding nothing at all.
+     *
+     * The lifetime is passed in for the same reason {@see Session::isUsableAt()}
+     * takes it: `BE-002` keeps a Domain contract from reading policy, and
+     * `BE-170` requires a shortened bound to apply to sessions already
+     * established — which it cannot if the bound was frozen anywhere.
+     *
+     * @param  int  $lifetimeInSeconds  `SEC-039` ‡'s bound, measured from
+     *                                  establishment
+     */
+    public function usableCountFor(UserReference $user, Instant $now, int $lifetimeInSeconds): int;
 
     /**
      * Writes an established or terminated session.
