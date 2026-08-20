@@ -8,7 +8,7 @@
 | Document Name | Documentation Status |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 4.0 |
+| Version | 4.1 |
 | Status | Draft |
 | Date | 2026-08-20 |
 | Author | Documentation Manager (AI-assisted) |
@@ -16,7 +16,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 3.9 (2026-08-20) |
+| Previous Version | 4.0 (2026-08-20) |
 | Related Documents | README.md, Documentation_Index.md, Document_Change_Log.md, Glossary.md, Master_Traceability_Matrix.md |
 
 ---
@@ -70,11 +70,11 @@ authoritative answer to *"where are we in the documentation programme?"*
 | ID | File | Version | Status | Last Updated |
 |---|---|---|---|---|
 | CMP-CTRL-README | README.md | **0.4** | Draft | **2026-08-19** |
-| CMP-CTRL-INDEX | Documentation_Index.md | **4.0** | Draft | **2026-08-20** |
-| CMP-CTRL-STATUS | Documentation_Status.md | **4.0** | Draft | **2026-08-20** |
-| CMP-CTRL-CHANGELOG | Document_Change_Log.md | **4.0** | Draft | **2026-08-20** |
+| CMP-CTRL-INDEX | Documentation_Index.md | **4.1** | Draft | **2026-08-20** |
+| CMP-CTRL-STATUS | Documentation_Status.md | **4.1** | Draft | **2026-08-20** |
+| CMP-CTRL-CHANGELOG | Document_Change_Log.md | **4.1** | Draft | **2026-08-20** |
 | CMP-CTRL-GLOSSARY | Glossary.md | 3.1 | Draft | 2026-08-17 |
-| CMP-CTRL-RTM | Master_Traceability_Matrix.md | **3.4** | Draft | **2026-08-20** |
+| CMP-CTRL-RTM | Master_Traceability_Matrix.md | **3.5** | Draft | **2026-08-20** |
 
 ## 5. Documentation Roadmap Status
 
@@ -92,7 +92,7 @@ authoritative answer to *"where are we in the documentation programme?"*
 | DOC-10 | API | API Specification | **0.2** | **Draft — awaiting Project Owner review** | Software Architect / Backend Lead |
 | DOC-11 | DATABASE | Database Design Document | **0.1** | **Draft — awaiting Project Owner review** | Software Architect / Backend Lead |
 | DOC-12 | UI/UX | UI/UX Specification | **0.1** | **Draft — awaiting Project Owner review** | UI/UX Designer |
-| DOC-13 | SECURITY | Security Design | **0.2** | **Draft — awaiting Project Owner review** | Security Analyst |
+| DOC-13 | SECURITY | Security Design | **0.3** | **Draft — awaiting Project Owner review** | Security Analyst |
 | DOC-14 | PAYMENT | Payment & UPI Specification | **0.1** | **Draft — awaiting Project Owner review** | Solution Architect / Payments |
 | DOC-15 | GPS | GPS / Live Trip Specification | **0.1** | **Draft — awaiting Project Owner review** | Software Architect |
 | DOC-16 | NOTIFICATION | Communication & Notification Specification | **0.1** | **Draft — awaiting Project Owner review** | Software Architect |

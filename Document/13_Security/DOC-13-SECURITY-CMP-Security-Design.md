@@ -15,7 +15,7 @@
 | Short Name | SECURITY |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | Draft |
 | Date | 2026-08-20 |
 | Author | Security Analyst (AI-assisted) |
@@ -23,7 +23,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 0.1 (2026-08-17) |
+| Previous Version | 0.2 (2026-08-20) |
 | Predecessor Documents | CMP-DOC-01 … CMP-DOC-11, **all Draft, none approved** (CMP-DOC-09 at v0.2, the remainder at v0.1). CMP-DOC-12 does not exist. |
 | Related Documents | `00_Project_Control/README.md`, `Documentation_Index.md`, `Documentation_Status.md`, `Document_Change_Log.md`, `Glossary.md`, `Master_Traceability_Matrix.md` |
 | Successor Documents | CMP-DOC-14 (Payment & UPI), CMP-DOC-15 (GPS / Live Trip), CMP-DOC-17 (Admin / Filament), CMP-DOC-18 (Testing & QA), CMP-DOC-19 (DevOps / Deployment) |
@@ -34,6 +34,7 @@
 |---|---|---|---|---|
 | 0.1 | 2026-08-17 | Security Analyst (AI-assisted) | Initial issue. Specifies the security mechanisms deferred here by five predecessors: 10 security drivers, **16 security decisions**, trust boundary defences, authentication, session management, authorisation, protection at rest and in transit, the evidential chain mechanism, injection defence, payment credential handling, client-side security, secrets and key management, abuse posture, the fraud position, logging and response, backup security, and verification. Issues 240 statements (`SEC-001` … `SEC-240`). | Draft |
 | 0.2 | 2026-08-20 | Security Analyst (AI-assisted) | **The evidential chain construction ratified and recorded in §14.2.** `SEC-107` required a keyed message authentication construction over a canonical serialisation and left the specific algorithm to §14.2 as a technical decision; §14.2 named no algorithm. The Project Owner ratified **HMAC-SHA-256 over the length-prefixed canonical serialisation of `SEC-108` ‡** on 2026-08-20, and it is now recorded at `SEC-241`. `SEC-242` records that this does not close `SEC-174`: each record continues to carry the construction that produced it, so the choice remains replaceable by a staged migration. Issues 2 statements (`SEC-241`, `SEC-242`); §14 now holds 18. **No existing statement was altered, no ‡ marking changed, and no compliance claim is made — §0.6.2 continues to apply.** | Draft |
+| 0.3 | 2026-08-20 | Security Analyst (AI-assisted) | **`SEC-025` decided: five attempts per phone number per hour, and no account lockout.** `SEC-024` holds the limit, the window and the lockout behaviour as policy configuration; all three now have a value, and the third is **none**. A dated **FACT** records two consequences. First, this single bound serves both `SEC-022` ‡ and `SEC-023` ‡ rather than only the latter: `SEC-015` makes authentication *the* demonstration of possession of a verified number, so an authentication attempt and a verification attempt are the same act against the same number, and the Project Owner’s *"no account lockout"* settles the account dimension explicitly. Second, **no account lockout means no locked-account state and therefore no column holding one** — the bound is enforced against the attempts `DB-043` retains, which is what that statement asks for. The four remaining authentication values (`SEC-017`, `SEC-031`, `SEC-039`, `SEC-049`) are **still undecided** and are named as such. **No statement other than `SEC-025` was altered and no ‡ marking changed.** | Draft |
 
 ## 0.3 Distribution List
 
@@ -557,9 +558,30 @@ flowchart LR
 | `SEC-022` ‡ | Authentication attempts against an account shall be rate-bounded. | `NFR-056` |
 | `SEC-023` ‡ | Verification attempts against a phone number shall be rate-bounded independently of any session. | `NFR-057`, `API-201` |
 | `SEC-024` | Attempt limits, windows and lockout behaviour shall be policy configuration. | `BADR-12`, `NFR-057` |
-| `SEC-025` | Their values are `[TBD – Business Decision Required]`; a limit too low denies service to a legitimate user on a poor network and a limit too high denies nothing. | `NFR-057`, `GAP-012` |
+| `SEC-025` | **Decided 2026-08-20: five attempts per phone number per hour, and no account lockout.** The limit is 5, the window is one hour, and the lockout behaviour `SEC-024` holds as configurable is **none** — exhaustion refuses further attempts within the window under `SEC-026` ‡ and creates no locked account state. The trade-off recorded at v0.1 is the reason the figure is neither smaller nor larger: a limit too low denies service to a legitimate user on a poor network and a limit too high denies nothing. | `NFR-057`, `GAP-012` |
 | `SEC-026` ‡ | Exhaustion of an attempt limit shall be a business refusal carrying its own reason identifier, and shall be recorded. | `FRD-FR-011`, `API-199` |
 | `SEC-027` | Attempt bounding shall not depend on a client-supplied identifier the client controls. | `API-205` |
+
+> **FACT (2026-08-20).** `SEC-025` was decided by the Project Owner as **five attempts per
+> phone number per hour, with no account lockout**.
+>
+> **One bound, and it serves both `SEC-022` ‡ and `SEC-023` ‡.** `SEC-023` ‡ bounds
+> verification attempts against a number independently of any session; `SEC-022` ‡ bounds
+> authentication attempts against an account. They are not two acts here: `SEC-015` makes
+> authentication **the** demonstration of possession of a verified phone number, so the
+> attempt is the same attempt and the number is the account’s. The decision’s second half
+> settles the account dimension in terms — there is no account lockout — so no separate
+> account-level bound is introduced, and none is invented.
+>
+> **No lockout means no state.** A lockout would be a condition of the account, needing a
+> column to hold it and a rule to clear it. A rate bound is not: it is a question asked of
+> the attempts `DB-043` requires to be retained *"so that an attempt limit is enforceable
+> against state rather than against memory"*. `op_users` therefore carries no
+> locked-until column, and the schema is decidable without waiting on the remaining values.
+>
+> **Four authentication values remain undecided** and no behaviour depending on them is
+> built: `SEC-017` demonstration lifetime, `SEC-031` hash cost parameters, `SEC-039`
+> session lifetime, `SEC-049` concurrent session limit.
 
 ## 5.3 Credential Storage
 
@@ -1225,7 +1247,7 @@ new.
 
 | Statement | Awaiting |
 |---|---|
-| `SEC-025`, `SEC-183` | Attempt and rate limits — `GAP-012` |
+| `SEC-183` | Rate limits, windows and thresholds — `GAP-012`. **`SEC-025` left this row on 2026-08-20**, decided at v0.3. |
 | `SEC-031`, `SEC-175` | Hash and algorithm parameters — deployed hardware |
 | `SEC-034` | Account recovery — `SEC-OQ-05` |
 | `SEC-049` | Concurrent session limit |
@@ -1319,7 +1341,7 @@ new.
 | Statements with no upstream counterpart | 4 |
 | **Compliance or certification claims** | **0** |
 | Assumptions / Risks / Open questions | 6 / 8 / 8 |
-| `[TBD – Business Decision Required]` markers | 21 |
+| `[TBD – Business Decision Required]` markers | 20 (21 at v0.1; `SEC-025` decided at v0.3) |
 | `[TBD – Technical Decision Required]` markers | 6 |
 
 ### Statements by Section
