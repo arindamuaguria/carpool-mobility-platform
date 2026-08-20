@@ -48,6 +48,24 @@ final class RestRoutingRulesTest extends TestCase
         'submit', 'approve', 'decline', 'activate', 'deactivate', 'enable', 'disable',
     ];
 
+    /**
+     * The paths CMP-DOC-10 §9.1 makes reachable without a session, that this
+     * surface serves.
+     *
+     * §9.1 names **five** operations: version discovery, session establishment,
+     * phone verification initiation and completion, the public configuration
+     * subset, and platform health. Two are routed. The other three are not built
+     * — session establishment and both verification operations are blocked at
+     * `CC-034`, and the configuration resource belongs to CMP-DOC-10 §14 — so
+     * naming them here would exempt paths that do not exist.
+     *
+     * `API-110` puts this list in §9.1 *"and nowhere else"*, which is why it is
+     * asserted against rather than merely used.
+     *
+     * @var list<string>
+     */
+    private const REACHABLE_WITHOUT_A_SESSION = ['versions', 'health'];
+
     public function test_no_path_segment_encodes_an_action(): void
     {
         // API-006 / AADR-07.
@@ -103,15 +121,14 @@ final class RestRoutingRulesTest extends TestCase
     public function test_every_operation_outside_section_9_1_sits_behind_a_session(): void
     {
         // API-110: "which operations are reachable without a session is stated in
-        // §9.1 and nowhere else." §9.1 names five; `versions` is the one the
-        // surface serves. API-095 ‡ requires everything else to carry a session,
-        // so every other declared path must sit inside the RequireSession group —
-        // and this fails if one is ever added outside it.
+        // §9.1 and nowhere else." API-095 ‡ requires everything else to carry a
+        // session, so every other declared path must sit inside the
+        // RequireSession group — and this fails if one is ever added outside it.
         $routes = self::routeFile();
         $guarded = substr($routes, strpos($routes, 'RequireSession::class') ?: 0);
 
         foreach (self::declaredPaths() as $path) {
-            if ($path === 'versions') {
+            if (in_array($path, self::REACHABLE_WITHOUT_A_SESSION, true)) {
                 continue;
             }
 
@@ -122,9 +139,31 @@ final class RestRoutingRulesTest extends TestCase
             );
         }
 
-        // And `versions` is not behind it — API-026 needs the unsupported-version
-        // outcome and the range reachable before a client can authenticate.
-        self::assertStringNotContainsString("'versions'", $guarded);
+        // And none of §9.1's is behind it. API-026 needs the range reachable
+        // before a client can authenticate, and BE-203's health indication is
+        // most needed exactly when the capability that authenticates is
+        // withdrawn.
+        foreach (self::REACHABLE_WITHOUT_A_SESSION as $exempt) {
+            self::assertStringNotContainsString("'".$exempt."'", $guarded);
+        }
+    }
+
+    public function test_the_unauthenticated_set_is_bounded_by_section_9_1(): void
+    {
+        // The other direction, and the one that matters more: API-110 puts the
+        // list in §9.1 "and nowhere else", so the exemption above is not a list
+        // this test may grow. Three of §9.1's five are unrouted — session
+        // establishment and both verification operations are blocked at CC-034 —
+        // and this fails if a sixth path is ever exempted here.
+        self::assertSame(['versions', 'health'], self::REACHABLE_WITHOUT_A_SESSION);
+
+        foreach (self::REACHABLE_WITHOUT_A_SESSION as $exempt) {
+            self::assertContains(
+                $exempt,
+                self::declaredPaths(),
+                'An exemption for a path the surface does not serve is an exemption nobody can review.',
+            );
+        }
     }
 
     /**

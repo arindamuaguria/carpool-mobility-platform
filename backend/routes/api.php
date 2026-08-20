@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Cmp\Interface\Rest\Controller\CurrentSessionController;
+use Cmp\Interface\Rest\Controller\HealthController;
 use Cmp\Interface\Rest\Controller\VersionsController;
 use Cmp\Interface\Rest\Middleware\RequireIdempotencyKey;
 use Cmp\Interface\Rest\Middleware\RequireSession;
@@ -51,6 +52,12 @@ Route::prefix(ServedVersions::PREFIX.'/{version}')
     ->group(function (): void {
         // API-027 / §9.1 — reachable without a session.
         Route::get('versions', VersionsController::class)->name('versions.show');
+
+        // BE-203 / §11.13 — platform health, distinguished from dependencies.
+        // §9.1 names it among the five reachable without a session, and that
+        // placement is the point: a client that cannot authenticate because the
+        // capability that authenticates is withdrawn must still learn why.
+        Route::get('health', HealthController::class)->name('health.show');
 
         // API-095 ‡: everything CMP-DOC-10 §9.1 does not name requires an
         // authenticated session. RequireSession establishes who is calling;
