@@ -9,6 +9,7 @@ use Cmp\Infrastructure\Laravel\Providers\EvidentialServiceProvider;
 use Cmp\Infrastructure\Laravel\Providers\PersistenceServiceProvider;
 use Cmp\Infrastructure\Laravel\Providers\PolicyServiceProvider;
 use Cmp\Infrastructure\Laravel\Providers\PortServiceProvider;
+use Cmp\Infrastructure\Laravel\Providers\UserServiceProvider;
 
 return [
     AppServiceProvider::class,
@@ -18,4 +19,5 @@ return [
     PolicyServiceProvider::class,
     AuthorisationServiceProvider::class,
     EvidentialServiceProvider::class,
+    UserServiceProvider::class,
 ];

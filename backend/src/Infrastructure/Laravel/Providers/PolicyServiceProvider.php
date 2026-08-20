@@ -10,8 +10,11 @@ use Cmp\Application\Shared\Policy\PolicyCache;
 use Cmp\Application\Shared\Policy\RecordsPolicyChanges;
 use Cmp\Application\Shared\StateMachine\ApplyTransition;
 use Cmp\Application\Shared\Transaction\TransactionBoundary;
+use Cmp\Application\User\ResolveSession;
+use Cmp\Domain\Shared\Policy\PolicyKey;
 use Cmp\Domain\Shared\Policy\PolicyRegister;
 use Cmp\Domain\Shared\Policy\PolicyStore;
+use Cmp\Domain\Shared\Policy\PolicyType;
 use Cmp\Domain\Shared\StateMachine\StateMachine;
 use Cmp\Domain\Shared\StateMachine\StateModelRepository;
 use Cmp\Domain\Shared\Time\Clock;
@@ -37,12 +40,16 @@ final class PolicyServiceProvider extends ServiceProvider
     /**
      * The platform's declared policy values.
      *
-     * **Empty.** CMP-DOC-09 §13.2 lists eleven values that will be held as policy
-     * configuration, and says of them: *"Their **existence** is architecture;
-     * their **values** are not invented here."* A key is declared on the commit
-     * that gives something the code to read it — declaring one earlier would
-     * create the accessor `BADR-12` says must not exist, for behaviour nothing
-     * yet performs.
+     * **One key, declared on 2026-08-20 with the code that reads it** —
+     * {@see sessionLifetime()}, for `SEC-039` ‡. That is the rule this register
+     * follows: a key is declared on the commit that gives something the code to
+     * read it, because declaring one earlier would create the accessor `BADR-12`
+     * says must not exist, for behaviour nothing yet performs.
+     *
+     * CMP-DOC-09 §13.2 lists eleven **further** values that will be held as
+     * policy configuration, and says of them: *"Their **existence** is
+     * architecture; their **values** are not invented here."* None is declared,
+     * and each row below says why.
      *
      * | §13.2 value | Why it is not declared |
      * |---|---|
@@ -63,7 +70,41 @@ final class PolicyServiceProvider extends ServiceProvider
      */
     public static function declaredValues(): PolicyRegister
     {
-        return PolicyRegister::of();
+        return PolicyRegister::of(self::sessionLifetime());
+    }
+
+    /**
+     * `SEC-039` ‡ / `API-104` — how long a session remains usable.
+     *
+     * The first key this register has ever held, and it is here rather than in
+     * `UserServiceProvider` because `DB-153` ‡ makes {@see declaredValues()} *the*
+     * table: a key absent from it cannot be read, cannot be written and has no
+     * default, and a second declaration point would defeat that.
+     *
+     * **Declared, and deliberately unset.** `SEC-039` ‡ was decided on 2026-08-20
+     * as twenty-four hours, and the figure is recorded in CMP-DOC-13 rather than
+     * here — `BADR-12` applies a value by an **operator action** that `BE-173`
+     * evidences, and `BE-171` keeps policy configuration out of deployment
+     * configuration. Until an operator applies `86400`, `DatabasePolicyStore`
+     * raises `PolicyNotSet` and every session resolution fails, which is
+     * `SRS-REQ-158` working rather than a defect.
+     *
+     * `SEC-017` (ten minutes) and `SEC-049` (three) were decided at the same time
+     * and are **not** declared: nothing reads either yet, and this file's own rule
+     * is that a key arrives with its reader. `SEC-049` has a further reason —
+     * what the platform does when the limit is reached is not stated by any
+     * requirement.
+     */
+    public static function sessionLifetime(): PolicyKey
+    {
+        return PolicyKey::of(
+            ResolveSession::LIFETIME_KEY,
+            PolicyType::Duration,
+            'How long an established session remains usable, measured from establishment (SEC-039 ‡). Read by '
+            .'ResolveSession on every request, so BE-170 lets a shortened bound apply to sessions already '
+            .'established. It cannot relax an absolute rule (BE-172 ‡): it sets the width of a window SEC-039 ‡ '
+            .'requires to exist and to be bounded, and cannot remove the bound.',
+        );
     }
 
     public function register(): void
