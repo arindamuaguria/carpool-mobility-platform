@@ -8,7 +8,7 @@
 | Document Name | Documentation Status |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 4.5 |
+| Version | 4.7 |
 | Status | Draft |
 | Date | 2026-08-20 |
 | Author | Documentation Manager (AI-assisted) |
@@ -16,7 +16,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 4.4 (2026-08-20) |
+| Previous Version | 4.6 (2026-08-20) |
 | Related Documents | README.md, Documentation_Index.md, Document_Change_Log.md, Glossary.md, Master_Traceability_Matrix.md |
 
 ---
