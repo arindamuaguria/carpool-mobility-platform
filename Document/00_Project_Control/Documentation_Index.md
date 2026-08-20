@@ -8,7 +8,7 @@
 | Document Name | Documentation Index |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 3.8 |
+| Version | 3.9 |
 | Status | Draft |
 | Date | 2026-08-20 |
 | Author | Documentation Manager (AI-assisted) |
@@ -16,7 +16,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 3.7 (2026-08-20) |
+| Previous Version | 3.8 (2026-08-20) |
 | Related Documents | README.md, Documentation_Status.md, Document_Change_Log.md, Glossary.md, Master_Traceability_Matrix.md |
 
 ---
@@ -33,11 +33,11 @@ approved, superseded, or deprecated.
 | ID | Document | Version | Status | Location |
 |---|---|---|---|---|
 | CMP-CTRL-README | Documentation Repository README | **0.4** | Draft | `Document/00_Project_Control/README.md` |
-| CMP-CTRL-INDEX | Documentation Index | **3.8** | Draft | `Document/00_Project_Control/Documentation_Index.md` |
-| CMP-CTRL-STATUS | Documentation Status | **3.8** | Draft | `Document/00_Project_Control/Documentation_Status.md` |
-| CMP-CTRL-CHANGELOG | Document Change Log | **3.8** | Draft | `Document/00_Project_Control/Document_Change_Log.md` |
+| CMP-CTRL-INDEX | Documentation Index | **3.9** | Draft | `Document/00_Project_Control/Documentation_Index.md` |
+| CMP-CTRL-STATUS | Documentation Status | **3.9** | Draft | `Document/00_Project_Control/Documentation_Status.md` |
+| CMP-CTRL-CHANGELOG | Document Change Log | **3.9** | Draft | `Document/00_Project_Control/Document_Change_Log.md` |
 | CMP-CTRL-GLOSSARY | Glossary | 3.1 | Draft | `Document/00_Project_Control/Glossary.md` |
-| CMP-CTRL-RTM | Master Traceability Matrix | **3.2** | Draft | `Document/00_Project_Control/Master_Traceability_Matrix.md` |
+| CMP-CTRL-RTM | Master Traceability Matrix | **3.3** | Draft | `Document/00_Project_Control/Master_Traceability_Matrix.md` |
 
 ## 3. Formal Document Register (DOC-01 … DOC-20)
 
@@ -52,7 +52,7 @@ approved, superseded, or deprecated.
 | CMP-DOC-07 | System Architecture Document | SAD | **0.1** | **Draft** | `Document/07_System_Architecture/DOC-07-SAD-CMP-System-Architecture.md` + `.docx` |
 | CMP-DOC-08 | Mobile Architecture Document | MOBILE | **0.1** | **Draft** | `Document/08_Mobile_Architecture/DOC-08-MOBILE-CMP-Mobile-Architecture.md` + `.docx` |
 | CMP-DOC-09 | Backend Architecture Document | BACKEND | **0.2** | **Draft** | `Document/09_Backend_Architecture/DOC-09-BACKEND-CMP-Backend-Architecture.md` + `.docx` |
-| CMP-DOC-10 | API Specification | API | **0.1** | **Draft** | `Document/10_API_Specification/DOC-10-API-CMP-API-Specification.md` + `.docx` |
+| CMP-DOC-10 | API Specification | API | **0.2** | **Draft** | `Document/10_API_Specification/DOC-10-API-CMP-API-Specification.md` + `.docx` |
 | CMP-DOC-11 | Database Design Document | DATABASE | **0.1** | **Draft** | `Document/11_Database_Design/DOC-11-DATABASE-CMP-Database-Design.md` + `.docx` |
 | CMP-DOC-12 | UI/UX Specification | UIUX | **0.1** | **Draft** | `Document/12_UI_UX_Specification/DOC-12-UIUX-CMP-UI-UX-Specification.md` + `.docx` |
 | CMP-DOC-13 | Security Design | SECURITY | **0.2** | **Draft** | `Document/13_Security/DOC-13-SECURITY-CMP-Security-Design.md` + `.docx` |
@@ -161,7 +161,7 @@ the corresponding document is explicitly requested by the Project Owner.
 | CMP-DOC-07 SAD | `ARCH-` | 001+ | **`ARCH-001` … `ARCH-148` (148 issued, v0.1)** |
 | CMP-DOC-08 MOBILE | `MOB-` | 001+ | **`MOB-001` … `MOB-168` (168 issued, v0.1)** |
 | CMP-DOC-09 BACKEND | `BE-` | 001+ | **`BE-001` … `BE-218` (218 issued, unchanged at v0.2)** |
-| CMP-DOC-10 API | `API-` | 001+ | **`API-001` … `API-216` (216 issued, v0.1)** |
+| CMP-DOC-10 API | `API-` | 001+ | **`API-001` … `API-219` (219 issued, v0.2)** — `API-217` added to §6, `API-218` to §5 and `API-219` to §8 at v0.2 |
 | CMP-DOC-11 DATABASE | `DB-` | 001+ | **`DB-001` … `DB-232` (232 issued, v0.1)** |
 | CMP-DOC-12 UIUX | `UX-` | 001+ | **`UX-001` … `UX-224` (224 issued, v0.1)** — prefix allocated here, see `CC-014` |
 | CMP-DOC-13 SECURITY | `SEC-` | 001+ | **`SEC-001` … `SEC-242` (242 issued, v0.2)** — `SEC-241`–`SEC-242` added to §14 at v0.2 |

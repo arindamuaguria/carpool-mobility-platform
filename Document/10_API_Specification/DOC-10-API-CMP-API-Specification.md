@@ -15,15 +15,15 @@
 | Short Name | API |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
-| Date | 2026-08-17 |
+| Date | 2026-08-20 |
 | Author | Solution Architect / Backend Lead (AI-assisted) |
 | Reviewer | [TBD] |
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | None (initial issue) |
+| Previous Version | 0.1 (2026-08-17) |
 | Predecessor Documents | CMP-DOC-01 … CMP-DOC-09, **all Draft, none approved** (CMP-DOC-09 at v0.2, the remainder at v0.1) |
 | Related Documents | `00_Project_Control/README.md`, `Documentation_Index.md`, `Documentation_Status.md`, `Document_Change_Log.md`, `Glossary.md`, `Master_Traceability_Matrix.md` |
 | Successor Documents | CMP-DOC-11 (Database), CMP-DOC-14 (Payment & UPI), CMP-DOC-15 (GPS / Live Trip), CMP-DOC-16 (Communication & Notification) |
@@ -33,6 +33,7 @@
 | Version | Date | Author | Change | Status |
 |---|---|---|---|---|
 | 0.1 | 2026-08-17 | Solution Architect / Backend Lead (AI-assisted) | Initial issue. Specifies the platform's external interface: 10 interface drivers, **14 API decisions**, the interface model and conventions, versioning and negotiation, representation rules, idempotency, the four-branch error model, authorisation and session carriage, collections, the resource catalogue across 13 functional areas, the safety surface, the provider callback surface, configuration delivery, rate limiting posture and interface quality obligations. Issues 216 statements (`API-001` … `API-216`). | Draft |
+| 0.2 | 2026-08-20 | Solution Architect / Backend Lead (AI-assisted) | **Three implementation readings ratified and recorded.** Building `FEAT-035` found three places where this document states a requirement without stating how it is met, and the implementation had to choose in order to meet it at all. Each choice was reported rather than taken silently, and the Project Owner ratified all three on 2026-08-20. **`API-217`** records the response envelope: `API-022`, `API-023`, `API-043` ‡ and `API-064` each require a marking and none says where it goes, so all four are carried in one `meta` object beside `data` — one envelope rather than four separate inventions. The four error branch shapes of `API-072` ‡ are unchanged and do not use `data`. **`API-218`** records `426 Upgrade Required` as the status of the version-unsupported outcome, which §5 describes without a code and §8.6 places outside the four branches; `API-024` ‡’s constraint is that it is **not** a not-found outcome, and that is preserved. **`API-219`** records the reading of `API-071` ‡ that a request naming no operation — an unrouted path or method — is not an operation failing, so the framework’s own not-found and method-not-allowed responses are not forced into the four branches. Issues 3 statements (`API-217` … `API-219`); §5, §6 and §8 gain one each. **No existing statement was altered, no ‡ marking changed, and no operation, resource or field was added.** | Draft |
 
 ## 0.3 Distribution List
 
@@ -222,7 +223,7 @@ its violation would permit an absolute business rule to be broken.
 |---|---|
 | Interface drivers | 10 |
 | **API Decision Records** | **14** |
-| API specification statements | **216** (`API-001` … `API-216`) |
+| API specification statements | **219** (`API-001` … `API-219`) |
 | Resource groups | 13 |
 | Operations specified | 59 |
 | Error branches | 4 |
@@ -506,6 +507,7 @@ flowchart TB
 | `API-032` | A version shall be retired only after a stated notice period. | `SRS-REQ-034` |
 | `API-033` | The duration for which the preceding version is served is `[TBD – Business Decision Required]`; it depends on the client update profile, which is unmeasured. | `SRS-OQ-005`, `API-OQ-01` |
 | `API-034` | Deprecation of an operation within a version shall be indicated in its response before the operation is removed in the next version. | `AADR-03` |
+| `API-218` | The version-unsupported outcome of `API-024` ‡ shall carry the status `426 Upgrade Required`. It is not a failure branch (§8.6) and shall not be a `404`. | `API-024`, `API-025` |
 
 > **`SRS-OQ-005` asked two questions: how many versions, and for how long.**
 > `API-021` answers the first — two. `API-033` records that the second cannot be answered
@@ -539,6 +541,7 @@ flowchart TB
 | `API-046` | A client shall tolerate response fields it does not recognise, so that additive change remains non-breaking. | `API-029` |
 | `API-047` | A representation shall not present a derived value without indicating what it was derived from where the distinction affects a decision. | `BE-121`, `NFR-086` |
 | `API-048` | Seat availability shall be served from the authoritative record, never from a projection. | `ARCH-056`, `BE-122` |
+| `API-217` | Every response shall carry the markings of `API-022`, `API-023`, `API-043` ‡ and `API-064` in a single `meta` object, distinct from the representation itself. A resource still has exactly one representation (`API-035`); the envelope describes the response, not the resource. Adding a `meta` field is non-breaking under `API-029`. | `API-022`, `API-043`, `API-029` |
 
 ## 6.3 Disclosure
 
@@ -681,6 +684,18 @@ Where a condition could plausibly be placed in more than one branch, these rules
 | ID | Statement | Src |
 |---|---|---|
 | `API-094` ‡ | Absence and non-entitlement shall be indistinguishable to a caller, so that existence cannot be probed. | `API-014`, `SRS-REQ-141` |
+| `API-219` | `API-071` ‡ governs the failure of an **operation**. A request naming no operation — an unrouted path, or a method the platform does not route on a path it does — is not an operation failing, and shall not be reshaped into one of the four branches. `API-094` ‡ is unaffected: it concerns a **resource** the caller may or may not be entitled to, which an unrouted path is not. | `API-071`, `API-004`, `API-094` |
+
+> **FACT (2026-08-20).** `API-217`, `API-218` and `API-219` were ratified by the Project
+> Owner after being reported as implementation choices during `FEAT-035`. Each records a
+> reading this document did not state, and none of the three adds behaviour: the markings
+> of `API-217` were already required, the outcome of `API-218` was already required to
+> exist and not to be a `404`, and `API-219` states the scope `API-071` ‡ already had.
+>
+> `API-219` in particular is a **reading, not a licence**. The Project Owner directed that
+> no fallback handler be introduced to force unrouted requests into the four branches, and
+> that the position be revisited through change control should an authoritative
+> specification later establish that `API-071` ‡ reaches them.
 
 ---
 
@@ -1330,8 +1345,8 @@ from CMP-DOC-09 §18.7, restated here because both are interface-visible.
 | 5 | No page size, rate, window, limit or latency figure invented | Yes — §15.3 lists 9 as unresolved |
 | 6 | No resource invented for undecided behaviour | Yes — §11.14 names 11 withheld with blockers |
 | 7 | No provider named in a domain-facing contract | Yes — §13 |
-| 8 | Every statement names a source, and every cited identifier resolves to a statement that says what is claimed | Yes — 216 of 216; verified by resolution against source text |
-| 9 | Statement identifiers contiguous and unique | Yes — `API-001` … `API-216` |
+| 8 | Every statement names a source, and every cited identifier resolves to a statement that says what is claimed | Yes — 219 of 219; verified by resolution against source text |
+| 9 | Statement identifiers contiguous and unique | Yes — `API-001` … `API-219`. §5, §6 and §8 each hold one identifier outside their original block, added at v0.2; identifiers are never renumbered. |
 | 10 | Statements with no upstream counterpart disclosed, not presented as derived | Yes — §17.6 |
 
 ---
@@ -1344,9 +1359,9 @@ from CMP-DOC-09 §18.7, restated here because both are interface-visible.
 |---|---|
 | Interface drivers | 10 (`APID-01` … `APID-10`) |
 | API decisions | 14 (`AADR-01` … `AADR-14`) |
-| API specification statements | 216 (`API-001` … `API-216`) |
+| API specification statements | 219 (`API-001` … `API-219`) |
 | Integrity-critical statements (‡) | 100 |
-| Statements naming a source | 216 of 216 |
+| Statements naming a source | 219 of 219 |
 | Diagrams | 7 |
 | Resource groups | 13 |
 | Operations specified | 59 |
@@ -1364,10 +1379,10 @@ from CMP-DOC-09 §18.7, restated here because both are interface-visible.
 | § | Section | Statements |
 |---|---|---|
 | 4 | Interface Model and Conventions | 18 |
-| 5 | Versioning and Negotiation | 16 |
-| 6 | Representation Rules | 22 |
+| 5 | Versioning and Negotiation | 17 |
+| 6 | Representation Rules | 23 |
 | 7 | Idempotency | 14 |
-| 8 | The Error Model | 24 |
+| 8 | The Error Model | 25 |
 | 9 | Authorisation and Session Carriage | 16 |
 | 10 | Collections, Filtering and Paging | 14 |
 | 11 | Resource Catalogue | 38 |
@@ -1376,11 +1391,11 @@ from CMP-DOC-09 §18.7, restated here because both are interface-visible.
 | 14 | Configuration Delivery | 10 |
 | 15 | Rate Limiting and Abuse Posture | 10 |
 | 16 | Interface Quality Obligations | 10 |
-| | **Total** | **216** |
+| | **Total** | **219** |
 
 ## 20.2 The Proportion That Is Integrity-Critical
 
-**100 of 216 statements carry ‡ — 46%, the highest proportion of any document in the
+**100 of 219 statements carry ‡ — 46%, the highest proportion of any document in the
 chain.** This is not inflation. The interface is the boundary at which every absolute
 rule is either enforced or lost: it is the only place a client can attempt to assert a
 fare, a payment status or a verification standing, and the only place a disclosure limit
@@ -1434,6 +1449,9 @@ document is where the outside world meets it.
 | `API-187` – `API-196` | Configuration Delivery |
 | `API-197` – `API-206` | Rate Limiting and Abuse Posture |
 | `API-207` – `API-216` | Interface Quality Obligations |
+| `API-217` | Representation Rules (added at v0.2) |
+| `API-218` | Versioning and Negotiation (added at v0.2) |
+| `API-219` | The Error Model (added at v0.2) |
 
 ---
 
