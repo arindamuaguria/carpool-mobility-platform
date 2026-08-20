@@ -15,7 +15,7 @@
 | Short Name | SECURITY |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 0.4 |
+| Version | 0.5 |
 | Status | Draft |
 | Date | 2026-08-20 |
 | Author | Security Analyst (AI-assisted) |
@@ -23,7 +23,7 @@
 | Approver | Project Owner |
 | Classification | Internal |
 | Brand | TBD |
-| Previous Version | 0.3 (2026-08-20) |
+| Previous Version | 0.4 (2026-08-20) |
 | Predecessor Documents | CMP-DOC-01 … CMP-DOC-11, **all Draft, none approved** (CMP-DOC-09 at v0.2, the remainder at v0.1). CMP-DOC-12 does not exist. |
 | Related Documents | `00_Project_Control/README.md`, `Documentation_Index.md`, `Documentation_Status.md`, `Document_Change_Log.md`, `Glossary.md`, `Master_Traceability_Matrix.md` |
 | Successor Documents | CMP-DOC-14 (Payment & UPI), CMP-DOC-15 (GPS / Live Trip), CMP-DOC-17 (Admin / Filament), CMP-DOC-18 (Testing & QA), CMP-DOC-19 (DevOps / Deployment) |
@@ -36,6 +36,7 @@
 | 0.2 | 2026-08-20 | Security Analyst (AI-assisted) | **The evidential chain construction ratified and recorded in §14.2.** `SEC-107` required a keyed message authentication construction over a canonical serialisation and left the specific algorithm to §14.2 as a technical decision; §14.2 named no algorithm. The Project Owner ratified **HMAC-SHA-256 over the length-prefixed canonical serialisation of `SEC-108` ‡** on 2026-08-20, and it is now recorded at `SEC-241`. `SEC-242` records that this does not close `SEC-174`: each record continues to carry the construction that produced it, so the choice remains replaceable by a staged migration. Issues 2 statements (`SEC-241`, `SEC-242`); §14 now holds 18. **No existing statement was altered, no ‡ marking changed, and no compliance claim is made — §0.6.2 continues to apply.** | Draft |
 | 0.3 | 2026-08-20 | Security Analyst (AI-assisted) | **`SEC-025` decided: five attempts per phone number per hour, and no account lockout.** `SEC-024` holds the limit, the window and the lockout behaviour as policy configuration; all three now have a value, and the third is **none**. A dated **FACT** records two consequences. First, this single bound serves both `SEC-022` ‡ and `SEC-023` ‡ rather than only the latter: `SEC-015` makes authentication *the* demonstration of possession of a verified number, so an authentication attempt and a verification attempt are the same act against the same number, and the Project Owner’s *"no account lockout"* settles the account dimension explicitly. Second, **no account lockout means no locked-account state and therefore no column holding one** — the bound is enforced against the attempts `DB-043` retains, which is what that statement asks for. The four remaining authentication values (`SEC-017`, `SEC-031`, `SEC-039`, `SEC-049`) are **still undecided** and are named as such. **No statement other than `SEC-025` was altered and no ‡ marking changed.** | Draft |
 | 0.4 | 2026-08-20 | Security Analyst (AI-assisted) | **Three of the four remaining authentication values decided: `SEC-017` ten minutes, `SEC-039` twenty-four hours, `SEC-049` three concurrent sessions.** Each is a bound `BADR-12` holds as policy configuration, so each is recorded here as the decided figure and applied through the policy store rather than compiled in. `SEC-049` leaves §20.8’s awaiting-decision register and §23.1’s business-decision marker count falls from 20 to 19. **Two things are explicitly not decided by this entry.** `SEC-031`’s hash cost parameters remain `[TBD – Technical Decision Required]`, and `SEC-030`/`SEC-031` require them set against deployed hardware, which `BAD-DEP-009` has not selected. And **`SEC-049` now has a number but still no behaviour**: no statement in this document or in CMP-DOC-10 says what happens when the limit is reached — whether the new session is refused or the oldest evicted — and none is invented. A dated **FACT** in §6 records that gap so it is not mistaken for settled. **No statement other than the three was altered and no ‡ marking changed.** | Draft |
+| 0.5 | 2026-08-20 | Security Analyst (AI-assisted) | **Two behaviours the document required and did not state are now stated, under delegated authority.** **`SEC-243` ‡** settles what `SEC-049`’s limit does when it is reached: establishment is **refused**, and no existing session is terminated to make room. **`SEC-244` ‡** settles `SEC-028` ‡’s construction as **Argon2id** and sets a **refusal floor** beneath which the platform will not hash, while leaving the operating parameters as `SEC-030`’s configuration — `SEC-031` is updated to record that the values are deployment-time and that `BAD-DEP-009` still names no hardware to set them against. §14.2’s construction table now cites `SEC-244` alongside `SEC-028` ‡, and §20.8 loses the `SEC-031` half of its hash-parameter row. Issues 2 statements (`SEC-243`, `SEC-244`); §6 now holds 19 and §14 19. **No existing statement was altered except `SEC-031` and `SEC-049`, whose behaviour these two record, and no ‡ marking was removed.** | Draft |
 
 ## 0.3 Distribution List
 
@@ -224,7 +225,7 @@ its violation would permit an absolute business rule to be broken.
 |---|---|
 | Security drivers | 10 |
 | **Security Decision Records** | **16** |
-| Security design statements | **242** (`SEC-001` … `SEC-242`) |
+| Security design statements | **244** (`SEC-001` … `SEC-244`) |
 | Trust boundaries defended | 4 |
 | Mechanisms specified for previously unmechanised properties | 4 |
 | Requirement-chain gaps adopted and closed | 2 |
@@ -591,7 +592,7 @@ flowchart LR
 | `SEC-028` ‡ | Authentication material shall be stored under a memory-hard, salted, tunable password hash. | `SADR-04`, `ARCH-060` |
 | `SEC-029` ‡ | Each stored value shall carry a unique salt. | `SADR-04` |
 | `SEC-030` | Hash cost parameters shall be configuration, tunable without a code change, and shall be re-tuned when hardware changes. | `SADR-04`, `SEC-024` |
-| `SEC-031` | Cost parameter values are `[TBD – Technical Decision Required]`; they must be set against the deployed hardware, which is CMP-DOC-19's. | `SADR-04`, `GAP-016` |
+| `SEC-031` | Operating cost parameter values remain **deployment-time**, set against the deployed hardware under `SEC-030`. `BAD-DEP-009` records hosting as **Unselected** and CMP-DOC-19 names no provider, so no hardware exists to set them against and none is assumed. `SEC-244` ‡ fixes the construction and a **floor** the platform refuses to go below; the floor is not the answer to this statement. | `SADR-04`, `GAP-016`, `SEC-244` |
 | `SEC-032` ‡ | A stored value shall be re-hashed on next successful authentication when its parameters are below the current setting. | `SEC-030` |
 | `SEC-033` ‡ | No store the platform controls shall hold any value that can be presented back to the platform as a credential. | `NFR-053`, `SADR-04` |
 
@@ -653,10 +654,38 @@ stateDiagram-v2
 | `SEC-046` | Terminating all of a user's sessions shall be possible as a single operation, for use when compromise is suspected. | `NFR-054`, `SADR-13` |
 | `SEC-047` | Session records shall be retained after termination for the period `DB-169` sets, so that reuse attempts remain detectable. | `DB-044`, `NFR-054` |
 | `SEC-048` ‡ | A request bearing a terminated, expired or unknown token shall be refused identically, so that the three are indistinguishable to a caller. | `API-107`, `NFR-061` |
-| `SEC-049` | Concurrent sessions per user shall be permitted, and their number shall be policy configuration. **Decided 2026-08-20: three.** What happens when the limit is reached is **not stated by any requirement** and is not decided here — see the FACT below. | `BADR-12` |
+| `SEC-049` | Concurrent sessions per user shall be permitted, and their number shall be policy configuration. **Decided 2026-08-20: three.** What happens when the limit is reached is `SEC-243` ‡. | `BADR-12`, `SEC-243` |
 | `SEC-050` | Session establishment, refresh and termination shall each be evidenced. | `SADR-15`, `NFR-125` |
 | `SEC-051` ‡ | No session shall be established for a caller whose account state does not permit it. | `SADR-06`, `DB-045` |
 | `SEC-052` | Session material on the device is `SADR-13`'s subject and is specified in §13.1. | §13.1 |
+| `SEC-243` ‡ | Where a user already holds the number of concurrent sessions `SEC-049` permits, establishment shall be **refused** as a business refusal carrying its own reason identifier, and shall be recorded. **No existing session shall be terminated to make room.** | `SEC-026`, `SEC-049`, `FRD-FR-019` |
+
+> **FACT (2026-08-20).** `SEC-243` ‡ was decided under delegated authority, and the
+> alternatives are recorded so the choice can be reviewed rather than only read.
+>
+> **The two options were to refuse the new session, or to terminate an existing one.**
+> Refusal was chosen, on three grounds drawn from this document and CMP-DOC-04.
+>
+> **`SEC-026` ‡ is the nearest precedent and it refuses.** Exhaustion of an attempt limit
+> *"shall be a business refusal carrying its own reason identifier, and shall be recorded"*.
+> A concurrency limit is an exhaustion of the same shape, and answering it differently would
+> mean the document treated two limits inconsistently.
+>
+> **`FRD-FR-019` terminates a session *on the user’s request*.** Eviction terminates one on
+> nobody’s request. `SEC-046` does allow terminating all of a user’s sessions at once, and it
+> is explicitly *"for use when compromise is suspected"* — a deliberate act, not a side
+> effect of somebody signing in.
+>
+> **Eviction would be exploitable.** `SEC-048` ‡ makes a terminated token indistinguishable
+> from an unknown or expired one, so an evicted device is signed out with no signal it can
+> act on. An attacker holding a demonstration could then sign in repeatedly to push the
+> legitimate holder off every device, and each eviction would look to the victim like an
+> ordinary expiry. Refusal has no equivalent: the worst it costs is that a fourth sign-in
+> waits until a session is terminated or `SEC-039` ‡’s bound elapses, and the user has both
+> remedies in hand.
+>
+> `SEC-055` ‡’s deny-by-default posture points the same way: where two readings are open,
+> the one that declines is the one to take.
 
 > **FACT (2026-08-20).** `SEC-017`, `SEC-039` and `SEC-049` were decided by the Project
 > Owner as **ten minutes**, **twenty-four hours** and **three** respectively. Each remains
@@ -946,7 +975,7 @@ This section supplies the mechanisms CMP-DOC-08 §17.5 required for `MOB-143`–
 
 | Purpose | Requirement | Statement |
 |---|---|---|
-| Authentication material | Memory-hard, salted, tunable password hash | `SEC-028` |
+| Authentication material | Memory-hard, salted, tunable password hash — **Argon2id** | `SEC-028`, `SEC-244` |
 | Session token storage | One-way hash of a high-entropy random token | `SEC-036` |
 | Evidential chain | Keyed message authentication over canonical serialisation | `SEC-105`, `SEC-107`, `SEC-241` |
 | Protected columns | Authenticated encryption | `SEC-084` |
@@ -964,6 +993,29 @@ This section supplies the mechanisms CMP-DOC-08 §17.5 required for `MOB-143`–
 | `SEC-178` | No key shall be derived from a value the platform also stores. | `SADR-05`, `SEC-072` |
 | `SEC-241` | The construction required by `SEC-107` shall be **HMAC-SHA-256** over the length-prefixed canonical serialisation of `SEC-108` ‡, in which each field is preceded by its own byte length, so that two records differing only in where a field boundary falls cannot serialise to the same bytes. | `SEC-105`, `SEC-107`, `SEC-108` |
 | `SEC-242` | `SEC-241` records the construction in use and **does not close `SEC-174`**: each evidential record shall carry the construction that produced it, and a replacement shall proceed as a staged migration under change control rather than as a rewrite of existing records. | `SEC-174`, `SEC-241` |
+| `SEC-244` ‡ | The construction required by `SEC-028` ‡ shall be **Argon2id**, whose encoded output carries its own salt (`SEC-029` ‡) and its own parameters (`SEC-032` ‡). Its memory, time and parallelism costs shall be policy configuration (`SEC-030`), and the platform shall **refuse to hash** where a configured cost is below the floor of **19456 KiB memory, 2 iterations and 1 lane** — a published minimum, not a library default. A cost above the floor is a deployment decision under `SEC-031`, never a decision taken in code. | `SEC-028`, `SEC-030`, `SEC-031` |
+
+> **FACT (2026-08-20).** `SEC-244` ‡ was decided under delegated authority after
+> establishing that the deployment hardware is genuinely unavailable: `BAD-DEP-009` records
+> hosting as **Unselected** and *"not started"*, and CMP-DOC-19 `DDR-01` names no provider
+> anywhere. `SEC-031` cannot therefore be answered as a set of operating values, and this
+> statement does not pretend otherwise.
+>
+> **What was decided, and what was left open.** The *construction* is decidable without
+> hardware and is decided: **Argon2id**, the memory-hard function `SEC-028` ‡ requires.
+> Its encoded output carries salt and parameters, which is what lets `SEC-029` ‡ and
+> `SEC-032` ‡ hold without a second column. The *operating cost* is not decidable without
+> hardware and is left to `SEC-030`’s configuration.
+>
+> **The floor is a refusal, not a default.** 19456 KiB / 2 / 1 is the published Argon2id
+> minimum, and the platform **refuses to hash** below it rather than quietly accepting a
+> weak configuration. It is deliberately **not** the language runtime’s own default, which
+> is higher — taking that would have been adopting a library’s choice and calling it a
+> decision. A deployment is expected to configure well above the floor and `SEC-030`
+> requires re-tuning when hardware changes.
+>
+> Until an operator configures a cost, the platform hashes nothing and authentication
+> refuses — `SRS-REQ-158`, the same posture `SEC-039` ‡’s bound takes.
 
 **FACT (2026-08-20).** `SEC-241` was ratified by the Project Owner. It is an engineering
 decision recorded here because `SEC-107` places the algorithm in this section, and per
@@ -1266,7 +1318,7 @@ new.
 | Statement | Awaiting |
 |---|---|
 | `SEC-183` | Rate limits, windows and thresholds — `GAP-012`. **`SEC-025` left this row on 2026-08-20**, decided at v0.3. |
-| `SEC-031`, `SEC-175` | Hash and algorithm parameters — deployed hardware |
+| `SEC-031`, `SEC-175` | Hash and algorithm **operating** parameters — deployed hardware, `BAD-DEP-009`. **The construction and its floor left this row on 2026-08-20** at `SEC-244` ‡. |
 | `SEC-034` | Account recovery — `SEC-OQ-05` |
 | `SEC-063` | Role set — CMP-DOC-17 |
 | `SEC-070` | Disclosure scopes — `NFR-066` |
@@ -1330,8 +1382,8 @@ new.
 | 6 | **No compliance, certification or regulatory claim made** | Yes — §0.6.2; 0 claims |
 | 7 | No fraud rule, threshold or response invented | Yes — §16, `SEC-195` |
 | 8 | No rate limit, key rotation period or notification timing invented | Yes — all `[TBD]` |
-| 9 | Every statement names a source, and every cited identifier resolves to a statement that says what is claimed | Yes — 242 of 242 |
-| 10 | Statement identifiers contiguous and unique | Yes — `SEC-001` … `SEC-242`. §14 holds `SEC-163`–`SEC-178` and `SEC-241`–`SEC-242`, the second range added at v0.2; identifiers are never renumbered. |
+| 9 | Every statement names a source, and every cited identifier resolves to a statement that says what is claimed | Yes — 244 of 244 |
+| 10 | Statement identifiers contiguous and unique | Yes — `SEC-001` … `SEC-244`. §6 holds `SEC-035`–`SEC-052` and `SEC-243`; §14 holds `SEC-163`–`SEC-178`, `SEC-241`–`SEC-242` and `SEC-244`. Identifiers are never renumbered. |
 | 11 | Properties that cannot be verified recorded as unverified | Yes — §19.4, 3 of them |
 | 12 | What the design does **not** defend against stated explicitly | Yes — §5.5, §13.6, `SEC-192` |
 
@@ -1345,9 +1397,9 @@ new.
 |---|---|
 | Security drivers | 10 (`SD-01` … `SD-10`) |
 | Security decisions | 16 (`SADR-01` … `SADR-16`) |
-| Security design statements | 242 (`SEC-001` … `SEC-242`) |
-| Integrity-critical statements (‡) | 135 |
-| Statements naming a source | 242 of 242 |
+| Security design statements | 244 (`SEC-001` … `SEC-244`) |
+| Integrity-critical statements (‡) | 137 |
+| Statements naming a source | 244 of 244 |
 | Diagrams | 5 |
 | Trust boundaries defended | 4 |
 | Security quality requirements mechanised | 18 of 18; 16 verifiable |
@@ -1367,7 +1419,7 @@ new.
 |---|---|---|
 | 4 | Trust Boundaries | 14 |
 | 5 | Authentication | 20 |
-| 6 | Session Management | 18 |
+| 6 | Session Management | 19 |
 | 7 | Authorisation and Disclosure | 18 |
 | 8 | Protection at Rest | 20 |
 | 9 | Protection in Transit | 14 |
@@ -1375,17 +1427,17 @@ new.
 | 11 | Input Handling and Injection Defence | 14 |
 | 12 | Payment Credential Handling | 12 |
 | 13 | Client-Side Security | 18 |
-| 14 | Secrets and Key Management | 18 |
+| 14 | Secrets and Key Management | 19 |
 | 15 | Abuse and Automated Access | 14 |
 | 16 | Fraud — An Unowned Obligation | 10 |
 | 17 | Security Logging and Response | 16 |
 | 18 | Backup and Restore Security | 10 |
 | 19 | Verification | 12 |
-| | **Total** | **242** |
+| | **Total** | **244** |
 
 ## 23.2 What This Document Deliberately Does Not Claim
 
-**135 of 242 statements are integrity-critical — 56%, the highest proportion in the
+**137 of 244 statements are integrity-critical — 56%, the highest proportion in the
 chain.** That is a measure of what security touches, not of how secure the platform is.
 
 This document makes **no claim** that the platform is secure, that it conforms to any
@@ -1447,6 +1499,8 @@ kind of invention in this chain, and §0.6.2 exists to prevent it.
 | `SEC-219` – `SEC-228` | Backup and Restore Security |
 | `SEC-229` – `SEC-240` | Verification |
 | `SEC-241` – `SEC-242` | Secrets and Key Management (added at v0.2) |
+| `SEC-243` | Session Management (added at v0.5) |
+| `SEC-244` | Secrets and Key Management (added at v0.5) |
 
 ---
 
