@@ -8,7 +8,7 @@ use Cmp\Application\Shared\Policy\ChangePolicyValue;
 use Cmp\Application\User\HashesSessionTokens;
 use Cmp\Application\User\ResolveSession;
 use Cmp\Application\User\SessionRefusal;
-use Cmp\Domain\Shared\Time\Instant;
+use Cmp\Domain\Shared\Time\Clock;
 use Cmp\Domain\User\Session;
 use Cmp\Domain\User\SessionRepository;
 use Cmp\Domain\User\UserReference;
@@ -214,7 +214,11 @@ final class SessionEndpointTest extends TestCase
         $session = Session::establish(
             UserReference::fromString($reference),
             $tokens->hash($token),
-            Instant::fromString('2026-08-20T12:00:00Z'),
+            // The platform's clock, never a date literal: SEC-039 ‡ bounds a
+            // session at twenty-four hours, so a pinned fixture becomes an
+            // expired session the day after it is written — which is exactly
+            // what happened to SessionEndpointTest on 2026-08-21.
+            $this->app->make(Clock::class)->now(),
         );
 
         $this->app->make(SessionRepository::class)->save($session);
