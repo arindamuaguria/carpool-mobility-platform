@@ -15,6 +15,7 @@ use Cmp\Application\User\RefreshCurrentSession;
 use Cmp\Application\User\ResolveSession;
 use Cmp\Application\User\SessionRefused;
 use Cmp\Application\User\TerminateCurrentSession;
+use Cmp\Domain\Shared\Time\Clock;
 use Cmp\Domain\Shared\Time\Instant;
 use Cmp\Domain\User\Session;
 use Cmp\Domain\User\SessionRepository;
@@ -172,7 +173,7 @@ final class SessionLifecycleTest extends IntegrationTestCase
     {
         // NFR-055 extends within the bound, and a fresh establishment instant is
         // what gives the new session the whole of SEC-039 ‡'s twenty-four hours.
-        [, $session] = $this->establishFor(self::REFERENCE, '2026-08-20T12:00:00Z');
+        [, $session] = $this->establishFor(self::REFERENCE);
 
         $this->refresh($session, self::REFERENCE);
 
@@ -204,7 +205,7 @@ final class SessionLifecycleTest extends IntegrationTestCase
         [, $session] = $this->establishFor(self::REFERENCE);
 
         $this->refresh($session, self::REFERENCE);
-        [, $second] = $this->establishFor(self::OTHER_REFERENCE, '2026-08-20T12:00:00Z', self::OTHER_REFERENCE);
+        [, $second] = $this->establishFor(self::OTHER_REFERENCE, phoneSeed: self::OTHER_REFERENCE);
         $this->terminate($second, self::OTHER_REFERENCE);
 
         $actions = array_map(
@@ -247,9 +248,16 @@ final class SessionLifecycleTest extends IntegrationTestCase
     }
 
     /**
+     * A user and a session for them, established **now** unless stated otherwise.
+     *
+     * `$at` reads from the platform's clock by default. A fixture pinned to a
+     * date literal ages past `SEC-039` ‡'s twenty-four-hour bound the day after
+     * it is written, and every test needing a usable session then fails for a
+     * reason that has nothing to do with the platform. It did.
+     *
      * @return array{0: string, 1: Session}
      */
-    private function establishFor(string $reference, string $at = '2026-08-20T12:00:00Z', ?string $phoneSeed = null): array
+    private function establishFor(string $reference, ?string $at = null, ?string $phoneSeed = null): array
     {
         $this->createUser($reference, self::PHONE.($phoneSeed === null ? '' : '9'));
 
@@ -258,7 +266,7 @@ final class SessionLifecycleTest extends IntegrationTestCase
         $session = Session::establish(
             UserReference::fromString($reference),
             $tokens->hash($token),
-            Instant::fromString($at),
+            $at === null ? $this->app->make(Clock::class)->now() : Instant::fromString($at),
         );
 
         $this->app->make(SessionRepository::class)->save($session);

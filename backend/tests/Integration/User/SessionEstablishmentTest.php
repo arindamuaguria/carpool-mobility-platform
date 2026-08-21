@@ -340,7 +340,7 @@ final class SessionEstablishmentTest extends IntegrationTestCase
     private function terminate(string $token): void
     {
         $session = $this->app->make(ResolveSession::class)->forToken($token);
-        $session->terminate(Instant::fromString('2026-08-20T13:00:00Z'));
+        $session->terminate($this->app->make(Clock::class)->now());
 
         $this->app->make(SessionRepository::class)->save($session);
     }

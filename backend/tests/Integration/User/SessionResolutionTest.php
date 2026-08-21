@@ -10,6 +10,7 @@ use Cmp\Application\User\ResolveSession;
 use Cmp\Application\User\SessionRefusalCause;
 use Cmp\Application\User\SessionRefused;
 use Cmp\Domain\Shared\Policy\PolicyNotSet;
+use Cmp\Domain\Shared\Time\Clock;
 use Cmp\Domain\Shared\Time\Instant;
 use Cmp\Domain\User\Session;
 use Cmp\Domain\User\SessionRepository;
@@ -56,7 +57,7 @@ final class SessionResolutionTest extends IntegrationTestCase
     {
         // FRD-FR-017, and the whole point of the operation.
         $this->applyLifetime();
-        $token = $this->establishSessionFor($this->createUser(), '2026-08-20T12:00:00Z');
+        $token = $this->establishSessionFor($this->createUser());
 
         $session = $this->resolver()->forToken($token);
 
@@ -83,11 +84,11 @@ final class SessionResolutionTest extends IntegrationTestCase
         // the record is retained, so the platform can tell a terminated token
         // from an unknown one even though the caller cannot.
         $this->applyLifetime();
-        $token = $this->establishSessionFor($this->createUser(), '2026-08-20T12:00:00Z');
+        $token = $this->establishSessionFor($this->createUser());
 
         $session = $this->sessions()->forTokenHash($this->tokens()->hash($token));
         self::assertNotNull($session);
-        $session->terminate(Instant::fromString('2026-08-20T13:00:00Z'));
+        $session->terminate($this->clock()->now());
         $this->sessions()->save($session);
 
         try {
@@ -122,10 +123,10 @@ final class SessionResolutionTest extends IntegrationTestCase
         $user = $this->createUser();
 
         $expired = $this->establishSessionFor($user, '2020-01-01T00:00:00Z');
-        $terminatedToken = $this->establishSessionFor($user, '2026-08-20T12:00:00Z', 'second');
+        $terminatedToken = $this->establishSessionFor($user, seed: 'second');
         $session = $this->sessions()->forTokenHash($this->tokens()->hash($terminatedToken));
         self::assertNotNull($session);
-        $session->terminate(Instant::fromString('2026-08-20T13:00:00Z'));
+        $session->terminate($this->clock()->now());
         $this->sessions()->save($session);
 
         $reasons = [];
@@ -157,7 +158,7 @@ final class SessionResolutionTest extends IntegrationTestCase
         // be choosing a security policy nobody decided — so it fails loudly
         // instead, and the failure is a fault rather than a refusal because
         // nothing about the caller is wrong.
-        $token = $this->establishSessionFor($this->createUser(), '2026-08-20T12:00:00Z');
+        $token = $this->establishSessionFor($this->createUser());
 
         $this->expectException(PolicyNotSet::class);
 
@@ -169,7 +170,7 @@ final class SessionResolutionTest extends IntegrationTestCase
         // SEC-036 ‡, against the actual row. A store holding the token would let
         // anyone who read the table act as any user.
         $this->applyLifetime();
-        $token = $this->establishSessionFor($this->createUser(), '2026-08-20T12:00:00Z');
+        $token = $this->establishSessionFor($this->createUser());
 
         /** @var list<object{token_hash: string}> $rows */
         $rows = $this->applicationConnection()->select(
@@ -235,17 +236,39 @@ final class SessionResolutionTest extends IntegrationTestCase
         return UserReference::fromString(self::REFERENCE);
     }
 
-    private function establishSessionFor(UserReference $user, string $at, string $seed = 'first'): string
+    /**
+     * A session for this user, established **now** unless a test wants otherwise.
+     *
+     * `$at` defaults to the platform's clock rather than to a date literal, and
+     * that is a fix rather than a preference: with `SEC-039` ‡'s bound at
+     * twenty-four hours, a fixture pinned to a fixed instant becomes an expired
+     * session the day after it is written, and every test that needed a usable
+     * one starts failing for a reason that has nothing to do with the platform.
+     * It did exactly that.
+     *
+     * A test that wants an **expired** session passes one deliberately — see
+     * `test_an_expired_token_is_refused()`, which uses 2020 and means it.
+     */
+    private function establishSessionFor(UserReference $user, ?string $at = null, string $seed = 'first'): string
     {
         $token = $this->tokens()->generate().$seed;
 
         $this->sessions()->save(Session::establish(
             $user,
             $this->tokens()->hash($token),
-            Instant::fromString($at),
+            $at === null ? $this->clock()->now() : Instant::fromString($at),
         ));
 
         return $token;
+    }
+
+    private function clock(): Clock
+    {
+        $clock = $this->app->make(Clock::class);
+
+        self::assertInstanceOf(Clock::class, $clock);
+
+        return $clock;
     }
 
     private function clearAll(): void

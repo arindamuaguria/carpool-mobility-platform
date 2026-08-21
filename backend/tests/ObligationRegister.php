@@ -16,6 +16,7 @@ use Tests\Integration\Persistence\DatabaseAccountGrantsTest;
 use Tests\Integration\Persistence\IdempotencyRegistryTest;
 use Tests\Integration\Persistence\IntegrityConstraintsHoldTest;
 use Tests\Integration\Persistence\PaymentCredentialAbsenceTest;
+use Tests\System\LogInspectionTest;
 
 /**
  * The consolidated verification obligation register — CMP-DOC-18 §4.
@@ -495,11 +496,12 @@ final class ObligationRegister
                 verifies: ['SEC-208', 'SEC-038', 'BE-201'],
                 level: self::LEVEL_SYSTEM,
                 technique: 'inspection',
-                status: self::ABSENT,
-                note: 'Partly covered where it matters most: SessionLifecycleTest, SessionEstablishmentTest '
-                    .'and SessionEndpointTest each assert that no token, hash or phone number reaches an '
-                    .'evidential record. What is absent is an inspection of the **operational** log under '
-                    .'exercise, which BE-202 keeps distinct from the evidential one. Buildable; nothing blocks it.',
+                status: self::ENFORCED,
+                provenBy: LogInspectionTest::class,
+                note: 'SEC-210 makes exclusion by construction — the value is not passed to the logger — so '
+                    .'LoggingRedactionRulesTest checks the call sites statically and this drives real '
+                    .'operations and reads what was written. The register surfaced it as absent; nothing '
+                    .'blocked it, and it was built in the same change.',
             ),
             self::securityCheck(
                 n: 9,
