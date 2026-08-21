@@ -7,6 +7,7 @@ namespace Cmp\Application\Shared\Failure;
 use Cmp\Application\Shared\Authorisation\AuthorisationRefusal;
 use Cmp\Application\Shared\Idempotency\IdempotencyRefusal;
 use Cmp\Domain\Shared\StateMachine\StateMachineRefusal;
+use Cmp\Domain\User\EmergencyContactRefusal;
 
 /**
  * `CMP-IMP-464` — every refusal reason the interface may serve, in one register.
@@ -41,8 +42,12 @@ use Cmp\Domain\Shared\StateMachine\StateMachineRefusal;
  * for an operator.
  *
  * The register grows with the aggregates. `BE-017` fixes nine and none is built,
- * so four is what a platform with no business operations can refuse: an
+ * so four of these are what a platform with no business operations can refuse: an
  * authorisation, a reused idempotency key, and two lifecycle refusals.
+ *
+ * `UC-048` adds the first two that are neither. Emergency contacts are the first
+ * behaviour on this surface that refuses a request **on business grounds** —
+ * which is why they arrive here and not with an aggregate.
  */
 final class ReasonIdentifiers
 {
@@ -54,6 +59,15 @@ final class ReasonIdentifiers
     public static function all(): array
     {
         return [
+            EmergencyContactRefusal::AlreadyNominated->identifier() => 'UC-048 A1: the platform records the set, and a set holds a number once. The existing '
+                .'nomination stands — FRD-FR-024’s principle, that a rejected amendment leaves what is '
+                .'stored unchanged and says why.',
+
+            EmergencyContactRefusal::NotNominated->identifier() => 'FRD-FR-182: the reference names no contact in the caller’s own set. SEC-069 ‡ and '
+                .'API-094 ‡ make that indistinguishable from a contact belonging to somebody else, and it '
+                .'is indistinguishable by construction — the set is loaded for the caller and the '
+                .'reference resolved inside it, so no lookup exists that could have told them which.',
+
             AuthorisationRefusal::NotAvailableToYou->value => 'The actor may not perform the operation. SEC-069 ‡ and API-094 ‡ make absence and '
                 .'non-entitlement indistinguishable, so this one identifier covers both and there is '
                 .'deliberately no second.',

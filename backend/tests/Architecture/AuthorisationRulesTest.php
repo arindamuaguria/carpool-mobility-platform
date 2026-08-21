@@ -108,18 +108,32 @@ final class AuthorisationRulesTest extends TestCase
 
     public function test_the_policy_states_a_rule_for_every_operation_and_no_others(): void
     {
-        // SEC-055 ‡: an operation with no stated rule is refused. The policy holds
-        // exactly the rules for the operations that exist — three, added with
-        // CMP-IMP-053, CMP-IMP-056 and CMP-IMP-057 — and a rule ahead of its
-        // operation would permit nothing while reviewing as though something had
-        // been decided.
+        // SEC-055 ‡: an operation with no stated rule is refused. The policy
+        // holds exactly the rules for the operations that exist — three from
+        // CMP-IMP-053, CMP-IMP-056 and CMP-IMP-057, and four from UC-048 — and a
+        // rule ahead of its operation would permit nothing while reviewing as
+        // though something had been decided.
         self::assertSame(
             ['sessions.establish', 'sessions.current.terminate', 'sessions.current.refresh'],
             array_keys(AuthorisationServiceProvider::sessionRules()),
         );
 
         self::assertSame(
-            count(AuthorisationServiceProvider::sessionRules()),
+            [
+                'profile.emergency_contacts.read',
+                'profile.emergency_contacts.nominate',
+                'profile.emergency_contacts.amend',
+                'profile.emergency_contacts.remove',
+            ],
+            array_keys(AuthorisationServiceProvider::emergencyContactRules()),
+        );
+
+        // And the policy is those two registers and nothing else. A rule
+        // reachable without appearing in one of them would be a rule no
+        // reviewer would find in the one place SADR-06 says to look.
+        self::assertSame(
+            count(AuthorisationServiceProvider::sessionRules())
+                + count(AuthorisationServiceProvider::emergencyContactRules()),
             AuthorisationServiceProvider::policy()->count(),
         );
     }
@@ -137,7 +151,12 @@ final class AuthorisationRulesTest extends TestCase
         // and it would look like an implementation.
         self::assertSame([], AuthorisationServiceProvider::roles());
 
-        foreach (AuthorisationServiceProvider::sessionRules() as $operation => $rule) {
+        $stated = [
+            ...AuthorisationServiceProvider::sessionRules(),
+            ...AuthorisationServiceProvider::emergencyContactRules(),
+        ];
+
+        foreach ($stated as $operation => $rule) {
             self::assertNull($rule->capability(), $operation.' must not require a capability while SEC-063 is open.');
             self::assertNull($rule->requiresRoleOfKind(), $operation.' must not require a role kind while SEC-063 is open.');
             self::assertTrue($rule->requiresParty(), $operation.' turns on SEC-066 ‡, being a party to the record.');

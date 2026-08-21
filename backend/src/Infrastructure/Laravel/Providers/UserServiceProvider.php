@@ -8,20 +8,28 @@ use Cmp\Application\Shared\Authorisation\Authoriser;
 use Cmp\Application\Shared\Evidence\RecordsEvidence;
 use Cmp\Application\Shared\Policy\ChangePolicyValue;
 use Cmp\Application\Shared\Transaction\TransactionBoundary;
+use Cmp\Application\User\AmendEmergencyContact;
 use Cmp\Application\User\EstablishSession;
+use Cmp\Application\User\GeneratesContactReferences;
 use Cmp\Application\User\HashesAuthenticationMaterial;
 use Cmp\Application\User\HashesSessionTokens;
+use Cmp\Application\User\NominateEmergencyContact;
+use Cmp\Application\User\ReadEmergencyContacts;
 use Cmp\Application\User\RecordsSessionAnomalies;
 use Cmp\Application\User\RefreshCurrentSession;
+use Cmp\Application\User\RemoveEmergencyContact;
 use Cmp\Application\User\ResolveSession;
 use Cmp\Application\User\TerminateCurrentSession;
 use Cmp\Domain\Shared\Policy\PolicyStore;
 use Cmp\Domain\Shared\Time\Clock;
+use Cmp\Domain\User\EmergencyContactRepository;
 use Cmp\Domain\User\SessionRepository;
 use Cmp\Domain\User\UserRepository;
+use Cmp\Infrastructure\Persistence\User\DatabaseEmergencyContactRepository;
 use Cmp\Infrastructure\Persistence\User\DatabaseSessionRepository;
 use Cmp\Infrastructure\Persistence\User\DatabaseUserRepository;
 use Cmp\Infrastructure\User\Argon2idAuthenticationMaterial;
+use Cmp\Infrastructure\User\RandomContactReferences;
 use Cmp\Infrastructure\User\RandomSessionTokens;
 use Cmp\Infrastructure\User\RecordedSessionAnomalies;
 use Illuminate\Contracts\Foundation\Application;
@@ -167,6 +175,74 @@ final class UserServiceProvider extends ServiceProvider
                 $app->make(TransactionBoundary::class),
                 $app->make(SessionRepository::class),
                 $app->make(HashesSessionTokens::class),
+                $app->make(RecordsEvidence::class),
+                $app->make(Clock::class),
+            ),
+        );
+
+        // UC-048 / FRD-FR-181 to FRD-FR-184. The four operations on a user’s
+        // emergency contacts. Each is an ApplicationService, so each goes
+        // through the single authorisation evaluation SADR-06 requires, and
+        // AuthorisationServiceProvider::emergencyContactRules() states the rule
+        // each needs.
+        //
+        // Nothing bound here can reach a contact. FRD-GAP-020 blocks every part
+        // of informing one on BAD-DEC-011, and CC-034 records that no delivery
+        // channel exists in any case — so there is no port here to bind one to.
+        $this->app->singleton(
+            EmergencyContactRepository::class,
+            fn (Application $app): DatabaseEmergencyContactRepository => new DatabaseEmergencyContactRepository(
+                $app->make(ConnectionResolverInterface::class)
+                    ->connection(PersistenceServiceProvider::APPLICATION_CONNECTION),
+                $app->make(Clock::class),
+            ),
+        );
+
+        // DB-023 ‡’s random source, and the platform’s first reference
+        // generator — op_users.external_id is written by registration, which
+        // CC-034 blocks.
+        $this->app->singleton(
+            GeneratesContactReferences::class,
+            static fn (): RandomContactReferences => new RandomContactReferences,
+        );
+
+        $this->app->bind(
+            ReadEmergencyContacts::class,
+            static fn (Application $app): ReadEmergencyContacts => new ReadEmergencyContacts(
+                $app->make(Authoriser::class),
+                $app->make(EmergencyContactRepository::class),
+            ),
+        );
+
+        $this->app->bind(
+            NominateEmergencyContact::class,
+            static fn (Application $app): NominateEmergencyContact => new NominateEmergencyContact(
+                $app->make(Authoriser::class),
+                $app->make(TransactionBoundary::class),
+                $app->make(EmergencyContactRepository::class),
+                $app->make(GeneratesContactReferences::class),
+                $app->make(RecordsEvidence::class),
+                $app->make(Clock::class),
+            ),
+        );
+
+        $this->app->bind(
+            AmendEmergencyContact::class,
+            static fn (Application $app): AmendEmergencyContact => new AmendEmergencyContact(
+                $app->make(Authoriser::class),
+                $app->make(TransactionBoundary::class),
+                $app->make(EmergencyContactRepository::class),
+                $app->make(RecordsEvidence::class),
+                $app->make(Clock::class),
+            ),
+        );
+
+        $this->app->bind(
+            RemoveEmergencyContact::class,
+            static fn (Application $app): RemoveEmergencyContact => new RemoveEmergencyContact(
+                $app->make(Authoriser::class),
+                $app->make(TransactionBoundary::class),
+                $app->make(EmergencyContactRepository::class),
                 $app->make(RecordsEvidence::class),
                 $app->make(Clock::class),
             ),
