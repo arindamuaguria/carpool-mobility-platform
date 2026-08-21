@@ -535,22 +535,36 @@ final class StructuralRulesTest extends TestCase
             'src/Infrastructure/Adapter' => 'CMP-IMP-030 / FEAT-016 / FEAT-023',
         ];
 
-        // Rule 11 left this list at FEAT-035 (CMP-IMP-461 … 467). The REST
-        // surface now holds source, so the rule examines something — but the
-        // thing it examines is a **request schema**, and none exists yet: every
-        // operation CMP-DOC-10 §11 states needs an application service, and
-        // BE-017's aggregates are unbuilt. The surface serves one operation,
-        // GET /versions, which reads no request body at all.
-        self::assertNotSame([], glob(self::basePath('src/Interface/Rest').'/*.php') ?: []);
-        self::assertSame(
+        // Rule 11 has **left this list**, and this is the commit on which it did.
+        //
+        // It waited at FEAT-035 (CMP-IMP-461 … 467) and then through FEAT-032,
+        // because RequestSchema existed with no subclass anywhere in src/ — the
+        // three operations the surface served accepted no body at all, which is
+        // what CC-042 records. UC-048 brings the first operation that accepts
+        // one, so EmergencyContactSchema is the first thing rule 11 has ever had
+        // to examine.
+        //
+        // Asserted in the positive from here on: a rule that went back to having
+        // nothing to check would be a rule quietly passing again, and the point
+        // of this test is that a reader can tell those apart.
+        $schemas = array_keys(array_filter(
+            self::requestSchemaFiles(),
+            static fn (string $contents): bool => str_contains($contents, 'extends RequestSchema'),
+        ));
+
+        self::assertNotSame(
             [],
-            self::requestSchemaFiles() === [] ? [] : array_keys(array_filter(
-                self::requestSchemaFiles(),
-                static fn (string $contents): bool => str_contains($contents, 'FormRequest')
-                    || str_contains($contents, 'function rules('),
-            )),
-            'A request schema now exists, so rule 11 examines it — check this test still says what is true.',
+            $schemas,
+            'Rule 11 examines request schemas, and there are none — either one was removed, or the detector '
+            .'stopped recognising them. Both are findings.',
         );
+
+        // And it examines them for the right thing: API-037 ‡'s seven are absent
+        // from the schema that exists, which is rule 11 passing on evidence
+        // rather than on emptiness.
+        foreach ($schemas as $relative) {
+            self::assertSame([], self::authoritativeValuesNamedIn(self::sourceFiles()[$relative]));
+        }
 
         foreach ($empty as $directory => $blocker) {
             // The directory exists — CMP-IMP-021 created the layer skeleton

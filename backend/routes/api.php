@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Cmp\Interface\Rest\Controller\ConfigurationController;
 use Cmp\Interface\Rest\Controller\CurrentSessionController;
+use Cmp\Interface\Rest\Controller\EmergencyContactController;
 use Cmp\Interface\Rest\Controller\HealthController;
 use Cmp\Interface\Rest\Controller\VersionsController;
 use Cmp\Interface\Rest\Middleware\RefuseAssertedAuthority;
@@ -84,5 +85,26 @@ Route::prefix(ServedVersions::PREFIX.'/{version}')
 
             Route::post('sessions/current/refresh', [CurrentSessionController::class, 'refresh'])
                 ->name('sessions.current.refresh');
+
+            // §11.2 / UC-048 — the emergency contacts a user nominates.
+            //
+            // The POST is not in CMP-DOC-10 §11.2 and FRD-FR-181 requires it;
+            // CMP-DOC-04 governs over CMP-DOC-10 and the conflict is recorded at
+            // CC-044 rather than resolved quietly. See EmergencyContactController.
+            //
+            // Nothing here reaches a contact. FRD-GAP-020 blocks whether and when
+            // a contact is informed on BAD-DEC-011, and UC-048 accepts the
+            // platform holding contacts "only because nothing is sent to them".
+            Route::get('profile/emergency-contacts', [EmergencyContactController::class, 'index'])
+                ->name('profile.emergency-contacts.index');
+
+            Route::post('profile/emergency-contacts', [EmergencyContactController::class, 'store'])
+                ->name('profile.emergency-contacts.store');
+
+            Route::put('profile/emergency-contacts/{id}', [EmergencyContactController::class, 'update'])
+                ->name('profile.emergency-contacts.update');
+
+            Route::delete('profile/emergency-contacts/{id}', [EmergencyContactController::class, 'destroy'])
+                ->name('profile.emergency-contacts.destroy');
         });
     });

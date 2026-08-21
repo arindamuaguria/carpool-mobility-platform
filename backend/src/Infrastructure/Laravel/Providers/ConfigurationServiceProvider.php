@@ -14,6 +14,7 @@ use Cmp\Application\User\SessionRefusal;
 use Cmp\Domain\Shared\Policy\PolicyStore;
 use Cmp\Domain\Shared\Refusal\RefusalReason;
 use Cmp\Domain\Shared\StateMachine\StateMachineRefusal;
+use Cmp\Domain\User\EmergencyContactRefusal;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
@@ -94,6 +95,13 @@ final class ConfigurationServiceProvider extends ServiceProvider
             // SEC-048 ‡: one case, so terminated, expired and unknown stay
             // indistinguishable.
             SessionRefusal::NotUsable,
+
+            // UC-048 — the first refusals on this surface decided on
+            // business grounds rather than on a session, an idempotency key
+            // or a lifecycle. AADR-14: a reason the platform can return and
+            // the register does not deliver is a reason the client has no
+            // text for.
+            ...EmergencyContactRefusal::cases(),
 
             ...EstablishmentRefusal::cases(),
             ...IdempotencyRefusal::cases(),

@@ -30,7 +30,7 @@ final class AuthorisationServiceProvider extends ServiceProvider
     /**
      * The platform's authorisation policy.
      *
-     * **Three rules, each added with the operation it governs** —
+     * **Seven rules, each added with the operation it governs** —
      * see {@see sessionRules()}. That is the standing rule: a rule is added on
      * the commit that adds the operation it governs, never ahead of it, because
      * a rule for an operation that does not exist permits nothing and reviews as
@@ -43,7 +43,7 @@ final class AuthorisationServiceProvider extends ServiceProvider
      */
     public static function policy(): AuthorisationPolicy
     {
-        return AuthorisationPolicy::of(self::sessionRules());
+        return AuthorisationPolicy::of([...self::sessionRules(), ...self::emergencyContactRules()]);
     }
 
     /**
@@ -95,6 +95,38 @@ final class AuthorisationServiceProvider extends ServiceProvider
             'sessions.establish' => AuthorisationRule::requiringParty(),
             'sessions.current.terminate' => AuthorisationRule::requiringParty(),
             'sessions.current.refresh' => AuthorisationRule::requiringParty(),
+        ];
+    }
+
+    /**
+     * `UC-048` — the four operations on a user’s own emergency contacts.
+     *
+     * All four take {@see AuthorisationRule::requiringParty()}, and the party
+     * is the user the session is bound to. `SEC-066` ‡ is the whole rule:
+     * *"a user shall access only records to which they are a party"* — a
+     * nomination is a record of the **user**, not of the person nominated,
+     * who has no account and whom `UC-OQ-006` records the platform may never
+     * even tell.
+     *
+     * **None alters entitlement.** `SEC-058` ‡ guards a caller changing their
+     * own permissions; nominating somebody as an emergency contact grants that
+     * person nothing, because there is nothing to grant — `FRD-GAP-020` blocks
+     * every part of what a contact would be informed of, and no capability,
+     * role or access follows from being named.
+     *
+     * The read has a rule of its own rather than sharing the write’s.
+     * `SEC-055` ‡ refuses an operation with no stated rule, and one rule
+     * covering four operations would be one place to widen four at once.
+     *
+     * @return array<string, AuthorisationRule>
+     */
+    public static function emergencyContactRules(): array
+    {
+        return [
+            'profile.emergency_contacts.read' => AuthorisationRule::requiringParty(),
+            'profile.emergency_contacts.nominate' => AuthorisationRule::requiringParty(),
+            'profile.emergency_contacts.amend' => AuthorisationRule::requiringParty(),
+            'profile.emergency_contacts.remove' => AuthorisationRule::requiringParty(),
         ];
     }
 
