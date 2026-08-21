@@ -11,6 +11,7 @@ use Cmp\Application\Shared\Transaction\TransactionBoundary;
 use Cmp\Application\User\EstablishSession;
 use Cmp\Application\User\HashesAuthenticationMaterial;
 use Cmp\Application\User\HashesSessionTokens;
+use Cmp\Application\User\RecordsSessionAnomalies;
 use Cmp\Application\User\RefreshCurrentSession;
 use Cmp\Application\User\ResolveSession;
 use Cmp\Application\User\TerminateCurrentSession;
@@ -22,8 +23,10 @@ use Cmp\Infrastructure\Persistence\User\DatabaseSessionRepository;
 use Cmp\Infrastructure\Persistence\User\DatabaseUserRepository;
 use Cmp\Infrastructure\User\Argon2idAuthenticationMaterial;
 use Cmp\Infrastructure\User\RandomSessionTokens;
+use Cmp\Infrastructure\User\RecordedSessionAnomalies;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\ConnectionResolverInterface;
+use Illuminate\Log\LogManager;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -92,6 +95,17 @@ final class UserServiceProvider extends ServiceProvider
             ),
         );
 
+        // SEC-206 ‡'s session anomaly. SEC-203 ‡ and SEC-204 split it by whether
+        // the platform knows whose session it was, so this needs both sinks.
+        $this->app->singleton(
+            RecordsSessionAnomalies::class,
+            static fn (Application $app): RecordedSessionAnomalies => new RecordedSessionAnomalies(
+                $app->make(RecordsEvidence::class),
+                $app->make(Clock::class),
+                $app->make(LogManager::class),
+            ),
+        );
+
         $this->app->bind(
             ResolveSession::class,
             static fn (Application $app): ResolveSession => new ResolveSession(
@@ -100,6 +114,7 @@ final class UserServiceProvider extends ServiceProvider
                 $app->make(PolicyStore::class),
                 $app->make(Clock::class),
                 PolicyServiceProvider::sessionLifetime(),
+                $app->make(RecordsSessionAnomalies::class),
             ),
         );
 

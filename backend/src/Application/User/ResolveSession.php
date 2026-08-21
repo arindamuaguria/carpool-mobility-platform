@@ -9,6 +9,7 @@ use Cmp\Domain\Shared\Policy\PolicyStore;
 use Cmp\Domain\Shared\Time\Clock;
 use Cmp\Domain\User\Session;
 use Cmp\Domain\User\SessionRepository;
+use Cmp\Domain\User\UserReference;
 
 /**
  * `CMP-IMP-055` — admits a user holding a valid existing session.
@@ -65,6 +66,7 @@ final class ResolveSession
         private readonly PolicyStore $policy,
         private readonly Clock $clock,
         private readonly PolicyKey $lifetime,
+        private readonly RecordsSessionAnomalies $anomalies,
     ) {}
 
     /**
@@ -74,16 +76,20 @@ final class ResolveSession
     {
         $session = $this->sessions->forTokenHash($this->tokens->hash($token));
 
+        // SEC-206 ‡'s session anomaly. The record is written on the refusal path
+        // and nowhere else, and SEC-203 ‡ / SEC-204 decide where it goes by
+        // whether the platform knows whose session it was — see
+        // RecordsSessionAnomalies.
         if ($session === null) {
-            throw SessionRefused::because(SessionRefusalCause::Unknown);
+            throw $this->refuse(SessionRefusalCause::Unknown, null);
         }
 
         if ($session->isTerminated()) {
-            throw SessionRefused::because(SessionRefusalCause::Terminated);
+            throw $this->refuse(SessionRefusalCause::Terminated, $session->user());
         }
 
         if ($session->hasExpiredAt($this->clock->now(), $this->lifetimeInSeconds())) {
-            throw SessionRefused::because(SessionRefusalCause::Expired);
+            throw $this->refuse(SessionRefusalCause::Expired, $session->user());
         }
 
         return $session;
@@ -104,6 +110,21 @@ final class ResolveSession
         }
 
         return true;
+    }
+
+    /**
+     * Records the anomaly, then hands back the refusal for the caller to throw.
+     *
+     * Recorded first and raised second, which is the order the authorisation
+     * refusal recorder uses for `SEC-057` ‡: a refusal that reached a caller
+     * without its record having been written would be a refusal nobody could
+     * account for afterwards.
+     */
+    private function refuse(SessionRefusalCause $cause, ?UserReference $user): SessionRefused
+    {
+        $this->anomalies->record($cause, $user);
+
+        return SessionRefused::because($cause);
     }
 
     private function lifetimeInSeconds(): int

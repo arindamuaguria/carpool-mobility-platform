@@ -8,30 +8,37 @@ use Cmp\Application\Shared\Integrity\RecordsIntegrityEvents;
 use Cmp\Application\Shared\Policy\ChangePolicyValue;
 use Cmp\Infrastructure\Authorisation\EvidentialAuthorisationRefusals;
 use Cmp\Infrastructure\Evidential\LoggingReconciliationRaises;
+use Cmp\Infrastructure\User\RecordedSessionAnomalies;
 use Tests\Integration\Authorisation\AuthorisationRefusalRecordingTest;
 use Tests\Integration\Evidence\EvidentialLogTest;
 use Tests\Integration\Integrity\IntegrityEventTest;
 use Tests\Integration\Policy\PolicyStoreTest;
+use Tests\Integration\User\SessionAnomalyRecordingTest;
 
 /**
- * `SEC-206` ‡ — the eight conducts the platform records operationally.
+ * `SEC-206` ‡ — the eight conducts the platform records.
  *
  * *"The conduct set shall be: refused authorisation, assertion attempt,
  * rate-limit breach, authentication failure, session anomaly, operator override,
  * policy change, and chain divergence."* Eight, named, and closed — `SADR-15` and
  * `NFR-060` are what it serves.
  *
- * ## Operational, and never instead of the evidential record
+ * ## Conduct is evidential; the platform's own health is operational
  *
- * `SEC-205` ‡: *"operational logging shall not substitute for the evidential
- * log."* `BE-202` says the same from the architecture side. So each entry below
- * records **both** halves where both exist — what is written evidentially, and
- * what is written to the operational log — because a conduct with only the second
- * would be a conduct nobody could prove afterwards.
+ * `SEC-203` ‡: *"security events concerning **an actor's conduct** shall be
+ * evidential records."* `SEC-204`: *"security events concerning **the platform's
+ * own health** shall be operational logs."* And `SEC-205` ‡ closes the gap
+ * between them — operational logging shall not substitute for the evidential log.
+ *
+ * So the default for this set is **evidential**, and `SEC-207` ‡'s six fields are
+ * exactly `Evidence`'s (`BE-107` ‡). Two entries are not, and each says why:
+ * chain divergence is the platform's health rather than anybody's conduct, and a
+ * session anomaly is **either**, depending on whether the platform knows whose
+ * session it was.
  *
  * ## What the register makes checkable
  *
- * Four of the eight are wired. Four are not, and each names what stands in the
+ * Five of the eight are wired. Three are not, and each names what stands in the
  * way — none of them is work nobody has done. `ConductSetTest` fails the build if
  * a wired conduct names a class that has gone, and `SEC-207` ‡ requires every
  * record to carry actor, action, subject, time, outcome and reason, which
@@ -94,13 +101,15 @@ final class ConductSet
             ],
             'session_anomaly' => [
                 'conduct' => 'A token was presented that the store will not serve.',
-                'status' => ObligationRegister::ABSENT,
-                'writtenBy' => null,
-                'provenBy' => null,
-                'note' => 'ResolveSession refuses a terminated, expired or unknown token today and SEC-048 ‡ '
-                    .'makes the three indistinguishable **to a caller** — SessionRefusalCause keeps them '
-                    .'apart internally, which is exactly what an operational record needs. Nothing writes '
-                    .'one. Buildable; nothing blocks it.',
+                'status' => ObligationRegister::ENFORCED,
+                'writtenBy' => RecordedSessionAnomalies::class,
+                'provenBy' => SessionAnomalyRecordingTest::class,
+                'note' => 'The one conduct that goes to either sink. A terminated or expired token names an '
+                    .'owner the platform knows, so SEC-203 ‡ makes it conduct and it is evidential — which is '
+                    .'DB-044 ‡ making reuse detectable rather than merely impossible. An **unknown** token '
+                    .'names nobody, BE-107 ‡ refuses a record that cannot say what it is about, and SEC-204 '
+                    .'puts it in the operational log with no actor. SEC-048 ‡ is untouched: the three stay '
+                    .'indistinguishable to a caller, and only the record differs.',
             ],
             'operator_override' => [
                 'conduct' => 'An operator acted against what the platform would otherwise do.',
