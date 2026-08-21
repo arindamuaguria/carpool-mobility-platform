@@ -262,4 +262,35 @@ final class UnverifiableRegister
     {
         return ['no_', 'not_', 'never', 'refus', 'withheld', 'absent', 'cannot', 'must_not', 'forbid'];
     }
+
+    /**
+     * The withheld capability a piece of text names, or null.
+     *
+     * **One implementation, used by every detector**, because a rule with two
+     * implementations has two behaviours and the difference shows up as a false
+     * positive in one place and a miss in the other.
+     *
+     * ## Whole words, not substrings
+     *
+     * The boundary is *"not a letter or a digit"*, which makes an underscore one —
+     * so `_rating_` in a method name matches and `demonstrating` does not.
+     * Both spellings occur in this repository: `test_demonstrating_a_number_twice`
+     * in `UserTest`, and the word `demonstrating` in the evidential-records
+     * migration. A substring match flagged both, and `TC-024` ‡ required that to
+     * be fixed rather than excluded.
+     *
+     * The plural is the same capability — `ratings` and `refunds` are caught.
+     */
+    public static function withheldTermIn(string $text): ?string
+    {
+        $lowered = strtolower($text);
+
+        foreach (self::withheldTerms() as $term) {
+            if (preg_match('/(?<![a-z0-9])'.preg_quote($term, '/').'s?(?![a-z0-9])/', $lowered) === 1) {
+                return $term;
+            }
+        }
+
+        return null;
+    }
 }

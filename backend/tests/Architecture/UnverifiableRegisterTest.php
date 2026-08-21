@@ -233,30 +233,11 @@ final class UnverifiableRegisterTest extends TestCase
             }
         }
 
-        // Whole segments of the name, not substrings of one. A method called
-        // test_demonstrating_a_number_twice contains "rating" inside
-        // "demonstrating", and flagging it would be the false positive TC-024 ‡
-        // requires to be fixed rather than disabled — the first version of this
-        // detector did exactly that, and UserTest caught it.
-        $segments = explode('_', $lowered);
-
-        foreach (UnverifiableRegister::withheldTerms() as $term) {
-            // A term may itself be multi-word (recurring_commute), so it is
-            // matched against the name's segments joined back up at the same
-            // boundaries rather than against each segment alone.
-            $needle = '_'.$term.'_';
-
-            if (str_contains('_'.implode('_', $segments).'_', $needle)) {
-                return $term;
-            }
-
-            // The plural. "ratings" and "refunds" are the same capability.
-            if (str_contains('_'.implode('_', $segments).'_', '_'.$term.'s_')) {
-                return $term;
-            }
-        }
-
-        return null;
+        // The withheld-term match itself is UnverifiableRegister's, so that this
+        // detector and TestDataRulesTest cannot drift apart. What is local here
+        // is the TC-179 ‡ exemption above: a name about refusal or absence is the
+        // specified behaviour and the right test to have.
+        return UnverifiableRegister::withheldTermIn($lowered);
     }
 
     /**
