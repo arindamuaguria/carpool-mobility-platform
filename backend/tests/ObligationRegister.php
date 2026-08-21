@@ -217,7 +217,9 @@ final class ObligationRegister
                 technique: 'assertion',
                 status: self::ENFORCED,
                 provenBy: IdempotencyRegistryTest::class,
-                note: '',
+                note: 'The concurrent dimension is CMP-DOC-18\'s own TC-147 ‡ rather than one of the 99. '
+                    .'ConcurrentIdempotencyClaimTest proves it under genuine parallelism (TADR-08) — six '
+                    .'operating-system processes released at one instant, exactly one of which takes the claim.',
             ),
             self::backendObligation(
                 n: 6,
