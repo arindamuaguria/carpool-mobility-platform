@@ -73,10 +73,12 @@ final class ConductSet
                 'status' => ObligationRegister::ENFORCED,
                 'writtenBy' => RecordsIntegrityEvents::class,
                 'provenBy' => IntegrityEventTest::class,
-                'note' => 'SADR-08 / FRD-FR-237 to FRD-FR-241: the whole request is rejected and the attempt '
-                    .'recorded. API-214 ‡ and TC-037 ‡ rule 11 mean a request schema cannot accept such a '
-                    .'field at all, so this records the attempt that got past a client rather than the '
-                    .'platform tolerating one.',
+                'note' => 'SADR-08 / FRD-FR-237 to FRD-FR-241 ‡: the whole request is rejected and the attempt '
+                    .'recorded. Two mechanisms, and the second was unwired until FEAT-032: API-037 ‡ and '
+                    .'TC-037 ‡ rule 11 keep the seven out of every request schema, but a schema that does not '
+                    .'declare a field **ignores** one rather than rejecting it — and FRD-FR-239 ‡ requires '
+                    .'rejection in whole. RefuseAssertedAuthority is the floor beneath the schema, on every '
+                    .'route, and AssertedAuthorityRecordingTest proves the record reaches the store.',
             ],
             'rate_limit_breach' => [
                 'conduct' => 'An attempt limit was exhausted.',

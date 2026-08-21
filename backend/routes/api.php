@@ -6,6 +6,7 @@ use Cmp\Interface\Rest\Controller\ConfigurationController;
 use Cmp\Interface\Rest\Controller\CurrentSessionController;
 use Cmp\Interface\Rest\Controller\HealthController;
 use Cmp\Interface\Rest\Controller\VersionsController;
+use Cmp\Interface\Rest\Middleware\RefuseAssertedAuthority;
 use Cmp\Interface\Rest\Middleware\RequireIdempotencyKey;
 use Cmp\Interface\Rest\Middleware\RequireSession;
 use Cmp\Interface\Rest\Middleware\RequireSupportedVersion;
@@ -49,6 +50,11 @@ Route::prefix(ServedVersions::PREFIX.'/{version}')
         // added without it — AADR-04 made the key mandatory, and a per-route
         // opt-in is how "mandatory" becomes "usually".
         RequireIdempotencyKey::class,
+        // FRD-FR-238 to FRD-FR-240 ‡: a caller may not assert what the platform
+        // decides. On the group rather than per route, because FRD-FR-238 ‡ is
+        // about **every** request and a guarantee remembered per route is one
+        // that lapses on the route somebody adds in a hurry.
+        RefuseAssertedAuthority::class,
     ])
     ->group(function (): void {
         // API-027 / §9.1 — reachable without a session.
