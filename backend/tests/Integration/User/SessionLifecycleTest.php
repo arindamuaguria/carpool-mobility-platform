@@ -123,6 +123,33 @@ final class SessionLifecycleTest extends IntegrationTestCase
         self::assertNull($this->sessionRows()[0]->terminated_at, 'The session must be untouched.');
     }
 
+    public function test_another_actor_cannot_refresh_a_session_they_do_not_hold(): void
+    {
+        // `TC-116` ‡ / `SEC-236`: negative authorisation cases exist for **every**
+        // operation, not a sample. Terminate had one and refresh did not, which
+        // the §17.2 obligation register surfaced — a sample is exactly what two
+        // out of three is.
+        //
+        // The rule is the same `requiringParty()` one, and that is the point: an
+        // operation is not covered because the operation beside it is. `SEC-044` ‡
+        // binds a session to one actor and makes it non-transferable, so a
+        // caller who is not that actor is refused whichever verb they used.
+        [$token, $session] = $this->establishFor(self::REFERENCE);
+
+        $result = $this->refresh($session, self::OTHER_REFERENCE);
+
+        self::assertTrue($result->isFailure());
+
+        // And nothing happened: `SEC-043` would have terminated this session and
+        // written a second, so one untouched row is the whole assertion.
+        self::assertCount(1, $this->sessionRows());
+        self::assertNull($this->sessionRows()[0]->terminated_at, 'The session must be untouched.');
+
+        // The token the caller already held still resolves — a refused refresh
+        // must not cost the rightful holder their session.
+        self::assertFalse($this->app->make(ResolveSession::class)->forToken($token)->isTerminated());
+    }
+
     public function test_refreshing_issues_a_new_token_and_invalidates_the_previous(): void
     {
         // SEC-043, both halves.
