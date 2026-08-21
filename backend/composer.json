@@ -65,6 +65,9 @@
         "test:system": [
             "@php vendor/bin/phpunit --testsuite=System"
         ],
+        "report": [
+            "@php tests/report.php"
+        ],
         "verify": [
             "@analyse",
             "@test:architecture",
