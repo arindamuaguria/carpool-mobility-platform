@@ -504,6 +504,20 @@ final class StructuralRulesTest extends TestCase
         self::assertSame(['seat counts'], self::authoritativeValuesNamedIn('"seatsAvailable"'));
         self::assertSame(['trip state'], self::authoritativeValuesNamedIn("'booking_status'"));
         self::assertSame([], self::authoritativeValuesNamedIn("'origin', 'destination'"));
+
+        // And the correction FEAT-032 forced: a file that **writes about** an
+        // authoritative value is not a file that declares one. Rule 11 read raw
+        // text, so RefuseAssertedAuthority — the middleware that implements
+        // FRD-FR-238 ‡ — failed the rule on the docblock explaining it.
+        self::assertSame([], self::authoritativeValuesNamedIn('// the example is {"fare": 1}'));
+        self::assertSame([], self::authoritativeValuesNamedIn('/** a schema declaring "fare" */'));
+
+        // The half that matters more: stripping the prose must not blind the rule
+        // to a declaration standing beside it. This is the offending shape.
+        self::assertSame(
+            ['fare'],
+            self::authoritativeValuesNamedIn('/** about "fare" */ public array $fields = [\'fare\'];'),
+        );
     }
 
     public function test_a_rule_with_nothing_to_check_yet_says_so(): void
@@ -572,9 +586,50 @@ final class StructuralRulesTest extends TestCase
      */
     private static function authoritativeValuesNamedIn(string $contents): array
     {
-        preg_match_all('/([\'"])([A-Za-z_][A-Za-z0-9_\- ]{0,40})\1/', $contents, $matches);
+        return AuthoritativeValues::assertedIn(self::stringLiteralsIn($contents));
+    }
 
-        return AuthoritativeValues::assertedIn($matches[2]);
+    /**
+     * The string literals a file **declares**, excluding anything in a comment.
+     *
+     * Read through the tokeniser rather than by regular expression, and that is a
+     * fix rather than a refinement: the earlier version matched any quoted text
+     * anywhere, so `RefuseAssertedAuthority` — the middleware that **implements**
+     * `FRD-FR-238` ‡ — failed rule 11 because its docblock explains the rule using
+     * `{"booking": {"fare": 1}}` as the example.
+     *
+     * `TC-024` ‡ requires a false positive to be fixed, never disabled. Deleting
+     * the example would have been the disabling; reading code instead of prose is
+     * the fix, and it makes the rule match what it always meant — a field name a
+     * schema declares, not a field name somebody wrote about.
+     *
+     * @return list<string>
+     */
+    private static function stringLiteralsIn(string $contents): array
+    {
+        $literals = [];
+
+        // Whole file or bare fragment alike: the detector-validation cases below
+        // pass a snippet, and text outside an open tag tokenises as T_INLINE_HTML
+        // — which would make every fixture silently produce nothing, the failure
+        // mode TC-041 exists to catch.
+        if (! str_contains($contents, '<?php')) {
+            $contents = '<?php '.$contents;
+        }
+
+        foreach (token_get_all($contents) as $token) {
+            if (! is_array($token) || $token[0] !== T_CONSTANT_ENCAPSED_STRING) {
+                continue;
+            }
+
+            // The literal without its quotes. A heredoc is T_ENCAPSED_AND_WHITESPACE
+            // and is deliberately not read: a field name is declared as a plain
+            // string, and a heredoc holding one would be a statement built by
+            // concatenation, which TC-037 ‡ rule 9 already forbids.
+            $literals[] = trim($token[1], "'\"");
+        }
+
+        return $literals;
     }
 
     /**
