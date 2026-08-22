@@ -46,10 +46,24 @@ final class JobFamilyRulesTest extends TestCase
     {
         // A literal 'safety' passed as a queue name would bypass the enum, and
         // BE-132 ‡ turns on the enum's ordering being the only ordering.
+        //
+        // **"As a queue name"** is the whole of it, and the detector now says
+        // so. API-163 ‡ puts the safety surface under the path prefix `safety`,
+        // so SafetySurface::PREFIX is the literal 'safety' meaning a URL
+        // segment — one word, two unrelated concepts. Flagging it was a false
+        // positive, and TC-024 ‡ requires the detector fixed rather than the
+        // constant renamed to something API-163 ‡ does not permit.
+        //
+        // So a file is examined only where it deals with queued work at all: a
+        // file that never mentions a queue cannot be naming one.
         $offenders = [];
 
         foreach (self::sourceFiles() as $relative => $contents) {
             if ($relative === 'src/Application/Shared/Work/JobFamily.php') {
+                continue;
+            }
+
+            if (! self::dealsWithQueuedWork($contents)) {
                 continue;
             }
 
@@ -61,6 +75,43 @@ final class JobFamilyRulesTest extends TestCase
         }
 
         self::assertSame([], $offenders, 'BE-131: a family is named by the enum, never by a string literal.');
+    }
+
+    /**
+     * `TC-041` / `TC-024` ‡ — the narrowed detector still fires, and no
+     * longer fires on a path prefix that happens to be the same word.
+     */
+    public function test_the_family_literal_detector_recognises_a_queue_name(): void
+    {
+        self::assertTrue(
+            self::dealsWithQueuedWork('$this->onQueue("safety");'),
+            'A file calling onQueue() is naming a queue.',
+        );
+
+        self::assertTrue(self::dealsWithQueuedWork('final class X implements ShouldQueue {}'));
+
+        self::assertFalse(
+            self::dealsWithQueuedWork('final class SafetySurface { public const PREFIX = "safety"; }'),
+            "API-163 ‡'s path prefix is not a queue name, and one word is not two concepts.",
+        );
+    }
+
+    /**
+     * Whether a file has anything to do with queued work.
+     *
+     * Narrow on purpose. `BE-131`’s subject is a family **named as a queue**,
+     * and a file mentioning no queue machinery has not named one. A job, a
+     * dispatcher and the queue configuration each say so in their own text.
+     */
+    private static function dealsWithQueuedWork(string $contents): bool
+    {
+        foreach (['onQueue', 'ShouldQueue', 'JobFamily', 'Queueable', 'PlatformJob', 'connections'] as $signal) {
+            if (str_contains($contents, $signal)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function test_the_environment_inventory_records_the_database_queue(): void

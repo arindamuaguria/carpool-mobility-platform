@@ -30,7 +30,7 @@ final class AuthorisationServiceProvider extends ServiceProvider
     /**
      * The platform's authorisation policy.
      *
-     * **Seven rules, each added with the operation it governs** —
+     * **Ten rules, each added with the operation it governs** —
      * see {@see sessionRules()}. That is the standing rule: a rule is added on
      * the commit that adds the operation it governs, never ahead of it, because
      * a rule for an operation that does not exist permits nothing and reviews as
@@ -43,7 +43,11 @@ final class AuthorisationServiceProvider extends ServiceProvider
      */
     public static function policy(): AuthorisationPolicy
     {
-        return AuthorisationPolicy::of([...self::sessionRules(), ...self::emergencyContactRules()]);
+        return AuthorisationPolicy::of([
+            ...self::sessionRules(),
+            ...self::emergencyContactRules(),
+            ...self::safetyRules(),
+        ]);
     }
 
     /**
@@ -127,6 +131,43 @@ final class AuthorisationServiceProvider extends ServiceProvider
             'profile.emergency_contacts.nominate' => AuthorisationRule::requiringParty(),
             'profile.emergency_contacts.amend' => AuthorisationRule::requiringParty(),
             'profile.emergency_contacts.remove' => AuthorisationRule::requiringParty(),
+        ];
+    }
+
+    /**
+     * `UC-051` — the three operations on a safety incident.
+     *
+     * All three take {@see AuthorisationRule::requiringParty()}, and the party
+     * is **whoever raised the incident**. `SEC-066` ‡ is the rule, and this is
+     * the record where it matters most: the list of people who have raised a
+     * safety signal is the most sensitive the platform holds, and `SEC-069` ‡
+     * makes an incident somebody else raised indistinguishable from one that
+     * does not exist.
+     *
+     * **A co-traveller is not a party.** `FRD-FR-186` ‡ has the platform
+     * capture who else was involved, and being captured in somebody’s safety
+     * incident entitles you to nothing — `BAD-DEC-022` has not decided what a
+     * counterparty may see of one, and a widened default here would be the
+     * worst possible place to guess.
+     *
+     * **`safety.incidents.route` is the worker’s**, and it takes the same rule
+     * rather than a capability. `SADR-06` routes every caller — client,
+     * operator, worker — through one evaluation, and `BE-140` has the job carry
+     * the raiser’s identity explicitly because a worker has no session. So the
+     * worker is the party, by being the raiser, and `SEC-063`’s undecided role
+     * set is not needed to express it.
+     *
+     * **None alters entitlement** (`SEC-058` ‡): raising, reading or routing an
+     * incident changes what the platform holds, not what anybody may do.
+     *
+     * @return array<string, AuthorisationRule>
+     */
+    public static function safetyRules(): array
+    {
+        return [
+            'safety.incidents.raise' => AuthorisationRule::requiringParty(),
+            'safety.incidents.read' => AuthorisationRule::requiringParty(),
+            'safety.incidents.route' => AuthorisationRule::requiringParty(),
         ];
     }
 

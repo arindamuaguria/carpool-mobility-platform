@@ -13,7 +13,6 @@ use Cmp\Application\Shared\Work\JobFamily;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use JsonException;
 use LogicException;
 
@@ -51,12 +50,30 @@ use LogicException;
  * than code, which needs the policy store (`CMP-IMP-031`). Until then `$tries`
  * is deliberately unset: the framework default of a single attempt cannot
  * silently re-run work, which is the safer way to be wrong.
+ *
+ * ## `SerializesModels` is deliberately not used
+ *
+ * It was, until `RouteSafetyIncident` became this class's first subclass and
+ * found that the job could not survive its own queue. The trait serialises
+ * through `ReflectionClass::getProperties()` on the **concrete** job, which does
+ * not return a parent's `private` properties — so `$actorReference` and
+ * `$idempotencyKeyValue` were dropped on the way out, and a worker unserialised
+ * a job whose acting identity and idempotency key had never been initialised.
+ * `BE-140` and `BE-135` ‡ were both defeated at the moment the job left the
+ * process, which is precisely the moment `BE-141` says a job must stop depending
+ * on it.
+ *
+ * The trait exists to re-resolve **Eloquent models** from the database on
+ * unserialise. `BE-087` puts the ORM inside a repository implementation and no
+ * job carries a model — {@see payload()} is scalars by contract — so the trait
+ * had nothing to do here and was removed rather than worked around. PHP's own
+ * serialisation handles a parent's private properties correctly, and readonly
+ * with it.
  */
 abstract class PlatformJob implements ShouldQueue, StateChangingCommand
 {
     use InteractsWithQueue;
     use Queueable;
-    use SerializesModels;
 
     public function __construct(
         private readonly string $actorReference,

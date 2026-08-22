@@ -112,7 +112,7 @@ final class AuthorisationRulesTest extends TestCase
         // holds exactly the rules for the operations that exist — three from
         // CMP-IMP-053, CMP-IMP-056 and CMP-IMP-057, and four from UC-048 — and a
         // rule ahead of its operation would permit nothing while reviewing as
-        // though something had been decided.
+        // though something had been decided. UC-051 adds three more.
         self::assertSame(
             ['sessions.establish', 'sessions.current.terminate', 'sessions.current.refresh'],
             array_keys(AuthorisationServiceProvider::sessionRules()),
@@ -128,12 +128,22 @@ final class AuthorisationRulesTest extends TestCase
             array_keys(AuthorisationServiceProvider::emergencyContactRules()),
         );
 
+        self::assertSame(
+            [
+                'safety.incidents.raise',
+                'safety.incidents.read',
+                'safety.incidents.route',
+            ],
+            array_keys(AuthorisationServiceProvider::safetyRules()),
+        );
+
         // And the policy is those two registers and nothing else. A rule
         // reachable without appearing in one of them would be a rule no
         // reviewer would find in the one place SADR-06 says to look.
         self::assertSame(
             count(AuthorisationServiceProvider::sessionRules())
-                + count(AuthorisationServiceProvider::emergencyContactRules()),
+                + count(AuthorisationServiceProvider::emergencyContactRules())
+                + count(AuthorisationServiceProvider::safetyRules()),
             AuthorisationServiceProvider::policy()->count(),
         );
     }
@@ -154,6 +164,7 @@ final class AuthorisationRulesTest extends TestCase
         $stated = [
             ...AuthorisationServiceProvider::sessionRules(),
             ...AuthorisationServiceProvider::emergencyContactRules(),
+            ...AuthorisationServiceProvider::safetyRules(),
         ];
 
         foreach ($stated as $operation => $rule) {
