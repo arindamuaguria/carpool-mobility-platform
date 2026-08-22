@@ -12,6 +12,7 @@ use Cmp\Application\Safety\RetrySafetyRouting;
 use Cmp\Application\Safety\RoutesSafetyIncidents;
 use Cmp\Application\Shared\Authorisation\Authoriser;
 use Cmp\Application\Shared\Evidence\RecordsEvidence;
+use Cmp\Application\Shared\Idempotency\IdempotentOperation;
 use Cmp\Application\Shared\Transaction\TransactionBoundary;
 use Cmp\Domain\Safety\SafetyIncidentRepository;
 use Cmp\Domain\Shared\Time\Clock;
@@ -68,6 +69,7 @@ final class SafetyServiceProvider extends ServiceProvider
             RaiseSafetyIncident::class,
             static fn (Application $app): RaiseSafetyIncident => new RaiseSafetyIncident(
                 $app->make(Authoriser::class),
+                $app->make(IdempotentOperation::class),
                 $app->make(TransactionBoundary::class),
                 $app->make(SafetyIncidentRepository::class),
                 $app->make(GeneratesIncidentReferences::class),
@@ -81,6 +83,7 @@ final class SafetyServiceProvider extends ServiceProvider
             MarkIncidentRouted::class,
             static fn (Application $app): MarkIncidentRouted => new MarkIncidentRouted(
                 $app->make(Authoriser::class),
+                $app->make(IdempotentOperation::class),
                 $app->make(TransactionBoundary::class),
                 $app->make(SafetyIncidentRepository::class),
                 $app->make(RecordsEvidence::class),
@@ -92,6 +95,7 @@ final class SafetyServiceProvider extends ServiceProvider
             ReadOwnIncident::class,
             static fn (Application $app): ReadOwnIncident => new ReadOwnIncident(
                 $app->make(Authoriser::class),
+                $app->make(IdempotentOperation::class),
                 $app->make(SafetyIncidentRepository::class),
             ),
         );

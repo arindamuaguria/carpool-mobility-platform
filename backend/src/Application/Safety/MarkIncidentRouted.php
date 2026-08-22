@@ -14,6 +14,7 @@ use Cmp\Application\Shared\Evidence\Evidence;
 use Cmp\Application\Shared\Evidence\EvidentialOutcome;
 use Cmp\Application\Shared\Evidence\RecordsEvidence;
 use Cmp\Application\Shared\Idempotency\ActorReference;
+use Cmp\Application\Shared\Idempotency\IdempotentOperation;
 use Cmp\Application\Shared\Result;
 use Cmp\Application\Shared\Transaction\TransactionBoundary;
 use Cmp\Domain\Safety\IncidentReference;
@@ -56,12 +57,13 @@ final class MarkIncidentRouted extends ApplicationService
 
     public function __construct(
         Authoriser $authoriser,
+        IdempotentOperation $idempotency,
         private readonly TransactionBoundary $transaction,
         private readonly SafetyIncidentRepository $incidents,
         private readonly RecordsEvidence $evidence,
         private readonly Clock $clock,
     ) {
-        parent::__construct($authoriser);
+        parent::__construct($authoriser, $idempotency);
     }
 
     public function operation(): Operation

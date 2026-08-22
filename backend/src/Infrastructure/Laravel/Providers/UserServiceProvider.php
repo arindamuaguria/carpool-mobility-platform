@@ -6,6 +6,7 @@ namespace Cmp\Infrastructure\Laravel\Providers;
 
 use Cmp\Application\Shared\Authorisation\Authoriser;
 use Cmp\Application\Shared\Evidence\RecordsEvidence;
+use Cmp\Application\Shared\Idempotency\IdempotentOperation;
 use Cmp\Application\Shared\Policy\ChangePolicyValue;
 use Cmp\Application\Shared\Transaction\TransactionBoundary;
 use Cmp\Application\User\AmendEmergencyContact;
@@ -142,6 +143,7 @@ final class UserServiceProvider extends ServiceProvider
             EstablishSession::class,
             static fn (Application $app): EstablishSession => new EstablishSession(
                 $app->make(Authoriser::class),
+                $app->make(IdempotentOperation::class),
                 $app->make(TransactionBoundary::class),
                 $app->make(UserRepository::class),
                 $app->make(SessionRepository::class),
@@ -161,6 +163,7 @@ final class UserServiceProvider extends ServiceProvider
             TerminateCurrentSession::class,
             static fn (Application $app): TerminateCurrentSession => new TerminateCurrentSession(
                 $app->make(Authoriser::class),
+                $app->make(IdempotentOperation::class),
                 $app->make(TransactionBoundary::class),
                 $app->make(SessionRepository::class),
                 $app->make(RecordsEvidence::class),
@@ -172,6 +175,7 @@ final class UserServiceProvider extends ServiceProvider
             RefreshCurrentSession::class,
             static fn (Application $app): RefreshCurrentSession => new RefreshCurrentSession(
                 $app->make(Authoriser::class),
+                $app->make(IdempotentOperation::class),
                 $app->make(TransactionBoundary::class),
                 $app->make(SessionRepository::class),
                 $app->make(HashesSessionTokens::class),
@@ -210,6 +214,7 @@ final class UserServiceProvider extends ServiceProvider
             ReadEmergencyContacts::class,
             static fn (Application $app): ReadEmergencyContacts => new ReadEmergencyContacts(
                 $app->make(Authoriser::class),
+                $app->make(IdempotentOperation::class),
                 $app->make(EmergencyContactRepository::class),
             ),
         );
@@ -218,6 +223,7 @@ final class UserServiceProvider extends ServiceProvider
             NominateEmergencyContact::class,
             static fn (Application $app): NominateEmergencyContact => new NominateEmergencyContact(
                 $app->make(Authoriser::class),
+                $app->make(IdempotentOperation::class),
                 $app->make(TransactionBoundary::class),
                 $app->make(EmergencyContactRepository::class),
                 $app->make(GeneratesContactReferences::class),
@@ -230,6 +236,7 @@ final class UserServiceProvider extends ServiceProvider
             AmendEmergencyContact::class,
             static fn (Application $app): AmendEmergencyContact => new AmendEmergencyContact(
                 $app->make(Authoriser::class),
+                $app->make(IdempotentOperation::class),
                 $app->make(TransactionBoundary::class),
                 $app->make(EmergencyContactRepository::class),
                 $app->make(RecordsEvidence::class),
@@ -241,6 +248,7 @@ final class UserServiceProvider extends ServiceProvider
             RemoveEmergencyContact::class,
             static fn (Application $app): RemoveEmergencyContact => new RemoveEmergencyContact(
                 $app->make(Authoriser::class),
+                $app->make(IdempotentOperation::class),
                 $app->make(TransactionBoundary::class),
                 $app->make(EmergencyContactRepository::class),
                 $app->make(RecordsEvidence::class),

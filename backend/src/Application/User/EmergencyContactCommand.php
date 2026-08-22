@@ -37,14 +37,6 @@ final class EmergencyContactCommand implements AuthorisationTarget, StateChangin
     ) {}
 
     /**
-     * `FRD-FR-181`, the read half — the set as the platform holds it.
-     */
-    public static function toRead(AuthenticatedCaller $caller, IdempotencyKey $idempotencyKey): self
-    {
-        return new self($caller->session()->user(), $idempotencyKey, null, null, null);
-    }
-
-    /**
      * `FRD-FR-181` — nominate.
      */
     public static function toNominate(

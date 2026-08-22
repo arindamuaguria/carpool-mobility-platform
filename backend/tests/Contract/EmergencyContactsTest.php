@@ -196,9 +196,19 @@ final class EmergencyContactsTest extends TestCase
         // API-072 ‡ / API-087: the branches are distinguishable by structure
         // alone. This one is decided against platform state, so it is 409 with a
         // `refusal`, not 400 with `invalid_request`.
-        $this->send('POST', 'profile/emergency-contacts', ['phone_number' => '+910000002006'])->assertOk();
+        $this->send('POST', 'profile/emergency-contacts', ['phone_number' => '+910000002006'], 'first-nomination')
+            ->assertOk();
 
-        $response = $this->send('POST', 'profile/emergency-contacts', ['phone_number' => '+910000002006']);
+        // A **different key**, because this is a second request rather than a
+        // retry of the first. API-062 ‡ would otherwise replay the original
+        // outcome, which is the correct answer to a repeat and the wrong one for
+        // the case UC-048 A1 is about.
+        $response = $this->send(
+            'POST',
+            'profile/emergency-contacts',
+            ['phone_number' => '+910000002006'],
+            'second-nomination',
+        );
 
         $response->assertStatus(409);
         $response->assertJsonPath('refusal.reason', EmergencyContactRefusal::AlreadyNominated->value);
@@ -252,12 +262,14 @@ final class EmergencyContactsTest extends TestCase
      * @param  array<string, mixed>  $body
      * @return TestResponse<JsonResponse>
      */
-    private function send(string $method, string $path, array $body = []): TestResponse
+    private function send(string $method, string $path, array $body = [], ?string $key = null): TestResponse
     {
         return $this->withHeaders([
-            // API-057 ‡. Unique per call, because API-062 ‡ would otherwise
-            // replay the first outcome and these tests ask a second question.
-            RequireIdempotencyKey::HEADER => 'contact-'.substr(hash('sha256', $method.$path.serialize($body)), 0, 20),
+            // API-057 ‡. Derived from the request by default, so an identical
+            // repeat is a retry and API-062 ‡ replays it — which is what a client
+            // on a poor connection actually does. A test asking a **second**
+            // question passes its own key.
+            RequireIdempotencyKey::HEADER => $key ?? 'contact-'.substr(hash('sha256', $method.$path.serialize($body)), 0, 20),
             SessionCarriage::REQUEST_HEADER => SessionCarriage::SCHEME.' '.$this->token,
         ])->json($method, '/api/v1/'.$path, $body);
     }

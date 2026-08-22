@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Job;
 
+use Cmp\Application\Shared\OperationOutcome;
 use Cmp\Application\Shared\Result;
 use Cmp\Application\Shared\Work\JobFamily;
 use Cmp\Infrastructure\Job\PlatformJob;
@@ -51,6 +52,6 @@ final class TestJob extends PlatformJob
     {
         self::$runs++;
 
-        return Result::success(['handled' => true]);
+        return Result::success(OperationOutcome::of(['handled' => true]));
     }
 }

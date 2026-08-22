@@ -145,8 +145,21 @@ final class SafetyIncidentsTest extends TestCase
     }
 
     /**
-     * The honesty test — `API-062` ‡ is **not** enforced on any REST
-     * operation, and this one is no exception.
+     * `API-173` / `API-066` ‡ — *"a repeated raise under a poor connection
+     * produces one incident"*, which is the situation a client in an emergency is
+     * actually in.
+     *
+     * This test asserted the opposite until `CC-045` was closed: the registry
+     * existed, `RequireIdempotencyKey` checked the key was **present** and
+     * stopped there, and `IdempotentOperation` was invoked by `PlatformJob` and
+     * by nothing else. Applying it in `ApplicationService` gave every
+     * state-changing operation the guarantee at once.
+     *
+     * The **replay is visible** (`API-064`): a client that cannot tell a replay
+     * from a fresh outcome would count two effects where the platform performed
+     * one.
+     *
+     * The superseded note read:
      *
      * `API-173` wants a repeated raise under a poor connection to produce one
      * incident, which is exactly the situation a client in an emergency is in.
@@ -156,13 +169,12 @@ final class SafetyIncidentsTest extends TestCase
      * guards", which is the application service’s. And `IdempotentOperation`,
      * which is that mechanism, is invoked by `PlatformJob` and by nothing else.
      *
-     * So every state-changing REST operation on the platform carries a key it
-     * does nothing with. Recorded at **`CC-045`**, and asserted here rather
-     * than left to be discovered: when the registry is wired into
-     * `ApplicationService`, this test fails and is replaced by the one
-     * `API-173` actually asks for.
+     * *"So every state-changing REST operation on the platform carries a key it
+     * does nothing with … when the registry is wired into `ApplicationService`,
+     * this test fails and is replaced by the one `API-173` actually asks for."*
+     * It did, and this is that test.
      */
-    public function test_a_repeated_raise_is_not_yet_replayed(): void
+    public function test_a_repeated_raise_under_one_key_produces_one_incident(): void
     {
         $first = $this->send('POST', 'safety/v1/incidents', [], 'one-signal');
         $second = $this->send('POST', 'safety/v1/incidents', [], 'one-signal');
@@ -170,16 +182,19 @@ final class SafetyIncidentsTest extends TestCase
         $first->assertOk();
         $second->assertOk();
 
+        self::assertSame(1, $this->incidentCount(), 'API-173: a repeated raise produces one incident.');
+
+        // API-064: the client can tell which of the two was the effect.
+        $first->assertJsonPath('meta.replayed', false);
+        $second->assertJsonPath('meta.replayed', true);
+
+        // API-062 ‡: the recorded outcome, not a re-execution — so the same
+        // incident comes back rather than a second one.
         self::assertSame(
-            2,
-            $this->incidentCount(),
-            'API-062 ‡ is now enforced on the REST surface — CC-045 is closed, and this test should assert '
-            .'the one incident API-173 requires.',
+            $first->json('data.incident.id'),
+            $second->json('data.incident.id'),
         );
 
-        // FRD-FR-188 ‡ is not breached by this: nothing is lost. Two records
-        // where one was meant is a duplicate an operator can see and reconcile;
-        // the failure mode API-062 ‡ exists to prevent is the opposite one.
     }
 
     public function test_a_raiser_reads_their_own_incident(): void

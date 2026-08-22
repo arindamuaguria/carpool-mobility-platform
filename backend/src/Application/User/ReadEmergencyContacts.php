@@ -10,6 +10,7 @@ use Cmp\Application\Shared\Authorisation\AuthorisationTarget;
 use Cmp\Application\Shared\Authorisation\Authoriser;
 use Cmp\Application\Shared\Authorisation\Operation;
 use Cmp\Application\Shared\Command;
+use Cmp\Application\Shared\Idempotency\IdempotentOperation;
 use Cmp\Application\Shared\Result;
 use Cmp\Domain\User\EmergencyContactRepository;
 use LogicException;
@@ -41,9 +42,10 @@ final class ReadEmergencyContacts extends ApplicationService
 {
     public function __construct(
         Authoriser $authoriser,
+        IdempotentOperation $idempotency,
         private readonly EmergencyContactRepository $contacts,
     ) {
-        parent::__construct($authoriser);
+        parent::__construct($authoriser, $idempotency);
     }
 
     public function operation(): Operation
@@ -53,12 +55,12 @@ final class ReadEmergencyContacts extends ApplicationService
 
     protected function target(Command $command): ?AuthorisationTarget
     {
-        return $command instanceof EmergencyContactCommand ? $command : null;
+        return $command instanceof ReadContactsCommand ? $command : null;
     }
 
     protected function handle(Command $command, Actor $actor): Result
     {
-        if (! $command instanceof EmergencyContactCommand) {
+        if (! $command instanceof ReadContactsCommand) {
             throw new LogicException(self::class.' reads the calling user\'s contacts.');
         }
 

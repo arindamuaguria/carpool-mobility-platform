@@ -10,6 +10,7 @@ use Cmp\Application\Shared\Authorisation\AuthorisationTarget;
 use Cmp\Application\Shared\Authorisation\Authoriser;
 use Cmp\Application\Shared\Authorisation\Operation;
 use Cmp\Application\Shared\Command;
+use Cmp\Application\Shared\Idempotency\IdempotentOperation;
 use Cmp\Application\Shared\Result;
 use Cmp\Domain\Safety\IncidentReference;
 use Cmp\Domain\Safety\SafetyIncidentRepository;
@@ -47,9 +48,10 @@ final class ReadOwnIncident extends ApplicationService
 {
     public function __construct(
         Authoriser $authoriser,
+        IdempotentOperation $idempotency,
         private readonly SafetyIncidentRepository $incidents,
     ) {
-        parent::__construct($authoriser);
+        parent::__construct($authoriser, $idempotency);
     }
 
     public function operation(): Operation

@@ -7,6 +7,7 @@ namespace Tests\Integration\User;
 use Cmp\Application\Shared\Authorisation\Actor;
 use Cmp\Application\Shared\Idempotency\ActorReference;
 use Cmp\Application\Shared\Idempotency\IdempotencyKey;
+use Cmp\Application\Shared\Idempotency\RegisteredOutcome;
 use Cmp\Application\Shared\Policy\ChangePolicyValue;
 use Cmp\Application\Shared\Result;
 use Cmp\Application\User\CurrentSessionCommand;
@@ -156,11 +157,8 @@ final class SessionLifecycleTest extends IntegrationTestCase
         // SEC-043, both halves.
         [$token, $session] = $this->establishFor(self::REFERENCE);
 
-        $result = $this->refresh($session, self::REFERENCE);
+        $issued = $this->tokenFrom($this->refresh($session, self::REFERENCE));
 
-        self::assertTrue($result->isSuccess());
-        $issued = $result->value();
-        self::assertIsString($issued);
         self::assertNotSame($token, $issued);
 
         // The previous is terminated, not removed — DB-044 ‡ again.
@@ -189,8 +187,7 @@ final class SessionLifecycleTest extends IntegrationTestCase
         // That matters because what happens AT the limit is not stated by any
         // requirement, and nothing here invents it.
         [$token, $session] = $this->establishFor(self::REFERENCE);
-        $issued = $this->refresh($session, self::REFERENCE)->value();
-        self::assertIsString($issued);
+        $issued = $this->tokenFrom($this->refresh($session, self::REFERENCE));
 
         $resolver = $this->app->make(ResolveSession::class);
 
@@ -343,5 +340,29 @@ final class SessionLifecycleTest extends IntegrationTestCase
 
         $this->app->make(DatabasePolicyStore::class)->forget(PolicyServiceProvider::sessionLifetime());
         $this->clearEvidentialLog();
+    }
+
+    /**
+     * The token a successful establishment or refresh answered with.
+     *
+     * `API-062` ‡ now wraps every state-changing operation (`CC-045`), so a
+     * service answers with a {@see RegisteredOutcome} rather than a bare token.
+     * `SEC-038` ‡ keeps the token out of what the registry stores, so it is
+     * present on a fresh outcome and absent from a replay — a distinction these
+     * tests exercise rather than work around.
+     */
+    private function tokenFrom(Result $result): string
+    {
+        self::assertTrue($result->isSuccess());
+
+        $outcome = $result->value();
+
+        self::assertInstanceOf(RegisteredOutcome::class, $outcome);
+
+        $token = ($outcome->representation() ?? [])['token'] ?? null;
+
+        self::assertIsString($token, 'SEC-043: a fresh outcome carries the token it issued.');
+
+        return $token;
     }
 }
