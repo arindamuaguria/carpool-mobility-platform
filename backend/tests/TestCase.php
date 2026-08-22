@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use Cmp\Infrastructure\Persistence\Idempotency\DatabaseIdempotencyRegistry;
 use Illuminate\Database\ConnectionResolverInterface;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
@@ -30,6 +31,13 @@ abstract class TestCase extends BaseTestCase
      * server configured with a smaller `max_connections` — so it is closed here
      * rather than worked around by running fewer tests.
      */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->clearTheIdempotencyRegistry();
+    }
+
     protected function tearDown(): void
     {
         if ($this->app !== null) {
@@ -43,5 +51,32 @@ abstract class TestCase extends BaseTestCase
         }
 
         parent::tearDown();
+    }
+
+    /**
+     * Puts `API-062` ‡'s registry back to empty before each test.
+     *
+     * The registry is platform state like any other, and it outlives a test —
+     * `API-060` scopes a key to an actor and an operation, and nothing scopes it
+     * to a test run. Two tests in one class that both call an operation under
+     * the same key would otherwise have the second **replayed**: it would pass
+     * or fail for a reason that had nothing to do with what it was asserting.
+     *
+     * That is not hypothetical. It is what `CC-045`'s wiring exposed the moment
+     * the registry began doing its job, and it is a fixture problem rather than a
+     * platform one — so it is fixed here once rather than by giving every test a
+     * key nobody else uses, which is a discipline a later test would forget.
+     *
+     * `DB-215`: the migration account is the one that may clear a table.
+     */
+    private function clearTheIdempotencyRegistry(): void
+    {
+        if ($this->app === null) {
+            return;
+        }
+
+        $this->app->make(ConnectionResolverInterface::class)
+            ->connection('mysql_migration')
+            ->delete('DELETE FROM '.DatabaseIdempotencyRegistry::TABLE);
     }
 }

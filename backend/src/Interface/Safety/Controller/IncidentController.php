@@ -10,6 +10,7 @@ use Cmp\Application\Safety\RaiseSafetyIncident;
 use Cmp\Application\Safety\ReadOwnIncident;
 use Cmp\Application\Safety\ReadOwnIncidentCommand;
 use Cmp\Application\Shared\Idempotency\IdempotencyKey;
+use Cmp\Application\Shared\Idempotency\RegisteredOutcome;
 use Cmp\Application\Shared\Response\EvaluationTime;
 use Cmp\Application\Shared\Result;
 use Cmp\Application\User\AuthenticatedCaller;
@@ -108,17 +109,28 @@ final class IncidentController
             return FailureResponse::from($result->failure(), $this->evaluatedAt->stamp());
         }
 
-        $incident = $result->value();
+        $value = $result->value();
 
-        if (! $incident instanceof IncidentView) {
-            throw new LogicException('UC-051: both operations answer with the incident.');
-        }
+        // A raise is state-changing, so API-062 ‡ wraps it (see
+        // ApplicationService). A read is not, and answers with the view itself.
+        [$data, $replayed] = $value instanceof RegisteredOutcome
+            ? [$value->representation() ?? [], $value->replayed()]
+            : [['incident' => $this->viewOf($value)->toArray()], false];
 
         return Envelope::of(
-            ['incident' => $incident->toArray()],
+            $data,
             // No configuration version — see the class note.
-            Envelope::meta(SafetySurface::CURRENT, $this->evaluatedAt->stamp()),
+            Envelope::meta(SafetySurface::CURRENT, $this->evaluatedAt->stamp(), null, $replayed),
         );
+    }
+
+    private function viewOf(mixed $value): IncidentView
+    {
+        if (! $value instanceof IncidentView) {
+            throw new LogicException('UC-051: the read answers with the incident.');
+        }
+
+        return $value;
     }
 
     /**

@@ -10,13 +10,14 @@ use Cmp\Application\Shared\Failure\Failure;
 use Cmp\Application\Shared\Failure\InvalidRequest;
 use Cmp\Application\Shared\Idempotency\ActorReference;
 use Cmp\Application\Shared\Idempotency\IdempotencyKey;
+use Cmp\Application\Shared\Idempotency\RegisteredOutcome;
 use Cmp\Application\User\AmendEmergencyContact;
 use Cmp\Application\User\AuthenticatedCaller;
 use Cmp\Application\User\ContactSetView;
-use Cmp\Application\User\ContactView;
 use Cmp\Application\User\EmergencyContactCommand;
 use Cmp\Application\User\HashesSessionTokens;
 use Cmp\Application\User\NominateEmergencyContact;
+use Cmp\Application\User\ReadContactsCommand;
 use Cmp\Application\User\ReadEmergencyContacts;
 use Cmp\Application\User\RemoveEmergencyContact;
 use Cmp\Domain\Shared\Time\Clock;
@@ -257,7 +258,7 @@ final class EmergencyContactsTest extends TestCase
         $this->nominate(self::USER, '+910000001012', 'Two');
 
         $result = $this->app->make(ReadEmergencyContacts::class)->execute(
-            EmergencyContactCommand::toRead($this->caller(self::USER), $this->key('read')),
+            ReadContactsCommand::from($this->caller(self::USER)),
             $this->actor(self::USER),
         );
 
@@ -278,7 +279,7 @@ final class EmergencyContactsTest extends TestCase
         $this->nominate(self::OTHER, '+910000001014', null);
 
         $result = $this->app->make(ReadEmergencyContacts::class)->execute(
-            EmergencyContactCommand::toRead($this->caller(self::USER), $this->key('read2')),
+            ReadContactsCommand::from($this->caller(self::USER)),
             $this->actor(self::USER),
         );
 
@@ -340,11 +341,16 @@ final class EmergencyContactsTest extends TestCase
             $result->isFailure() ? $this->refusalIdentifier($result->failure()) : '',
         );
 
-        $contact = $result->value();
+        $outcome = $result->value();
 
-        self::assertInstanceOf(ContactView::class, $contact);
+        self::assertInstanceOf(RegisteredOutcome::class, $outcome);
 
-        return $contact->toArray()['id'];
+        $contact = ($outcome->representation() ?? [])['contact'] ?? null;
+
+        self::assertIsArray($contact);
+        self::assertIsString($contact['id']);
+
+        return $contact['id'];
     }
 
     private function caller(string $user): AuthenticatedCaller

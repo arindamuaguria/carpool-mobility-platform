@@ -7,7 +7,9 @@ namespace Cmp\Interface\Rest\Controller;
 use Cmp\Application\Shared\Authorisation\Actor;
 use Cmp\Application\Shared\Configuration\ConfigurationVersion;
 use Cmp\Application\Shared\Idempotency\IdempotencyKey;
+use Cmp\Application\Shared\Idempotency\RegisteredOutcome;
 use Cmp\Application\Shared\Response\EvaluationTime;
+use Cmp\Application\Shared\Result;
 use Cmp\Application\User\AuthenticatedCaller;
 use Cmp\Application\User\CurrentSessionCommand;
 use Cmp\Application\User\RefreshCurrentSession;
@@ -63,13 +65,12 @@ final class CurrentSessionController
             return FailureResponse::from($result->failure(), $this->evaluatedAt->stamp());
         }
 
+        $outcome = $this->outcomeOf($result);
+
         // FRD-FR-020 clears the device's cached business data when a session
         // ends; the client does that, and MOB-144 clears the session material
         // with it. The body says what happened and carries nothing else.
-        return Envelope::of(
-            ['terminated' => true],
-            Envelope::meta(ServedVersions::CURRENT, $this->evaluatedAt->stamp(), $this->configurationVersion->current()),
-        );
+        return $this->envelope($outcome->representation() ?? ['terminated' => true], $outcome->replayed());
     }
 
     /**
@@ -83,20 +84,51 @@ final class CurrentSessionController
             return FailureResponse::from($result->failure(), $this->evaluatedAt->stamp());
         }
 
-        $token = $result->value();
+        $outcome = $this->outcomeOf($result);
+        $representation = $outcome->representation() ?? [];
+        $token = $representation['token'] ?? null;
+
+        // SEC-038 ‡: the token never appears in the body. It is lifted out here
+        // and put in a header, and what is left is what the client reads.
+        unset($representation['token']);
+
+        $response = $this->envelope($representation, $outcome->replayed());
 
         if (! is_string($token)) {
-            throw new LogicException('SEC-043: a refresh issues a new token.');
+            // A **replay** carries no token, because SEC-038 ‡ kept it out of the
+            // registry — see OperationOutcome. The client is told the refresh
+            // happened and that this is a replay (API-064), which is enough for it
+            // to try again under a new key if it never received the first one.
+            return $response;
         }
 
-        $response = Envelope::of(
-            // API-064: a client can tell a fresh outcome from a replayed one, and
-            // SEC-038 ‡ keeps the token itself out of here.
-            ['refreshed' => true],
-            Envelope::meta(ServedVersions::CURRENT, $this->evaluatedAt->stamp(), $this->configurationVersion->current()),
-        );
-
         return $response->withHeaders([SessionCarriage::ISSUE_HEADER => $token]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function envelope(array $data, bool $replayed): JsonResponse
+    {
+        return Envelope::of($data, Envelope::meta(
+            ServedVersions::CURRENT,
+            $this->evaluatedAt->stamp(),
+            $this->configurationVersion->current(),
+            $replayed,
+        ));
+    }
+
+    private function outcomeOf(Result $result): RegisteredOutcome
+    {
+        $outcome = $result->value();
+
+        if (! $outcome instanceof RegisteredOutcome) {
+            // API-062 ‡ is applied in ApplicationService for every state-changing
+            // command, so a session operation cannot answer with anything else.
+            throw new LogicException('API-062 ‡: a state-changing operation answers with a registered outcome.');
+        }
+
+        return $outcome;
     }
 
     /**

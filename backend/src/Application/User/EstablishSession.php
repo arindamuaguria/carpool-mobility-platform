@@ -14,6 +14,8 @@ use Cmp\Application\Shared\Evidence\Evidence;
 use Cmp\Application\Shared\Evidence\EvidentialOutcome;
 use Cmp\Application\Shared\Evidence\RecordsEvidence;
 use Cmp\Application\Shared\Idempotency\ActorReference;
+use Cmp\Application\Shared\Idempotency\IdempotentOperation;
+use Cmp\Application\Shared\OperationOutcome;
 use Cmp\Application\Shared\Result;
 use Cmp\Application\Shared\Transaction\TransactionBoundary;
 use Cmp\Domain\Shared\Policy\PolicyKey;
@@ -91,6 +93,7 @@ final class EstablishSession extends ApplicationService
 
     public function __construct(
         Authoriser $authoriser,
+        IdempotentOperation $idempotency,
         private readonly TransactionBoundary $transaction,
         private readonly UserRepository $users,
         private readonly SessionRepository $sessions,
@@ -101,7 +104,7 @@ final class EstablishSession extends ApplicationService
         private readonly PolicyKey $lifetime,
         private readonly PolicyKey $concurrentLimit,
     ) {
-        parent::__construct($authoriser);
+        parent::__construct($authoriser, $idempotency);
     }
 
     public function operation(): Operation
@@ -177,7 +180,18 @@ final class EstablishSession extends ApplicationService
 
         // SEC-038 ‡: the token reaches the response that issues it and nothing
         // else. It is returned rather than stored, and nothing above logs it.
-        return Result::success($token);
+        // SEC-038 ‡ is why these two forms differ. The token has to reach the
+        // client, and it may not be written down — DB-125 ‡ makes the registry
+        // append-only, so a token recorded there could never be taken back.
+        //
+        // A replay therefore answers with the recorded form and carries no
+        // token, which is correct rather than a shortfall: API-064 lets a client
+        // tell a replay from a fresh outcome, and one that finds no token knows
+        // to try again under a new key.
+        return Result::success(OperationOutcome::withheldFromTheRegistry(
+            ['established' => true, 'token' => $token],
+            ['established' => true],
+        ));
     }
 
     /**

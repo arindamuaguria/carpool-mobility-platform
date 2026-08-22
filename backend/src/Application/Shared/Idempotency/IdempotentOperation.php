@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Cmp\Application\Shared\Idempotency;
 
 use Cmp\Application\Shared\Failure\BusinessRefused;
+use Cmp\Application\Shared\OperationOutcome;
 use Cmp\Application\Shared\Result;
 use Cmp\Application\Shared\StateChangingCommand;
 use Cmp\Application\Shared\Transaction\TransactionBoundary;
+use LogicException;
 
 /**
  * Runs a state-changing operation exactly once per key.
@@ -68,11 +70,26 @@ final class IdempotentOperation
                     return Result::failed($result->failure());
                 }
 
-                /** @var array<string, mixed>|null $representation */
-                $representation = $result->value();
-                $this->registry->recordOutcome($actor, $operation, $key, $representation);
+                $outcome = $result->value();
 
-                return Result::success(new RegisteredOutcome($representation));
+                if ($outcome !== null && ! $outcome instanceof OperationOutcome) {
+                    // A state-changing operation says what it answers with and
+                    // what may be written down, because SEC-038 ‡ makes those
+                    // different for a refresh. Anything else reaching here would
+                    // be a value the registry would store without anybody having
+                    // decided that it may be stored.
+                    throw new LogicException(sprintf(
+                        'DB-143: a state-changing operation returns an OperationOutcome or nothing; %s returned %s.',
+                        $operation,
+                        get_debug_type($outcome),
+                    ));
+                }
+
+                // SEC-038 ‡: what DB-143 keeps, which for a refresh is less than
+                // what the caller receives.
+                $this->registry->recordOutcome($actor, $operation, $key, $outcome?->toRegistry());
+
+                return Result::success(new RegisteredOutcome($outcome?->toCaller()));
             }
         );
     }

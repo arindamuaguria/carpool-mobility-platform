@@ -8,6 +8,7 @@ use Cmp\Application\Shared\Authorisation\Actor;
 use Cmp\Application\Shared\Failure\BusinessRefused;
 use Cmp\Application\Shared\Idempotency\ActorReference;
 use Cmp\Application\Shared\Idempotency\IdempotencyKey;
+use Cmp\Application\Shared\Idempotency\RegisteredOutcome;
 use Cmp\Application\Shared\Policy\ChangePolicyValue;
 use Cmp\Application\Shared\Result;
 use Cmp\Application\User\EstablishmentRefusal;
@@ -79,13 +80,8 @@ final class SessionEstablishmentTest extends IntegrationTestCase
         // only its hash.
         $this->createUser('VERIFIED', 'ACTIVE');
 
-        $result = $this->establish();
+        $token = $this->tokenFrom($this->establish());
 
-        self::assertTrue($result->isSuccess());
-
-        $token = $result->value();
-
-        self::assertIsString($token);
         self::assertNotSame('', $token);
 
         // SEC-042: the token resolves, which is the end-to-end fact a caller
@@ -102,9 +98,7 @@ final class SessionEstablishmentTest extends IntegrationTestCase
         // not against what the repository was asked to write.
         $this->createUser('VERIFIED', 'ACTIVE');
 
-        $token = $this->establish()->value();
-
-        self::assertIsString($token);
+        $token = $this->tokenFrom($this->establish());
 
         /** @var list<object{token_hash: string}> $rows */
         $rows = $this->applicationConnection()->select(
@@ -165,14 +159,11 @@ final class SessionEstablishmentTest extends IntegrationTestCase
         // be refused ... No existing session shall be terminated to make room."
         $this->createUser('VERIFIED', 'ACTIVE');
 
+        /** @var list<string> $held */
         $held = [];
 
         for ($i = 0; $i < self::LIMIT; $i++) {
-            $result = $this->establish('key-'.$i);
-            self::assertTrue($result->isSuccess());
-            $token = $result->value();
-            self::assertIsString($token);
-            $held[] = $token;
+            $held[] = $this->tokenFrom($this->establish('key-'.$i));
         }
 
         $this->assertRefusedWith(EstablishmentRefusal::ConcurrentLimitReached, $this->establish('key-fourth'));
@@ -198,8 +189,7 @@ final class SessionEstablishmentTest extends IntegrationTestCase
         $tokens = [];
 
         for ($i = 0; $i < self::LIMIT; $i++) {
-            $token = $this->establish('key-'.$i)->value();
-            self::assertIsString($token);
+            $token = $this->tokenFrom($this->establish('key-'.$i));
             $tokens[] = $token;
         }
 
@@ -261,9 +251,7 @@ final class SessionEstablishmentTest extends IntegrationTestCase
         // effect, so an establishment that could not be evidenced does not stand.
         $this->createUser('VERIFIED', 'ACTIVE');
 
-        $token = $this->establish()->value();
-
-        self::assertIsString($token);
+        $token = $this->tokenFrom($this->establish());
 
         $rows = $this->evidentialRows();
 
@@ -298,9 +286,7 @@ final class SessionEstablishmentTest extends IntegrationTestCase
         // name it.
         $this->createUser('VERIFIED', 'ACTIVE');
 
-        $token = $this->establish()->value();
-
-        self::assertIsString($token);
+        $token = $this->tokenFrom($this->establish());
 
         $encoded = json_encode($this->evidentialRows(), JSON_THROW_ON_ERROR);
 
@@ -441,5 +427,29 @@ final class SessionEstablishmentTest extends IntegrationTestCase
         }
 
         $this->clearEvidentialLog();
+    }
+
+    /**
+     * The token a successful establishment or refresh answered with.
+     *
+     * `API-062` ‡ now wraps every state-changing operation (`CC-045`), so a
+     * service answers with a {@see RegisteredOutcome} rather than a bare token.
+     * `SEC-038` ‡ keeps the token out of what the registry stores, so it is
+     * present on a fresh outcome and absent from a replay — a distinction these
+     * tests exercise rather than work around.
+     */
+    private function tokenFrom(Result $result): string
+    {
+        self::assertTrue($result->isSuccess());
+
+        $outcome = $result->value();
+
+        self::assertInstanceOf(RegisteredOutcome::class, $outcome);
+
+        $token = ($outcome->representation() ?? [])['token'] ?? null;
+
+        self::assertIsString($token, 'SEC-043: a fresh outcome carries the token it issued.');
+
+        return $token;
     }
 }

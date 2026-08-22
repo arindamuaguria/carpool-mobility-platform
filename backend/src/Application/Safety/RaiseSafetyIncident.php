@@ -14,6 +14,8 @@ use Cmp\Application\Shared\Evidence\Evidence;
 use Cmp\Application\Shared\Evidence\EvidentialOutcome;
 use Cmp\Application\Shared\Evidence\RecordsEvidence;
 use Cmp\Application\Shared\Idempotency\ActorReference;
+use Cmp\Application\Shared\Idempotency\IdempotentOperation;
+use Cmp\Application\Shared\OperationOutcome;
 use Cmp\Application\Shared\Result;
 use Cmp\Application\Shared\Transaction\TransactionBoundary;
 use Cmp\Domain\Safety\IncidentContext;
@@ -77,6 +79,7 @@ final class RaiseSafetyIncident extends ApplicationService
 
     public function __construct(
         Authoriser $authoriser,
+        IdempotentOperation $idempotency,
         private readonly TransactionBoundary $transaction,
         private readonly SafetyIncidentRepository $incidents,
         private readonly GeneratesIncidentReferences $references,
@@ -84,7 +87,7 @@ final class RaiseSafetyIncident extends ApplicationService
         private readonly RecordsEvidence $evidence,
         private readonly Clock $clock,
     ) {
-        parent::__construct($authoriser);
+        parent::__construct($authoriser, $idempotency);
     }
 
     public function operation(): Operation
@@ -145,6 +148,6 @@ final class RaiseSafetyIncident extends ApplicationService
             ));
         }
 
-        return Result::success(IncidentView::of($incident));
+        return Result::success(OperationOutcome::of(['incident' => IncidentView::of($incident)->toArray()]));
     }
 }

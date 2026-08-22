@@ -56,9 +56,21 @@ final class Envelope
      *
      * @return array<string, mixed>
      */
-    public static function meta(int $version, string $evaluatedAt, ?string $configurationVersion = null): array
-    {
+    public static function meta(
+        int $version,
+        string $evaluatedAt,
+        ?string $configurationVersion = null,
+        bool $replayed = false,
+    ): array {
         return [
+            // API-064: a client can tell a fresh outcome from a replayed one.
+            // API-062 ‡ replays the recorded outcome rather than re-running the
+            // work, and a client that could not tell would treat a replay as a
+            // second effect — which is the belief the registry exists to prevent.
+            //
+            // False on a read, because a safe method carries no key (API-065)
+            // and there is nothing to replay.
+            'replayed' => $replayed,
             // API-189: any response on any surface may indicate that
             // configuration has changed, so the client refetches without
             // polling — which API-190 ‡ forbids it doing on its own interval.

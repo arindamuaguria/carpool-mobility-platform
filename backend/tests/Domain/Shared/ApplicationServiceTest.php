@@ -17,6 +17,7 @@ use Cmp\Application\Shared\Failure\BusinessRefused;
 use Cmp\Application\Shared\Failure\FailureBranch;
 use Cmp\Application\Shared\Idempotency\ActorReference;
 use Cmp\Application\Shared\Idempotency\IdempotencyKey;
+use Cmp\Application\Shared\Idempotency\IdempotentOperation;
 use Cmp\Application\Shared\Result;
 use Cmp\Application\Shared\StateChangingCommand;
 use Cmp\Domain\Shared\Refusal\BusinessRefusal;
@@ -26,6 +27,8 @@ use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 use Tests\Domain\Authorisation\Doubles\RecordedRefusals;
 use Tests\Domain\DomainTestCase;
+use Tests\Domain\Shared\Doubles\ImmediateTransactionBoundary;
+use Tests\Domain\Shared\Doubles\InMemoryIdempotencyRegistry;
 use Tests\Domain\Shared\Doubles\TestRefusalReason;
 
 /**
@@ -208,7 +211,7 @@ final class ApplicationServiceTest extends DomainTestCase
      */
     private function serviceWith(AuthorisationPolicy $policy, callable $work): ApplicationService
     {
-        return new class(new Authoriser($policy, new RecordedRefusals), $work) extends ApplicationService
+        return new class(new Authoriser($policy, new RecordedRefusals), new IdempotentOperation(new ImmediateTransactionBoundary, new InMemoryIdempotencyRegistry), $work) extends ApplicationService
         {
             /** @var callable(): Result */
             private $work;
@@ -216,9 +219,12 @@ final class ApplicationServiceTest extends DomainTestCase
             /**
              * @param  callable(): Result  $work
              */
-            public function __construct(Authoriser $authoriser, callable $work)
-            {
-                parent::__construct($authoriser);
+            public function __construct(
+                Authoriser $authoriser,
+                IdempotentOperation $idempotency,
+                callable $work,
+            ) {
+                parent::__construct($authoriser, $idempotency);
 
                 $this->work = $work;
             }

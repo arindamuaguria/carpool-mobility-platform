@@ -9,6 +9,7 @@ use Cmp\Application\Shared\Idempotency\ActorReference;
 use Cmp\Application\Shared\Idempotency\IdempotencyKey;
 use Cmp\Application\Shared\Idempotency\IdempotentOperation;
 use Cmp\Application\Shared\Idempotency\RegisteredOutcome;
+use Cmp\Application\Shared\OperationOutcome;
 use Cmp\Application\Shared\Result;
 use Cmp\Application\Shared\StateChangingCommand;
 use PHPUnit\Framework\Attributes\Test;
@@ -43,7 +44,7 @@ final class IdempotentOperationTest extends DomainTestCase
             function () use (&$runs): Result {
                 $runs++;
 
-                return Result::success(['rideId' => 'r-1']);
+                return Result::success(OperationOutcome::of(['rideId' => 'r-1']));
             },
         );
 
@@ -67,7 +68,7 @@ final class IdempotentOperationTest extends DomainTestCase
         $work = function () use (&$runs): Result {
             $runs++;
 
-            return Result::success(['rideId' => 'r-1']);
+            return Result::success(OperationOutcome::of(['rideId' => 'r-1']));
         };
 
         $operation->execute($this->command('key-1', 'fingerprint-a'), self::OPERATION, $this->actor(), $work);
@@ -97,7 +98,7 @@ final class IdempotentOperationTest extends DomainTestCase
             function () use (&$runs): Result {
                 $runs++;
 
-                return Result::success(['rideId' => 'r-1']);
+                return Result::success(OperationOutcome::of(['rideId' => 'r-1']));
             },
         );
 
@@ -108,7 +109,7 @@ final class IdempotentOperationTest extends DomainTestCase
             function () use (&$runs): Result {
                 $runs++;
 
-                return Result::success(['rideId' => 'r-2']);
+                return Result::success(OperationOutcome::of(['rideId' => 'r-2']));
             },
         );
 
@@ -185,7 +186,7 @@ final class IdempotentOperationTest extends DomainTestCase
             static function () use ($transaction): Result {
                 $transaction->record('work');
 
-                return Result::success(['ok' => true]);
+                return Result::success(OperationOutcome::of(['ok' => true]));
             },
         );
 

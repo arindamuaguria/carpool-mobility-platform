@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Safety;
 
-use Cmp\Application\Safety\IncidentView;
 use Cmp\Application\Safety\RaiseIncidentCommand;
 use Cmp\Application\Safety\RaiseSafetyIncident;
 use Cmp\Application\Safety\RetrySafetyRouting;
@@ -12,6 +11,7 @@ use Cmp\Application\Safety\RoutesSafetyIncidents;
 use Cmp\Application\Shared\Authorisation\Actor;
 use Cmp\Application\Shared\Idempotency\ActorReference;
 use Cmp\Application\Shared\Idempotency\IdempotencyKey;
+use Cmp\Application\Shared\Idempotency\RegisteredOutcome;
 use Cmp\Application\User\AuthenticatedCaller;
 use Cmp\Application\User\HashesSessionTokens;
 use Cmp\Domain\Safety\IncidentReference;
@@ -71,7 +71,7 @@ final class SafetyIncidentPipelineTest extends TestCase
         $rows = $this->incidentRows();
 
         self::assertCount(1, $rows);
-        self::assertSame($view->toArray()['id'], $rows[0]->external_id);
+        self::assertSame($view['id'], $rows[0]->external_id);
 
         // Every context element carries a standing — DB-078 ‡ — and every one is
         // unavailable, which is true and is what FRD-FR-187 ‡ asks be recorded.
@@ -90,7 +90,10 @@ final class SafetyIncidentPipelineTest extends TestCase
         $encoded = json_encode($this->evidentialRows(), JSON_THROW_ON_ERROR);
 
         self::assertStringContainsString(RaiseSafetyIncident::ACTION, $encoded);
-        self::assertStringContainsString($view->toArray()['id'], $encoded);
+        $id = $view['id'];
+
+        self::assertIsString($id);
+        self::assertStringContainsString($id, $encoded);
         self::assertStringNotContainsString('+910000002001', $encoded);
     }
 
@@ -107,14 +110,14 @@ final class SafetyIncidentPipelineTest extends TestCase
         // Recorded — and API-169 ‡'s acknowledgement rests on that, not on the
         // queue.
         self::assertCount(1, $this->incidentRows());
-        self::assertFalse($view->toArray()['routed']);
+        self::assertFalse($view['routed']);
 
         // Retained: findable again by query, because a process that died here
         // would have remembered nothing.
         $pending = $this->app->make(SafetyIncidentRepository::class)->unrouted(10);
 
         self::assertSame(1, $pending->count());
-        self::assertSame($view->toArray()['id'], $pending->all()[0]->reference()->toString());
+        self::assertSame($view['id'], $pending->all()[0]->reference()->toString());
 
         // BE-138 ‡: the deferral is visible immediately rather than discovered
         // later.
@@ -175,7 +178,7 @@ final class SafetyIncidentPipelineTest extends TestCase
         $this->app->instance(RoutesSafetyIncidents::class, new RefusingRouter);
         $this->app->forgetInstance(RaiseSafetyIncident::class);
 
-        $first = $this->raise('raise-8')->toArray()['id'];
+        $first = $this->raise('raise-8')['id'];
         $this->raise('raise-9');
         $this->raise('raise-10');
 
@@ -188,7 +191,10 @@ final class SafetyIncidentPipelineTest extends TestCase
         self::assertTrue($pending->mayBeMore());
     }
 
-    private function raise(string $seed): IncidentView
+    /**
+     * @return array<string, mixed>
+     */
+    private function raise(string $seed): array
     {
         $result = $this->app->make(RaiseSafetyIncident::class)->execute(
             RaiseIncidentCommand::from($this->caller(), $this->key($seed)),
@@ -197,11 +203,15 @@ final class SafetyIncidentPipelineTest extends TestCase
 
         self::assertTrue($result->isSuccess());
 
-        $view = $result->value();
+        $outcome = $result->value();
 
-        self::assertInstanceOf(IncidentView::class, $view);
+        self::assertInstanceOf(RegisteredOutcome::class, $outcome);
 
-        return $view;
+        $incident = ($outcome->representation() ?? [])['incident'] ?? null;
+
+        self::assertIsArray($incident);
+
+        return $incident;
     }
 
     private function caller(): AuthenticatedCaller

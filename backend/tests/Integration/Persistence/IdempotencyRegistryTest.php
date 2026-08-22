@@ -9,6 +9,7 @@ use Cmp\Application\Shared\Idempotency\IdempotencyKey;
 use Cmp\Application\Shared\Idempotency\IdempotencyRegistry;
 use Cmp\Application\Shared\Idempotency\IdempotentOperation;
 use Cmp\Application\Shared\Idempotency\RegisteredOutcome;
+use Cmp\Application\Shared\OperationOutcome;
 use Cmp\Application\Shared\Result;
 use Cmp\Application\Shared\StateChangingCommand;
 use Cmp\Application\Shared\Transaction\TransactionBoundary;
@@ -64,7 +65,7 @@ final class IdempotencyRegistryTest extends IntegrationTestCase
             $this->command('key-integration-1', 'fingerprint-a'),
             self::OPERATION,
             $this->actor(),
-            static fn (): Result => Result::success(['rideId' => 'r-1']),
+            static fn (): Result => Result::success(OperationOutcome::of(['rideId' => 'r-1'])),
         );
 
         self::assertTrue($result->isSuccess());
@@ -95,7 +96,7 @@ final class IdempotencyRegistryTest extends IntegrationTestCase
         $work = function () use (&$runs): Result {
             $runs++;
 
-            return Result::success(['rideId' => 'r-1']);
+            return Result::success(OperationOutcome::of(['rideId' => 'r-1']));
         };
 
         $operation = $this->operation();

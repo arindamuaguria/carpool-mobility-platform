@@ -6,14 +6,15 @@ namespace Cmp\Interface\Rest\Controller;
 
 use Cmp\Application\Shared\Configuration\ConfigurationVersion;
 use Cmp\Application\Shared\Idempotency\IdempotencyKey;
+use Cmp\Application\Shared\Idempotency\RegisteredOutcome;
 use Cmp\Application\Shared\Response\EvaluationTime;
 use Cmp\Application\Shared\Result;
 use Cmp\Application\User\AmendEmergencyContact;
 use Cmp\Application\User\AuthenticatedCaller;
 use Cmp\Application\User\ContactSetView;
-use Cmp\Application\User\ContactView;
 use Cmp\Application\User\EmergencyContactCommand;
 use Cmp\Application\User\NominateEmergencyContact;
+use Cmp\Application\User\ReadContactsCommand;
 use Cmp\Application\User\ReadEmergencyContacts;
 use Cmp\Application\User\RemoveEmergencyContact;
 use Cmp\Interface\Rest\Envelope;
@@ -86,10 +87,12 @@ final class EmergencyContactController
      */
     public function index(Request $request): JsonResponse
     {
-        [$caller, $key] = $this->carriage($request);
+        // API-065 / API-007: a safe method carries no key, so the read does not
+        // ask for one — RequireIdempotencyKey does not require it on a GET either.
+        $caller = $this->caller($request);
 
         $result = $this->read->execute(
-            EmergencyContactCommand::toRead($caller, $key),
+            ReadContactsCommand::from($caller),
             $caller->actor(),
         );
 
@@ -103,7 +106,7 @@ final class EmergencyContactController
             throw new LogicException('UC-048: the read returns the set.');
         }
 
-        return $this->envelope(['contacts' => $contacts->toArray()]);
+        return $this->envelope(['contacts' => $contacts->toArray()], false);
     }
 
     /**
@@ -160,7 +163,9 @@ final class EmergencyContactController
             return FailureResponse::from($result->failure(), $this->evaluatedAt->stamp());
         }
 
-        return $this->envelope(['removed' => true]);
+        $outcome = $this->outcomeOf($result);
+
+        return $this->envelope($outcome->representation() ?? [], $outcome->replayed());
     }
 
     /**
@@ -173,24 +178,48 @@ final class EmergencyContactController
             return FailureResponse::from($result->failure(), $this->evaluatedAt->stamp());
         }
 
-        $contact = $result->value();
+        $outcome = $this->outcomeOf($result);
 
-        if (! $contact instanceof ContactView) {
-            throw new LogicException('UC-048: a nomination and an amendment both return the contact.');
+        return $this->envelope($outcome->representation() ?? [], $outcome->replayed());
+    }
+
+    /**
+     * `API-062` ‡ is applied in `ApplicationService` for every state-changing
+     * command, so a write here cannot answer with anything else.
+     */
+    private function outcomeOf(Result $result): RegisteredOutcome
+    {
+        $outcome = $result->value();
+
+        if (! $outcome instanceof RegisteredOutcome) {
+            throw new LogicException('API-062 ‡: a state-changing operation answers with a registered outcome.');
         }
 
-        return $this->envelope(['contact' => $contact->toArray()]);
+        return $outcome;
     }
 
     /**
      * @param  array<string, mixed>  $data
      */
-    private function envelope(array $data): JsonResponse
+    private function envelope(array $data, bool $replayed): JsonResponse
     {
-        return Envelope::of(
-            $data,
-            Envelope::meta(ServedVersions::CURRENT, $this->evaluatedAt->stamp(), $this->configurationVersion->current()),
-        );
+        return Envelope::of($data, Envelope::meta(
+            ServedVersions::CURRENT,
+            $this->evaluatedAt->stamp(),
+            $this->configurationVersion->current(),
+            $replayed,
+        ));
+    }
+
+    private function caller(Request $request): AuthenticatedCaller
+    {
+        $caller = $request->attributes->get(RequireSession::CALLER);
+
+        if (! $caller instanceof AuthenticatedCaller) {
+            throw new LogicException('An emergency-contact operation runs behind RequireSession.');
+        }
+
+        return $caller;
     }
 
     /**
@@ -216,15 +245,14 @@ final class EmergencyContactController
      */
     private function carriage(Request $request): array
     {
-        $caller = $request->attributes->get(RequireSession::CALLER);
         $key = $request->headers->get(RequireIdempotencyKey::HEADER);
 
-        if (! $caller instanceof AuthenticatedCaller || ! is_string($key)) {
+        if (! is_string($key)) {
             throw new LogicException(
-                'An emergency-contact operation runs behind RequireSession and RequireIdempotencyKey.'
+                'A state-changing emergency-contact operation runs behind RequireIdempotencyKey.'
             );
         }
 
-        return [$caller, IdempotencyKey::fromString($key)];
+        return [$this->caller($request), IdempotencyKey::fromString($key)];
     }
 }

@@ -15,6 +15,8 @@ use Cmp\Application\Shared\Evidence\EvidentialOutcome;
 use Cmp\Application\Shared\Evidence\RecordsEvidence;
 use Cmp\Application\Shared\Failure\InvalidRequest;
 use Cmp\Application\Shared\Idempotency\ActorReference;
+use Cmp\Application\Shared\Idempotency\IdempotentOperation;
+use Cmp\Application\Shared\OperationOutcome;
 use Cmp\Application\Shared\Result;
 use Cmp\Application\Shared\Transaction\TransactionBoundary;
 use Cmp\Domain\Shared\Time\Clock;
@@ -51,12 +53,13 @@ final class AmendEmergencyContact extends ApplicationService
 
     public function __construct(
         Authoriser $authoriser,
+        IdempotentOperation $idempotency,
         private readonly TransactionBoundary $transaction,
         private readonly EmergencyContactRepository $contacts,
         private readonly RecordsEvidence $evidence,
         private readonly Clock $clock,
     ) {
-        parent::__construct($authoriser);
+        parent::__construct($authoriser, $idempotency);
     }
 
     public function operation(): Operation
@@ -113,6 +116,6 @@ final class AmendEmergencyContact extends ApplicationService
             throw new LogicException('FRD-FR-182: an amended contact is readable after its transaction commits.');
         }
 
-        return Result::success(ContactView::of($contact));
+        return Result::success(OperationOutcome::of(['contact' => ContactView::of($contact)->toArray()]));
     }
 }
