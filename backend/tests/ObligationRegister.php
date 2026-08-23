@@ -12,8 +12,8 @@ use Tests\Domain\Authorisation\AuthoriserTest;
 use Tests\Domain\StateMachine\StateMachineTest;
 use Tests\Domain\User\Argon2idAuthenticationMaterialTest;
 use Tests\Integration\Evidence\EvidentialLogTest;
+use Tests\Integration\Idempotency\EveryStateChangingOperationReplaysTest;
 use Tests\Integration\Persistence\DatabaseAccountGrantsTest;
-use Tests\Integration\Persistence\IdempotencyRegistryTest;
 use Tests\Integration\Persistence\IntegrityConstraintsHoldTest;
 use Tests\Integration\Persistence\PaymentCredentialAbsenceTest;
 use Tests\System\LogInspectionTest;
@@ -217,10 +217,16 @@ final class ObligationRegister
                 level: self::LEVEL_INTEGRATION,
                 technique: 'assertion',
                 status: self::ENFORCED,
-                provenBy: IdempotencyRegistryTest::class,
-                note: 'The concurrent dimension is CMP-DOC-18\'s own TC-147 ‡ rather than one of the 99. '
-                    .'ConcurrentIdempotencyClaimTest proves it under genuine parallelism (TADR-08) — six '
-                    .'operating-system processes released at one instant, exactly one of which takes the claim.',
+                provenBy: EveryStateChangingOperationReplaysTest::class,
+                note: '**Corrected.** This obligation was recorded as discharged by IdempotencyRegistryTest, '
+                    .'which proves the **registry** replays under a synthetic test.operation no service '
+                    .'performs. BE-211 ‡ says every state-changing **operation**, and until CC-047 not one of '
+                    .'them replayed: IdempotentOperation was invoked by PlatformJob and by nothing else. A '
+                    .'working mechanism, tested where it works, stood in for a guarantee nothing had applied. '
+                    .'EveryStateChangingOperationReplaysTest replays each of the seven, and derives the set '
+                    .'from the source (StateChangingOperations) so a new one cannot be added without a case. '
+                    .'The concurrent dimension remains CMP-DOC-18\'s own TC-147 ‡ rather than one of the 99 — '
+                    .'ConcurrentIdempotencyClaimTest proves it under genuine parallelism (TADR-08).',
             ),
             self::backendObligation(
                 n: 6,
