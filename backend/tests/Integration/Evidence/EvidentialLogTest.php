@@ -14,6 +14,7 @@ use Cmp\Application\Shared\Transaction\TransactionBoundary;
 use Cmp\Domain\Shared\Time\Instant;
 use Cmp\Infrastructure\Evidential\DatabaseEvidentialWriter;
 use Cmp\Infrastructure\Evidential\KeyedChainHash;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Integration\IntegrationTestCase;
 use Throwable;
 
@@ -185,6 +186,98 @@ final class EvidentialLogTest extends IntegrationTestCase
         self::assertFalse($verification->isIntact());
         self::assertSame(2, $verification->divergedAtRecord(), 'SEC-111: the first divergence, with its record.');
         self::assertStringContainsString('altered', (string) $verification->divergence());
+    }
+
+    /**
+     * `BE-107` ‡ — *"An evidential record shall capture actor, action, subject,
+     * time, outcome and reason."*
+     *
+     * All six are written today and **nothing observed that they were**. The
+     * chain hash is computed from the {@see Evidence} object rather than from
+     * the row, so a writer that dropped a column — or transposed two — would
+     * produce a valid chain, pass every test in this file, and lose the field
+     * an operator needs. `BE-107` ‡ is the statement that forbids it and this
+     * is what makes it observable.
+     *
+     * Six distinct values, one per field, so a transposition fails as loudly as
+     * an omission.
+     */
+    public function test_the_stored_record_carries_every_field_be_107_names(): void
+    {
+        $this->writer()->record(Evidence::of(
+            ActorReference::fromString('actor-under-test'),
+            'field.coverage',
+            'subject-under-test',
+            EvidentialOutcome::Refused,
+            $this->anInstant(),
+            'reason-under-test',
+        ));
+
+        $rows = $this->applicationConnection()->select(
+            'SELECT actor, action, subject, outcome, reason, occurred_at FROM '.DatabaseEvidentialWriter::TABLE
+        );
+
+        self::assertCount(1, $rows);
+
+        self::assertSame('actor-under-test', $rows[0]->actor, 'BE-107 ‡: the actor.');
+        self::assertSame('field.coverage', $rows[0]->action, 'BE-107 ‡: the action.');
+        self::assertSame('subject-under-test', $rows[0]->subject, 'BE-107 ‡: the subject.');
+        self::assertSame('refused', $rows[0]->outcome, 'BE-107 ‡: the outcome.');
+        self::assertSame('reason-under-test', $rows[0]->reason, 'BE-107 ‡: the reason.');
+        self::assertNotNull($rows[0]->occurred_at, 'BE-107 ‡: the time.');
+    }
+
+    /**
+     * `BE-109` ‡ / `SEC-108` ‡ — alteration is detectable, **of any field**.
+     *
+     * `test_verification_detects_a_deliberately_altered_record` alters the
+     * subject, which discharges `BE-212` ‡’s *"tested against a deliberately
+     * altered record"*. It does not discharge this: if the canonical
+     * serialisation ever stopped covering `reason`, altering a reason would
+     * become undetectable and that test would still pass.
+     *
+     * So every field `BE-107` ‡ names is altered in turn. `SEC-108` ‡’s
+     * length-prefixed serialisation is what makes each of them matter, and this
+     * is what would notice if one were dropped from it.
+     */
+    #[DataProvider('alterableFields')]
+    public function test_altering_any_recorded_field_is_detected(string $column, string $altered): void
+    {
+        $this->writer()->record($this->anEvidence('thing.happened', 'subject-1'));
+        $this->writer()->record($this->anEvidence('thing.happened', 'subject-2'));
+
+        $this->tamper('UPDATE '.DatabaseEvidentialWriter::TABLE.' SET '.$column.' = ? WHERE id = ?', [$altered, '1']);
+
+        $verification = $this->verifier()->verify();
+
+        self::assertFalse(
+            $verification->isIntact(),
+            'SEC-108 ‡: altering '.$column.' is undetectable, so the chain does not cover it.',
+        );
+
+        self::assertSame(1, $verification->divergedAtRecord(), 'SEC-111: the first divergence.');
+    }
+
+    /**
+     * The six fields `BE-107` ‡ names, each with a value that differs from what
+     * the fixture wrote.
+     *
+     * `outcome` is altered to another **valid** case rather than to nonsense:
+     * an unreadable value would make the verifier fail to reconstitute the
+     * record, which is a different failure from the one this asserts.
+     *
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function alterableFields(): array
+    {
+        return [
+            'actor' => ['actor', 'somebody-else'],
+            'action' => ['action', 'something.else'],
+            'subject' => ['subject', 'another-subject'],
+            'outcome' => ['outcome', 'refused'],
+            'reason' => ['reason', 'a reason that was never recorded'],
+            'occurred_at' => ['occurred_at', '2020-01-01 00:00:00.000000'],
+        ];
     }
 
     public function test_verification_detects_a_removed_record(): void
