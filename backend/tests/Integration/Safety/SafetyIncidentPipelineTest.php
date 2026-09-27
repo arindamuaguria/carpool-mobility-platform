@@ -192,6 +192,52 @@ final class SafetyIncidentPipelineTest extends TestCase
     }
 
     /**
+     * `DB-077` ‡ — *"A safety incident shall be insertable with **partial
+     * context**, so that no validation failure on a non-essential column can lose
+     * a signal."*
+     *
+     * The table satisfies this and nothing observed it. The risk the statement
+     * names is a future migration: a `location_latitude NOT NULL` would make an
+     * incident uninsertable without a location, and `BD-04` — *"no safety signal
+     * may be lost, under any load or failure"* — would be broken by a column
+     * definition rather than by any code anybody reviewed.
+     *
+     * So the `NOT NULL` set is **stated**. Adding a column that is not nullable
+     * fails this test, and whoever adds one has to say here why a signal cannot be
+     * lost to it. Every name below is either identity, the raiser — without whom
+     * there is no incident — or a standing the **platform** supplies and no caller
+     * can get wrong (`API-164` ‡).
+     */
+    public function test_no_context_column_can_refuse_an_incident(): void
+    {
+        /** @var list<object{COLUMN_NAME: string}> $rows */
+        $rows = $this->connection('mysql')->select(
+            'SELECT COLUMN_NAME FROM information_schema.COLUMNS'
+            .' WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND IS_NULLABLE = ?'
+            .' ORDER BY COLUMN_NAME ASC',
+            [DatabaseSafetyIncidentRepository::TABLE, 'NO'],
+        );
+
+        self::assertSame(
+            [
+                'co_travellers_standing',
+                'created_at',
+                'external_id',
+                'id',
+                'location_standing',
+                'raised_at',
+                'trip_standing',
+                'updated_at',
+                'user_id',
+                'vehicle_standing',
+            ],
+            array_map(static fn (object $row): string => $row->COLUMN_NAME, $rows),
+            'DB-077 ‡: a column that is not nullable is a way for a safety signal to be refused. Each one here '
+            .'is identity, the raiser, or a standing the platform supplies — never a value a caller sends.',
+        );
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function raise(string $seed): array

@@ -15,6 +15,7 @@ use Cmp\Domain\Shared\Time\Instant;
 use Cmp\Infrastructure\Evidential\DatabaseEvidentialWriter;
 use Cmp\Infrastructure\Evidential\KeyedChainHash;
 use PHPUnit\Framework\Attributes\DataProvider;
+use RuntimeException;
 use Tests\Integration\IntegrationTestCase;
 use Throwable;
 
@@ -150,6 +151,47 @@ final class EvidentialLogTest extends IntegrationTestCase
             $this->refused(fn () => $this->migrationConnection()->delete(
                 'DELETE FROM '.DatabaseEvidentialWriter::TABLE
             )),
+        );
+    }
+
+    /**
+     * `DB-112` ‡ / `BE-106` ‡ — *"A record shall be written in the same
+     * transaction as the operation it evidences."*
+     *
+     * `test_an_operation_is_not_reported_complete_when_its_record_cannot_be_written`
+     * proves one direction: no record, no operation (`FRD-FR-248` ‡). This proves
+     * the other, and nothing did: **no operation, no record.**
+     *
+     * A writer that committed on its own — its own connection, or a transaction of
+     * its own — would leave evidence of an operation that never happened. That is
+     * worse than a missing record: an operator reading the log would find an action
+     * nobody performed, and `DB-125` ‡ makes the log append-only, so it could never
+     * be corrected.
+     */
+    public function test_a_rolled_back_operation_leaves_no_evidential_record(): void
+    {
+        $boundary = $this->app->make(TransactionBoundary::class);
+
+        try {
+            $boundary->transactional(function (): void {
+                $this->writer()->record($this->anEvidence('thing.happened', 'subject-1'));
+
+                // The operation fails after its record was written, which is the
+                // ordering BE-106 ‡ requires and the case this test exists for.
+                throw new RuntimeException('the operation failed after its record was written');
+            });
+        } catch (RuntimeException) {
+            // Expected: the boundary rolls back and re-raises.
+        }
+
+        $rows = $this->applicationConnection()->select(
+            'SELECT COUNT(*) AS total FROM '.DatabaseEvidentialWriter::TABLE
+        );
+
+        self::assertSame(
+            0,
+            (int) $rows[0]->total,
+            'DB-112 ‡: the record commits with the operation, so a rolled-back operation leaves none.',
         );
     }
 
