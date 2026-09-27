@@ -93,6 +93,50 @@ final class InterfaceStructureRulesTest extends TestCase
     }
 
     /**
+     * `SEC-037` ‡ — *"A token shall be carried in a request header and never in a
+     * URI, a query parameter or a body field."*
+     *
+     * `SessionCarriage::tokenIn()` is the one door: it is the only thing that
+     * turns a request value into a token, and `RequireSession` is its only
+     * caller. So the statement reduces to something checkable — **every call site
+     * reads a header** — and the check is future-proof in the way a rule naming
+     * two files would not be: a third file resolving a token from a query string
+     * fails this, wherever it is put.
+     *
+     * `SessionCarriageTest` asserts the behaviour at level 4; this asserts that
+     * the behaviour has no second way in. `NFR-062` is why both are worth having:
+     * a URI reaches a server log, a proxy and a referrer, and a query parameter
+     * reaches all three.
+     */
+    public function test_a_session_token_is_resolved_from_a_header_and_from_nothing_else(): void
+    {
+        $offenders = [];
+        $callSites = 0;
+
+        foreach (self::interfaceFiles() as $relative => $contents) {
+            $code = self::codeOf($contents);
+
+            foreach (self::statementsCalling($code, 'SessionCarriage::tokenIn(') as $statement) {
+                $callSites++;
+
+                if (! str_contains($statement, 'headers->get')) {
+                    $offenders[] = $relative.' → '.trim($statement);
+                }
+            }
+        }
+
+        self::assertSame(
+            [],
+            $offenders,
+            'SEC-037 ‡: a token is read from a request header and from nothing else — never a URI, a query '
+            .'parameter or a body field.',
+        );
+
+        // A rule with no call site proves nothing. RequireSession is the one.
+        self::assertSame(1, $callSites, 'SEC-037 ‡: the token has exactly one resolution point.');
+    }
+
+    /**
      * `TC-041` / `TC-024` ‡ — both detectors are shown to fire, and shown not to
      * fire on the prose that describes them.
      */
@@ -114,6 +158,45 @@ final class InterfaceStructureRulesTest extends TestCase
         self::assertSame(1, preg_match_all('/->execute\(/', '$this->read->execute($command, $actor);'));
         self::assertSame(2, preg_match_all('/->execute\(/', '$a->execute($x); $b->execute($y);'));
         self::assertSame(0, preg_match_all('/->execute\(/', 'return $this->envelope($data, false);'));
+
+        // SEC-037 ‡'s detector reads the statement a call sits in, so that the
+        // source of the value is visible rather than assumed.
+        self::assertSame(
+            ['        $token = SessionCarriage::tokenIn($request->headers->get(X));'],
+            self::statementsCalling(
+                '        $token = SessionCarriage::tokenIn($request->headers->get(X));',
+                'SessionCarriage::tokenIn(',
+            ),
+        );
+
+        self::assertSame(
+            ['$t = SessionCarriage::tokenIn($request->query("token"));'],
+            self::statementsCalling('$t = SessionCarriage::tokenIn($request->query("token"));', 'SessionCarriage::tokenIn('),
+        );
+
+        self::assertSame([], self::statementsCalling('$x = somethingElse($request->headers->get(Y));', 'SessionCarriage::tokenIn('));
+    }
+
+    /**
+     * Every statement in which a call appears, as written.
+     *
+     * A statement rather than a line, because the value a call is handed may sit
+     * on the next one — and a detector that read one line would miss exactly the
+     * formatting a developer reaches for when a line grows long.
+     *
+     * @return list<string>
+     */
+    private static function statementsCalling(string $code, string $call): array
+    {
+        $found = [];
+
+        foreach (explode(';', $code) as $statement) {
+            if (str_contains($statement, $call)) {
+                $found[] = $statement.';';
+            }
+        }
+
+        return $found;
     }
 
     /**
