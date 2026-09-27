@@ -168,6 +168,42 @@ final class DegradedOperationTest extends DomainTestCase
         ));
     }
 
+    public function test_a_capability_is_affected_by_one_missing_support_and_not_only_by_all_of_them(): void
+    {
+        // The case every fixture in this class quietly avoided. Each capability in
+        // the register below needs exactly **one** thing, so "affected" and
+        // "everything it needs is gone" are the same set there — and an
+        // implementation that withdrew a capability only when *all* of its support
+        // was missing would satisfy every other assertion in this file, the
+        // contract level and the system level. It would then report a capability as
+        // working with one of its two dependencies gone, which is what
+        // `FRD-FR-256` ‡ forbids in the exact words "rather than present it as
+        // working".
+        //
+        // `NFR-034` ‡ is about **any single** supporting service being unavailable,
+        // so a capability needing two is affected by either one alone.
+        $dependence = CapabilityDependence::of(
+            PlatformCapability::essential('settlement'),
+            [Support::service(self::PAYMENT), Support::policyValue('money.precision')],
+        );
+
+        foreach ([Support::service(self::PAYMENT), Support::policyValue('money.precision')] as $alone) {
+            self::assertSame(
+                CapabilityStanding::Withdrawn,
+                $dependence->standingGiven([$alone]),
+                'FRD-FR-256 ‡ / NFR-034 ‡: "'.$alone->name().'" alone is enough to affect settlement.',
+            );
+        }
+
+        // And the other direction, which is the half NFR-034 ‡ is written for:
+        // something settlement does not need going missing leaves it offered.
+        self::assertSame(
+            CapabilityStanding::Available,
+            $dependence->standingGiven([Support::service(self::MAPPING)]),
+            'NFR-034 ‡: the platform continues to operate, so an unrelated absence withdraws nothing.',
+        );
+    }
+
     public function test_a_service_and_a_policy_value_of_the_same_name_are_different_dependencies(): void
     {
         // Kind is part of the identity. Without that, a policy key that happened

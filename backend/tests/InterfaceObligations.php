@@ -70,7 +70,7 @@ final class InterfaceObligations
             'API-002' => [
                 'status' => 'enforced',
                 'provenBy' => 'Tests\\Architecture\\InterfaceStructureRulesTest',
-                'note' => 'test_every_operation_invokes_exactly_one_application_service. It was absent when this register was first written; writing the register is what found it.',
+                'note' => 'test_every_operation_invokes_exactly_one_application_service, plus test_every_operation_the_platform_exposes_is_read. It was absent when this register was first written; writing the register is what found it. CC-053 then found that the rule read only six of the eleven operations — a promoted constructor ending ") {}" swallowed the method after it — and that counting "->execute(" judged the three controllers whose service takes no actor to invoke nothing. Both are corrected, and the operation set is now asserted so that "no offender" cannot mean "no subject".',
             ],
             'API-003' => [
                 'status' => 'enforced',

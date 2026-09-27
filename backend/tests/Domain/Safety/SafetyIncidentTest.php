@@ -111,7 +111,15 @@ final class SafetyIncidentTest extends TestCase
     }
 
     /**
-     * `BE-029` ‡ / `API-171` ‡ — the negative test `FR-04` requires.
+     * `BE-029` ‡ / `API-171` ‡ / `SRS-REQ-160` — the negative test `FR-04`
+     * requires.
+     *
+     * `SRS-REQ-160` states it from the software side and one word wider:
+     * *"shall not close a safety incident **or a support case** without a recorded
+     * outcome, irrespective of the caller."* A support case has no aggregate —
+     * `UC-052` is Outlined pending `BAD-DEC-011` — so this covers the half that
+     * exists, and *"irrespective of the caller"* is what having no method at all
+     * gives that a guard on one path would not.
      *
      * *"`SafetyIncident` shall not close without a recorded outcome."* The rule
      * is not enforced by a check that could be forgotten: there is **no method

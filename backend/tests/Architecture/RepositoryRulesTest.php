@@ -43,6 +43,8 @@ use SplFileInfo;
  */
 final class RepositoryRulesTest extends TestCase
 {
+    use ReadsMethods;
+
     /**
      * Types a repository may return besides a domain object.
      *
@@ -151,6 +153,135 @@ final class RepositoryRulesTest extends TestCase
                 );
             }
         }
+    }
+
+    /**
+     * `FRD-FR-005` ‡ — *"The system shall assign each account a unique and
+     * **persistent** identifier that is **never reused**."*
+     *
+     * Uniqueness is a database constraint and `DB-022` ‡ declares it. **Persistence
+     * is not a constraint at all**: nothing stopped a repository from writing a new
+     * external identifier over a row that already carried one, and no constraint
+     * would have objected.
+     *
+     * `DB-023` ‡ makes the identifier random, so such a rewrite would collide with
+     * nothing and fail nowhere. It would simply stop being the same identifier — and
+     * the old value, now belonging to no row, would be free to appear again on
+     * another, which is exactly the reuse the statement forbids. Every reference a
+     * client, an operator or an evidential record held would quietly point at a
+     * different account.
+     *
+     * So the checkable form of the statement is: **nothing assigns one twice**.
+     * Reading *by* an external identifier is what it is for — `WHERE external_id = ?`
+     * appears in four repositories — so only the `SET` clause is examined.
+     *
+     * Scoped to `UPDATE` rather than `INSERT`: assignment at creation is the
+     * assignment `FRD-FR-005` ‡ requires.
+     */
+    public function test_no_statement_rewrites_an_external_identifier(): void
+    {
+        $offenders = [];
+        $examined = 0;
+
+        foreach (self::sourceFiles() as $relative => $contents) {
+            foreach (self::assignmentClausesIn(self::codeOf($contents)) as $clause) {
+                $examined++;
+
+                if (str_contains($clause, 'external_id')) {
+                    $offenders[] = $relative.' → SET '.$clause;
+                }
+            }
+        }
+
+        self::assertSame(
+            [],
+            $offenders,
+            'FRD-FR-005 ‡: an account identifier is persistent and never reused, so nothing assigns one over a '
+            .'row that already carries it. DB-023 ‡ means such a rewrite would collide with nothing and fail '
+            .'nowhere — it would only stop being the same identifier.',
+        );
+
+        // A rule that examined no UPDATE proves nothing. Five statements exist.
+        self::assertGreaterThan(0, $examined, 'No UPDATE statement was examined, so the rule ran on nothing.');
+    }
+
+    /**
+     * `TC-041` / `TC-024` ‡ — the detector fires on the shape the rule exists for,
+     * and not on the prose that describes it.
+     *
+     * The second case is the one that matters: a detector that read the whole
+     * statement would flag `WHERE external_id = ?` in every repository in the
+     * platform, and the quickest way to quieten it would be to stop looking at
+     * repositories.
+     */
+    public function test_the_assignment_detector_reads_the_set_clause_and_not_the_predicate(): void
+    {
+        self::assertSame(
+            ['external_id = ?, updated_at = ?'],
+            self::assignmentClausesIn('$c->update("UPDATE t SET external_id = ?, updated_at = ? WHERE id = ?");'),
+        );
+
+        self::assertSame(
+            ['verification_standing = ?, updated_at = ?'],
+            self::assignmentClausesIn(
+                '$c->update("UPDATE t SET verification_standing = ?, updated_at = ? WHERE external_id = ?");',
+            ),
+        );
+
+        // Concatenation is how every statement here is written, and the WHERE
+        // arrives in a later literal than the SET.
+        $concatenated = "\$c->update('UPDATE '.self::TABLE.' SET routed_at = ?'.' WHERE external_id = ?');";
+        $clauses = self::assignmentClausesIn($concatenated);
+
+        self::assertCount(1, $clauses);
+        self::assertStringContainsString('routed_at', $clauses[0]);
+        self::assertStringNotContainsString(
+            'external_id',
+            $clauses[0],
+            'The predicate is not part of the assignment, however the statement is spelled.',
+        );
+
+        // A read of the identifier, and a grant naming the privilege: neither is an
+        // assignment.
+        self::assertSame([], self::assignmentClausesIn('$c->select("SELECT external_id FROM op_users WHERE id = ?");'));
+        self::assertSame([], self::assignmentClausesIn("return 'SELECT, INSERT, UPDATE, DELETE';"));
+
+        // The prohibition written about rather than committed: comments are gone
+        // before the detector sees a file — the correction `TC-037` ‡ rule 11
+        // needed.
+        self::assertSame(
+            [],
+            self::assignmentClausesIn(self::codeOf('<?php // Nothing issues UPDATE t SET external_id = ? — FRD-FR-005 ‡.')),
+        );
+    }
+
+    /**
+     * Every `SET …` clause of every `UPDATE` in a file, as written.
+     *
+     * Bounded at `WHERE` so that a predicate naming a column is never mistaken for
+     * an assignment to it, and at the end of the PHP statement otherwise — which
+     * over-captures an `UPDATE` carrying no `WHERE` at all. That is the safe
+     * direction: such a statement rewrites every row in its table, and a rule that
+     * errs towards flagging it is not a rule that wants loosening.
+     *
+     * @return list<string>
+     */
+    private static function assignmentClausesIn(string $code): array
+    {
+        $clauses = [];
+
+        foreach (explode(';', $code) as $statement) {
+            preg_match_all('/\bUPDATE\s.*?\sSET\s(.*?)(?:\sWHERE\s|\z)/is', $statement, $matches);
+
+            /** @var list<string> $found */
+            $found = $matches[1];
+
+            foreach ($found as $clause) {
+                $clauses[] = trim($clause);
+            }
+        }
+
+        return $clauses;
     }
 
     /**
