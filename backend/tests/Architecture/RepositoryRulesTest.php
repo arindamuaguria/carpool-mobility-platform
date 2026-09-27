@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Architecture;
 
+use Cmp\Domain\Safety\SafetyIncidentRepository;
+use Cmp\Domain\Shared\StateMachine\StateModelRepository;
+use Cmp\Domain\User\EmergencyContactRepository;
+use Cmp\Domain\User\SessionRepository;
+use Cmp\Domain\User\UserRepository;
 use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -57,6 +62,20 @@ final class RepositoryRulesTest extends TestCase
      */
     private const PERMITTED_SCALARS = ['void', 'bool', 'int', 'string', 'null'];
 
+    /**
+     * The repository contracts `BE-037` is asserted of, in the order
+     * {@see repositoryContracts()} returns them.
+     *
+     * @var list<class-string>
+     */
+    private const CONTRACTS = [
+        SafetyIncidentRepository::class,
+        StateModelRepository::class,
+        EmergencyContactRepository::class,
+        SessionRepository::class,
+        UserRepository::class,
+    ];
+
     public function test_every_repository_contract_is_declared_in_the_domain(): void
     {
         // BE-037 / BADR-05. A contract declared in Infrastructure would be the
@@ -106,9 +125,30 @@ final class RepositoryRulesTest extends TestCase
             'BE-037: a repository returns domain objects, never a row, an array of rows or a framework type.',
         );
 
-        // A rule with nothing to run on proves nothing. StateModelRepository is
-        // what keeps this honest until BE-017's aggregates arrive.
+        // A rule with nothing to run on proves nothing, and every contract in
+        // CONTRACTS has methods.
         self::assertGreaterThan(0, $checked);
+    }
+
+    /**
+     * `TC-024` ‡ — which contracts `BE-037` is asserted of, stated.
+     *
+     * `CC-053` and `CC-054` both found a rule reading less of its subject than it
+     * claimed, and both were guarded only by that subject being non-empty. A
+     * contract is recognised here by a **naming convention** — a file ending
+     * `Repository.php` declaring `interface …Repository` — so a contract named
+     * anything else is one this rule silently does not hold. `BE-017`'s nine
+     * aggregates each want one, so the list is about to grow, and it should grow by
+     * a reviewed edit rather than by whatever the convention happens to catch.
+     */
+    public function test_every_repository_contract_is_examined(): void
+    {
+        self::assertSame(
+            self::CONTRACTS,
+            self::repositoryContracts(),
+            'BE-037 is asserted of the contracts this rule can see. A contract in the tree and missing from here '
+            .'is one the naming convention did not recognise.',
+        );
     }
 
     public function test_every_repository_implementation_is_infrastructure(): void
@@ -310,6 +350,10 @@ final class RepositoryRulesTest extends TestCase
                 $contracts[] = $contract;
             }
         }
+
+        // A directory walk's order is the filesystem's, so it is fixed here rather
+        // than relied on — CONTRACTS is compared against this by identity.
+        sort($contracts);
 
         return $contracts;
     }
