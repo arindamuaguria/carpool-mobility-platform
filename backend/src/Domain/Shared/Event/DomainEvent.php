@@ -19,7 +19,7 @@ use Cmp\Domain\Shared\Time\Instant;
  * `BE-062`: publishing an event does not require the publisher to know its
  * subscribers. Nothing on this interface names a listener.
  *
- * Immutability is asserted structurally in DomainEventImmutabilityTest: every
+ * Immutability is asserted structurally in DomainEventRulesTest: every
  * implementation is `final` and every property `readonly`.
  */
 interface DomainEvent

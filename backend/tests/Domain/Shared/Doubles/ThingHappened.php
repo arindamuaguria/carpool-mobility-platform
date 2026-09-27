@@ -13,7 +13,7 @@ use Cmp\Domain\Shared\Time\Instant;
  * A **test double**, not a platform event. The platform's events belong to the
  * nine aggregates of `BE-017` and arrive with their features. It is `final` with
  * `readonly` properties because `BE-039` requires a domain event to be
- * immutable, and DomainEventImmutabilityTest asserts that of every
+ * immutable, and DomainEventRulesTest asserts that of every
  * implementation — including this one.
  */
 final class ThingHappened implements DomainEvent
