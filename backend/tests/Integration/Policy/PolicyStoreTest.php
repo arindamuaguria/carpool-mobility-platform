@@ -327,6 +327,30 @@ final class PolicyStoreTest extends IntegrationTestCase
         self::assertSame(EvidentialOutcome::Succeeded->value, $rows[0]->outcome);
     }
 
+    public function test_the_record_names_the_operator_who_acted_and_not_merely_an_operator(): void
+    {
+        // FRD-FR-246 ‡: "the system shall name the operator responsible where an
+        // operator acted." A single record naming a single operator is consistent
+        // with a constant, a deployment identity or the first actor the store ever
+        // saw — all of which would satisfy "an operator is named" and none of which
+        // names the one responsible. Two operators, two records, each its own.
+        //
+        // A policy change is the operator action the platform has (BADR-12);
+        // verification adjudication, account-state change and settlement are all
+        // withheld, so this is the whole of the statement's subject today.
+        $this->change()->apply(self::KEY, '3', 'operator-1');
+        $this->change()->apply(self::KEY, '5', 'operator-2');
+
+        self::assertSame(
+            ['operator-1', 'operator-2'],
+            array_map(
+                static fn (object $row): string => $row->actor,
+                $this->evidentialRecords(),
+            ),
+            'FRD-FR-246 ‡: each record names the operator who made that change.',
+        );
+    }
+
     public function test_the_record_points_at_the_one_version_holding_the_values(): void
     {
         // BE-173 asks for the previous and new value, and BE-107 ‡ fixes the

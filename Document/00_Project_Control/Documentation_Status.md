@@ -8,9 +8,9 @@
 | Document Name | Documentation Status |
 | Project Name | Carpool Mobility Platform |
 | Project Code | CMP |
-| Version | 5.9 |
+| Version | 6.0 |
 | Status | Draft |
-| Date | 2026-08-20 |
+| Date | 2026-09-27 |
 | Author | Documentation Manager (AI-assisted) |
 | Reviewer | [TBD] |
 | Approver | Project Owner |
@@ -70,9 +70,9 @@ authoritative answer to *"where are we in the documentation programme?"*
 | ID | File | Version | Status | Last Updated |
 |---|---|---|---|---|
 | CMP-CTRL-README | README.md | **0.4** | Draft | **2026-08-19** |
-| CMP-CTRL-INDEX | Documentation_Index.md | **4.4** | Draft | **2026-08-20** |
-| CMP-CTRL-STATUS | Documentation_Status.md | **4.4** | Draft | **2026-08-20** |
-| CMP-CTRL-CHANGELOG | Document_Change_Log.md | **4.4** | Draft | **2026-08-20** |
+| CMP-CTRL-INDEX | Documentation_Index.md | **6.0** | Draft | **2026-09-27** |
+| CMP-CTRL-STATUS | Documentation_Status.md | **6.0** | Draft | **2026-09-27** |
+| CMP-CTRL-CHANGELOG | Document_Change_Log.md | **6.0** | Draft | **2026-09-27** |
 | CMP-CTRL-GLOSSARY | Glossary.md | 3.1 | Draft | 2026-08-17 |
 | CMP-CTRL-RTM | Master_Traceability_Matrix.md | **3.8** | Draft | **2026-08-20** |
 
