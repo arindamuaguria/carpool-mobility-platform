@@ -209,6 +209,57 @@ final class EvidentialLogTest extends IntegrationTestCase
         self::assertNull($verification->divergedAtRecord());
     }
 
+    public function test_the_chain_follows_the_key_and_not_the_time(): void
+    {
+        // SEC-109 ‡ / DB-111 ‡: "the chain shall be ordered by the database's
+        // monotonic, never-reused key."
+        //
+        // The instants run **backwards**, which is legitimate rather than
+        // contrived: occurred_at is when the thing happened, not when it was
+        // recorded. BE-057 ‡ dispatches a listener after the producing transaction
+        // commits and BE-059 lets it enqueue a job, so a record written later can
+        // carry an earlier instant — and a queue that retried would produce exactly
+        // this order.
+        //
+        // A verifier ordering by occurred_at would then walk the records
+        // youngest-first, find hashes that do not link, and report a chain that is
+        // in fact intact as diverged. Worse, two records sharing an instant have no
+        // defined order at all, so whether it reported divergence would depend on
+        // the server.
+        foreach (['2026-08-19T12:00:00Z', '2026-08-19T11:00:00Z', '2026-08-19T10:00:00Z'] as $index => $instant) {
+            $this->writer()->record(Evidence::of(
+                ActorReference::fromString('actor-1'),
+                'thing.happened',
+                'subject-'.$index,
+                EvidentialOutcome::Succeeded,
+                Instant::fromString($instant),
+            ));
+        }
+
+        // The fixture is only worth anything if the two orders really differ, so
+        // that is asserted rather than assumed: the key ascends while the instant
+        // descends.
+        $rows = $this->applicationConnection()->select(
+            'SELECT id, occurred_at FROM '.DatabaseEvidentialWriter::TABLE.' ORDER BY id ASC'
+        );
+
+        self::assertCount(3, $rows);
+        self::assertTrue((int) $rows[0]->id < (int) $rows[1]->id && (int) $rows[1]->id < (int) $rows[2]->id);
+        self::assertTrue(
+            $rows[0]->occurred_at > $rows[1]->occurred_at && $rows[1]->occurred_at > $rows[2]->occurred_at,
+            'The instants must run against the key for this test to distinguish the two orderings.',
+        );
+
+        $verification = $this->verifier()->verify();
+
+        self::assertTrue(
+            $verification->isIntact(),
+            'SEC-109 ‡: the chain is the key\'s order. Ordered by occurred_at these three records do not link, '
+            .'so a verifier reading them in time order reports an intact chain as diverged.',
+        );
+        self::assertSame(3, $verification->recordsVerified());
+    }
+
     public function test_verification_detects_a_deliberately_altered_record(): void
     {
         // BE-212 ‡: "Evidential chain verification shall be tested against a

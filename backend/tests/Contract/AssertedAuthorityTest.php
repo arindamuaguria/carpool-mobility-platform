@@ -31,6 +31,12 @@ final class AssertedAuthorityTest extends TestCase
      * caught six would leave the seventh assertable and nobody would notice
      * until it mattered.
      *
+     * Verification standing is the one of the seven whose column already exists,
+     * and `DB-041` ‡ states the property this test is the proof of: it is *"written
+     * only by the platform, and shall have no inbound write path."* The column and
+     * the migration both say so in prose; the refusal below is what makes it
+     * observable.
+     *
      * @return array<string, array{0: string, 1: string}>
      */
     public static function assertions(): array
