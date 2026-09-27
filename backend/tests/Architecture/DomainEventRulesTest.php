@@ -7,6 +7,8 @@ namespace Tests\Architecture;
 use Cmp\Application\Shared\Event\DomainEventListener;
 use Cmp\Application\Shared\Event\ListenerRegistry;
 use Cmp\Domain\Shared\Event\DomainEvent;
+use Cmp\Domain\User\Event\PhoneNumberVerified;
+use Cmp\Domain\User\Event\UserRegistered;
 use Cmp\Infrastructure\Laravel\Providers\EventServiceProvider;
 use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
@@ -74,12 +76,50 @@ final class DomainEventRulesTest extends TestCase
         }
     }
 
-    public function test_at_least_one_domain_event_exists_to_check(): void
+    /**
+     * `TC-024` ‡ — every domain event in the tree is examined, and which ones
+     * those are is stated.
+     *
+     * `CC-054`. The rules above were enforced against whatever PHP **happened to
+     * have loaded**: the subject came from `get_declared_classes()`, and a class
+     * nothing in the run had referenced was not declared. Today the only member is
+     * the test double, appended by name because doubles load lazily — and that
+     * special case was the tell. The platform's own events arrive with `BE-017`'s
+     * nine aggregates, and each would have been invisible to `BE-039` until some
+     * unrelated test happened to autoload it. A non-final event with a public
+     * mutable property was placed in `src/Domain` and all six rules passed.
+     *
+     * **And the platform already had two.** `UserRegistered` and
+     * `PhoneNumberVerified` have been in `src/Domain/User/Event` since FEAT-001,
+     * both `final` with `readonly` properties — and `BE-039` was asserted of
+     * neither, because nothing in an architecture run loads a Domain event. Both
+     * files say in their own docblocks that `DomainEventRulesTest` asserts it of
+     * every implementation. It did not.
+     *
+     * The subject is now read from the tree, and asserted by identity so that
+     * "nothing broke the rule" cannot again mean "nothing was read".
+     *
+     * @var array<class-string<DomainEvent>, string>
+     */
+    private const EVENTS = [
+        PhoneNumberVerified::class => 'FRD-FR-008 / BAD-RULE-006: the platform\'s own account of having decided '
+            .'that control of a number was demonstrated.',
+        UserRegistered::class => 'FRD-FR-001 / FRD-FR-006: an account came into existence. It carries a '
+            .'reference and not a number, because BE-201 ‡ keeps a contact detail out of anything a listener '
+            .'or a record can reach.',
+        ThingHappened::class => 'A test double, and a member because BE-039 is asserted of every implementation. '
+            .'It is what kept these rules from running on nothing while the two above were invisible to them.',
+    ];
+
+    public function test_every_domain_event_in_the_tree_is_examined(): void
     {
-        // A rule with nothing to run on proves nothing. The platform's own events
-        // arrive with the nine aggregates of BE-017; until then the test double
-        // is what keeps this suite honest.
-        self::assertNotEmpty(self::domainEventClasses());
+        self::assertSame(
+            array_keys(self::EVENTS),
+            self::domainEventClasses(),
+            'BE-039 is asserted of the events this file can see. An event in the tree and missing from here is '
+            .'one the rules never examined; an entry here that is not in the tree is a rule asserting something '
+            .'about nothing. An event added with an aggregate belongs in this list on the same commit.',
+        );
     }
 
     public function test_subscriptions_are_declared_in_exactly_one_place(): void
@@ -124,29 +164,89 @@ final class DomainEventRulesTest extends TestCase
     }
 
     /**
+     * Every implementation of {@see DomainEvent} in the tree.
+     *
+     * Read from the **files**, not from `get_declared_classes()`. A class PHP has
+     * not loaded is not declared, and autoloading is driven by what a run happens
+     * to touch — so a subject derived that way shrinks and grows with the test
+     * order and is never the whole of it. Resolving the name from the file and
+     * asking `is_subclass_of()` loads each candidate on purpose.
+     *
+     * The doubles directory is a root because the double is held to `BE-039` too:
+     * an immutability rule that exempted the one implementation it could reach
+     * would have nothing left to run on.
+     *
      * @return list<class-string<DomainEvent>>
      */
     private static function domainEventClasses(): array
     {
         $classes = [];
 
-        foreach (get_declared_classes() as $class) {
-            if (! is_subclass_of($class, DomainEvent::class)) {
-                continue;
+        foreach ([self::root().'src', self::root().'tests/Domain/Shared/Doubles'] as $root) {
+            foreach (self::phpFilesUnder($root) as $path) {
+                $class = self::classDeclaredIn($path);
+
+                if ($class === null || ! is_subclass_of($class, DomainEvent::class)) {
+                    continue;
+                }
+
+                $classes[] = $class;
             }
-
-            $classes[] = $class;
         }
 
-        // Test doubles are loaded lazily, so make sure the one that exists is
-        // present before the rules above run against an empty set.
-        if (! in_array(ThingHappened::class, $classes, true)
-            && class_exists(ThingHappened::class)) {
-            $classes[] = ThingHappened::class;
-        }
+        sort($classes);
 
         /** @var list<class-string<DomainEvent>> $classes */
         return $classes;
+    }
+
+    /**
+     * The class a file declares, or `null` where it declares none that exists.
+     *
+     * An interface or a trait is not a class, so {@see DomainEvent} itself and any
+     * contract beside it drop out here rather than needing to be named.
+     *
+     * @return class-string|null
+     */
+    private static function classDeclaredIn(string $path): ?string
+    {
+        $contents = file_get_contents($path);
+
+        self::assertIsString($contents);
+
+        if (preg_match('/^namespace\s+([^;]+);/m', $contents, $matches) !== 1) {
+            return null;
+        }
+
+        $class = trim($matches[1]).'\\'.basename($path, '.php');
+
+        return class_exists($class) ? $class : null;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function phpFilesUnder(string $root): array
+    {
+        $paths = [];
+
+        /** @var iterable<SplFileInfo> $iterator */
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($root, RecursiveDirectoryIterator::SKIP_DOTS),
+        );
+
+        foreach ($iterator as $file) {
+            if ($file->isFile() && $file->getExtension() === 'php') {
+                $paths[] = $file->getPathname();
+            }
+        }
+
+        return $paths;
+    }
+
+    private static function root(): string
+    {
+        return dirname(__DIR__, 2).'/';
     }
 
     /**
