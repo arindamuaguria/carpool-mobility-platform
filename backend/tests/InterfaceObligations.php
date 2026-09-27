@@ -474,8 +474,8 @@ final class InterfaceObligations
             ],
             'API-170' => [
                 'status' => 'enforced',
-                'provenBy' => 'Tests\\Architecture\\SafetySurfaceRulesTest',
-                'note' => 'test_no_safety_operation_is_declared_on_the_general_surface.',
+                'provenBy' => 'Tests\\System\\SafetyOnlyDeploymentTest',
+                'note' => 'test_a_deployment_serving_only_safety_records_an_incident, with test_the_general_surface_is_absent_from_that_deployment as its other half. CC-056 corrected the citation: this entry named SafetySurfaceRulesTest::test_no_safety_operation_is_declared_on_the_general_surface, which proves a necessary condition and not the statement. A safety route file that reached a middleware alias registered by the general surface would satisfy that test exactly and leave a safety-only deployment unable to serve one request — demonstrated by making it so, at which point the whole architecture suite and the ordinary endpoint test still passed. The surface is now booted alone, from the same providers, and serves.',
             ],
             'API-171' => [
                 'status' => 'enforced',

@@ -77,9 +77,12 @@ final class Argon2idAuthenticationMaterialTest extends DomainTestCase
 
     public function test_nothing_stored_can_be_presented_back_as_a_credential(): void
     {
-        // SEC-033 ‡ / NFR-053: no store the platform controls holds a value that
-        // can be presented back to it as a credential. Presenting the stored
-        // value itself is the obvious attempt, and it fails.
+        // SEC-033 ‡ / SEC-076 ‡ / NFR-053: no store the platform controls holds a
+        // value that can be presented back to it as a credential. `SEC-076` ‡ puts
+        // it as **non-recoverable**, "a stronger requirement than protected" —
+        // protection at rest can be reversed by whoever holds the key, and this
+        // cannot be reversed at all. Presenting the stored value itself is the
+        // obvious attempt, and it fails.
         $hasher = $this->hasher();
         $stored = $hasher->hash(self::MATERIAL);
 

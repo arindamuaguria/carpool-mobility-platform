@@ -164,6 +164,151 @@ final class EvidentialLogRulesTest extends TestCase
     }
 
     /**
+     * `SEC-109` ‡ / `DB-111` ‡ — *"The chain shall be ordered by the database's
+     * monotonic, never-reused key."*
+     *
+     * Three statements read the log and each orders by `id`. Nothing observed that.
+     * `occurred_at` is the obvious alternative and the wrong one: it is when the
+     * thing **happened**, not when it was recorded, so it is not monotonic in
+     * insertion order at all — `BE-057` ‡ dispatches a listener after the
+     * transaction commits and `BE-059` may enqueue a job, so a record written later
+     * can legitimately carry an earlier instant. Two records sharing an instant
+     * would then verify in whichever order the server returned them.
+     *
+     * The rule is narrow: every ordering of the evidential table orders by its key.
+     * `EvidentialLogTest` proves the consequence at level 3, with three records
+     * whose instants run **backwards**. `CC-056` records both.
+     */
+    public function test_every_ordering_of_the_evidential_table_is_by_the_key(): void
+    {
+        $offenders = [];
+        $orderings = 0;
+
+        foreach (self::sourceFiles() as $relative => $contents) {
+            foreach (self::orderingsOfTheLogIn($contents) as $ordering) {
+                $orderings++;
+
+                if (preg_match('/^id\b/', $ordering) !== 1) {
+                    $offenders[] = $relative.' → ORDER BY '.$ordering;
+                }
+            }
+        }
+
+        self::assertSame(
+            [],
+            $offenders,
+            'SEC-109 ‡ / DB-111 ‡: the chain is ordered by the monotonic, never-reused key. occurred_at is when '
+            .'the thing happened rather than when it was recorded, so ordering by it is not insertion order and '
+            .'two records sharing an instant have no defined order at all.',
+        );
+
+        // A rule with no ordering to examine proves nothing. The writer's tail
+        // read and the verifier's two are what it runs on.
+        self::assertSame(3, $orderings, 'SEC-109 ‡: three statements order the evidential log.');
+    }
+
+    /**
+     * `TC-041` / `TC-024` ‡ — the ordering detector finds an ordering, and tells
+     * the key from the time.
+     */
+    public function test_the_ordering_detector_tells_the_key_from_the_time(): void
+    {
+        $ownsTheLog = "private const TABLE = 'ev_evidential_records';\n";
+
+        self::assertSame(
+            ['id DESC'],
+            self::orderingsOfTheLogIn($ownsTheLog."'SELECT record_hash FROM '.self::TABLE.' ORDER BY id DESC LIMIT 1';"),
+        );
+
+        self::assertSame(
+            ['occurred_at ASC'],
+            self::orderingsOfTheLogIn("'SELECT * FROM ev_evidential_records ORDER BY occurred_at ASC'"),
+        );
+
+        // A repository that orders its own table by a timestamp is doing nothing
+        // wrong, and three of them do. `self::TABLE` is the log only where the file
+        // says its TABLE is.
+        self::assertSame(
+            [],
+            self::orderingsOfTheLogIn(
+                "private const TABLE = 'op_user_emergency_contacts';\n"
+                ."'SELECT * FROM '.self::TABLE.' ORDER BY created_at ASC';"
+            ),
+        );
+
+        // An ordering of something that is not the log is not this rule's
+        // business, and a statement with no ordering is not an ordering.
+        self::assertSame([], self::orderingsOfTheLogIn("'SELECT * FROM op_users ORDER BY created_at ASC'"));
+        self::assertSame([], self::orderingsOfTheLogIn($ownsTheLog."'SELECT COUNT(*) FROM '.self::TABLE;"));
+    }
+
+    /**
+     * Every `ORDER BY` in a statement that reads the evidential log, as written.
+     *
+     * The table is named either by its literal or by the writer's constant, which
+     * is how {@see test_no_source_file_outside_the_writer_reaches_the_evidential_table()}
+     * already recognises it — so a statement that names the log one way and orders
+     * it the other cannot slip between two spellings.
+     *
+     * `TC-024` ‡: a bare `self::TABLE` counts only where the **file's own** `TABLE`
+     * is the log. Every repository on the platform writes `self::TABLE`, and three
+     * of them order by a timestamp perfectly correctly — a detector that read the
+     * spelling without the declaration flagged all three, which is a false positive
+     * to fix rather than a rule to relax.
+     *
+     * @return list<string>
+     */
+    private static function orderingsOfTheLogIn(string $contents): array
+    {
+        $found = [];
+        $ownTableIsTheLog = str_contains($contents, "TABLE = '".DatabaseEvidentialWriter::TABLE."'");
+
+        foreach (self::statementsIn($contents) as $statement) {
+            $namesTheLog = str_contains($statement, DatabaseEvidentialWriter::TABLE)
+                || str_contains($statement, 'DatabaseEvidentialWriter::TABLE')
+                || ($ownTableIsTheLog && str_contains($statement, 'self::TABLE'));
+
+            if (! $namesTheLog) {
+                continue;
+            }
+
+            if (preg_match('/ORDER BY\s+(.+?)(?:\s+LIMIT\b|\s*\'|$)/i', $statement, $matches) === 1) {
+                $found[] = trim($matches[1]);
+            }
+        }
+
+        return $found;
+    }
+
+    /**
+     * A file's PHP statements, comments removed.
+     *
+     * Split on `;` for the reason `SEC-037` ‡'s rule needed it: the `ORDER BY` and
+     * the table name are commonly on different lines of one concatenation, and a
+     * detector reading a line would see one without the other.
+     *
+     * @return list<string>
+     */
+    private static function statementsIn(string $contents): array
+    {
+        if (! str_contains($contents, '<?php')) {
+            $contents = '<?php '.$contents;
+        }
+
+        $code = '';
+
+        foreach (token_get_all($contents) as $token) {
+            if (is_array($token) && in_array($token[0], [T_COMMENT, T_DOC_COMMENT], true)) {
+                continue;
+            }
+
+            $code .= is_array($token) ? $token[1] : $token;
+        }
+
+        return explode(';', $code);
+    }
+
+    /**
      * @return array<string, string> relative path => contents
      */
     private static function sourceFiles(): array
